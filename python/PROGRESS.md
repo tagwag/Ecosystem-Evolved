@@ -41,3 +41,8 @@
   Survivors are about 14 generations from their founders.
   Flips and restores were mildly weeded out (kept 0.8× as often as chance); silencing and knockouts were neutral to slightly kept.
   The sample is small (105 ancestral births), so this is a hint, not a result. A longer run is needed.
+- **Long ecosystem run** (150,000 ticks, seed 2, `results/eco_long_lineage.*`): 2,664 births. Survivors are about 64 generations deep.
+  Every mutation type was kept at 1.0–1.24× chance. The 30k-run hint (flips weeded out) **did not replicate**.
+  Reading: one structural mutation is usually close to **neutral**. Survival here is decided mostly by chance
+  (genetic drift) plus the slow build-up of small tweaks, not by single big rewiring events.
+  This matches real neutral evolution theory. Next test: harsher food scarcity to make selection stronger.
