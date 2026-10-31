@@ -1,0 +1,42 @@
+ _____      _ _       ___   _____
+/  __ \    | | |     / _ \ |_   _|
+| /  \/ ___| | |    / /_\ \  | |
+| |    / _ \ | |    |  _  |  | |
+| \__/\  __/ | |    | | | |__| |__
+ \____/\___|_|_|    \_| |_(_)___(_)
+
+
+______                                                                 _
+| ___ \                                                               | |
+| |_/ / __ ___   __ _ _ __ __ _ _ __ ___  _ __ ___   ___ _ __ ___     | |     ___   __ _
+|  __/ '__/ _ \ / _` | '__/ _` | '_ ` _ \| '_ ` _ \ / _ \ '__/ __|    | |    / _ \ / _` |
+| |  | | | (_) | (_| | | | (_| | | | | | | | | | | |  __/ |  \__ \    | |___| (_) | (_| |
+\_|  |_|  \___/ \__, |_|  \__,_|_| |_| |_|_| |_| |_|\___|_|  |___/    \_____/\___/ \__, |
+                 __/ |                                                              __/ |
+                |___/                                                              |___/
+
+
+    So far:
+    I have a working algorithm for executing basic survival functions: Flight, Fight, Search.
+    My current problem is creating the cell split function. It might be best to place the cell split function on hold and instead
+    focus on programming evolution by setting a specific time length for each generation and for which ever cells survive I carry
+    their traits into the next generation and add mutation chance. This can help me refine the basic instinct of the cell so that
+    when I do add cell splitting in the future it will be with advanced natural instinct allowing me to attribute any bugs to my
+    implementation of cell splitting and not the possibility of the bug occurring elsewhere within my code.
+    Design:
+    1. Quantify each aspect of Flight, Fight, and Search and make them be represented by a matrix.
+        * Find a way to make this data represent color so that cells can be distinguished from each other by Instinct.
+        * I feel like making Sight a factor of seeking and a trait that can change might greatly influence this whole algorithm.
+            * If it only needs to see enough food to survive it might not have ability to see far.
+            * If it's too slow to eat food boxes but can see far enough to find prey to eat then it could survive.
+            * I think Sight is a key survival trait that should change with evolution.
+        * Quantify Threat Tolerance, this could be an interesting thing.
+
+    2. Quantify order of instinct and make them be represented by a matrix.
+    3. Create "leaderboard" which stores surviving Cells and their Instinct.
+    4. Add pulling data from leaderboard file so that surviving instinct can be passed on.
+    4. Add Mutation Roll which will mutate traits of Instinct.
+    5. Refine how size affects energy consumption and movement speed.
+        * Set a score requirement where a cell must consume so much energy in order to have it's traits passed on.
+        * Leftover score is converted into a size growth.
+        * Size affects speed. If too big, then the cell is too slow and cannot eat enough to survive to the next round.

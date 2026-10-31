@@ -1,0 +1,14 @@
+Changes
+    The objects are too intelligent and contain too much knowledge of their surroundings.
+    True cells cannot see and store sight data like food direction.
+    Cells will literally bump into each other and eat each other if their diet includes meat. But they don't hunt.
+    cells have orientation  so I will need to implement such a thing.
+
+    SO I might be able to get away with creating a basic pathfinding evolution finder. Basically pre program basic behaviors
+    like turning and spinning and allow the cell to create it's own algorthithm/movement behavior.
+
+    every cell or object has a Vector2D object that will determine it's movement vector. it does not contain any data in regards to it's location.
+    That's stored in the environment object and is used for rendering, and collisions where a check is performed to see if any two objects occupy the same space.
+    this check is performed by a stack that is created every tick, as objects are added to the stack for occupied spaces, if two objects are found to occupy
+    the same space, one of the objects is eliminated and a state is triggered within the surviving object.
+    The direction that the object is facing is determined by finding the angle of magnitude (not sure of correct term) by comparing the x and y velocities.

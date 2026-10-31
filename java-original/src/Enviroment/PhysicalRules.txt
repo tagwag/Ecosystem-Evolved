@@ -1,0 +1,4 @@
+1. In orrder for Cell bodies to exist, their body parts must be neighbored by 2 or 3 other body parts.
+2. In order for a Body to grow, it must have have interacted with another Body.
+3. How much a Body Grows is determined by the size of the interacted Body.
+4. A body can move, but it's size limits the Max speed it can move.
