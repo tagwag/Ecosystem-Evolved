@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="1 Evolve worm brain" type="PythonConfigurationType" factoryName="Python">
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/python" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="MODULE_MODE" value="true" />
+    <option name="SCRIPT_NAME" value="ecosim.evolve" />
+    <option name="PARAMETERS" value="--brain worm --generations 40 --out runs/worm" />
+    <option name="EMULATE_TERMINAL" value="true" />
+    <method v="2" />
+  </configuration>
+</component>

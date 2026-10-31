@@ -63,6 +63,7 @@ def evolve(cfg: Config, out_dir: Path, log=print, controller='brain'):
     best = genomes[0]
     events = [[] for _ in range(len(genomes))]
     winners_log = []
+    champions = []
     for gen in range(cfg.generations):
         fit, stats = run_generation(cfg, genomes, rng, controller, conn=conn)
         # random-walk baseline on the same settings, for comparison
@@ -74,9 +75,11 @@ def evolve(cfg: Config, out_dir: Path, log=print, controller='brain'):
         history.append(stats)
         log(f"gen {gen:3d}  mean food {stats['mean_food']:6.2f}  best {stats['best_food']:4.0f}  "
             f"survivors {stats['survivors']:3d}  | random-walk mean {base['mean_food']:6.2f}")
+        champions.append(genomes[int(np.argmax(fit))].astype(np.float32))   # for brainviz animation
         genomes, best, events = next_generation(genomes, fit, cfg, rng, rate, conn)
     out_dir.mkdir(parents=True, exist_ok=True)
     np.save(out_dir / 'best_genome.npy', best)
+    np.save(out_dir / 'champions.npy', np.array(champions))
     (out_dir / 'history.json').write_text(json.dumps(history, indent=1, default=float))
     (out_dir / 'winners.json').write_text(json.dumps(winners_log, indent=1, default=str))
     return best, history
