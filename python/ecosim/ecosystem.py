@@ -154,4 +154,5 @@ if __name__ == '__main__':
     (out / 'births.json').write_text(json.dumps(eco.births, default=str))
     if len(eco.genomes):
         np.save(out / 'survivor_genomes.npy', eco.genomes)
+        np.save(out / 'survivor_ids.npy', eco.lineage)
     print('saved', out)
