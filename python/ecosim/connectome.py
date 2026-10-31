@@ -126,7 +126,7 @@ class WormBrains:
         self.d_bias = gains[:, 3 + R * N_OUT:3 + R * N_OUT + N_OUT]
         self.v = np.zeros((P, N), np.float32)
         self.rd = conn.ids(READOUT)
-        self.rbar = None
+        self.rbar = np.zeros((P, len(self.rd)), np.float32)
         c = conn
         self.s_on, self.s_off, self.s_lvl = c.ids(SENSORS['on']), c.ids(SENSORS['off']), c.ids(SENSORS['level'])
         self.fwd, self.bwd = c.ids(FWD), c.ids(BWD)
@@ -144,8 +144,6 @@ class WormBrains:
         self.v = v + self.dt / self.tau * (-v + I)
         r = np.tanh(np.maximum(self.v, 0))
         x = r[:, self.rd]
-        if self.rbar is None:
-            self.rbar = x.copy()
         dev = x - self.rbar
         self.rbar += self.adapt * (x - self.rbar)
         o = np.einsum('pr,pro->po', dev, self.D) + self.d_bias
