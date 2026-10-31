@@ -50,3 +50,4 @@ class Config:
     p_silence: float = 0.3
     p_restore: float = 0.2
     p_knockout: float = 0.05
+    p_flip: float = 0.2
