@@ -73,7 +73,7 @@ def main(run_dir):
     lines += [f'- {k} {t}: {d:+.2f}' for d, k, t in allm[:6]] + ['  ...'] + [f'- {k} {t}: {d:+.2f}' for d, k, t in allm[-4:]]
     (run_dir / 'mutation_effects.md').write_text('\n'.join(lines))
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.boxplot([res[k][0] for k in kinds], labels=kinds)
+    ax.boxplot([res[k][0] for k in kinds], tick_labels=kinds)
     ax.axhspan(-2 * noise, 2 * noise, color='grey', alpha=0.2, label='noise band')
     ax.axhline(0, color='k', lw=0.8)
     ax.set_ylabel('change in food vs unmutated'); ax.set_title('Effect of one mutation on an evolved worm brain')

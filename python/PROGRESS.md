@@ -60,3 +60,10 @@
   vary by ±20% from chance alone. The robust finding is at the brain level, not the mutation level: evolved wiring survives scarcity
   and random wiring does not.
   To find mutation-level effects: many more seeds, or measure each mutation's direct fitness effect (mutate → test → compare).
+- **Direct mutation test** (`ecosim/mutation_effects.py`, `results/step2_mutation_effects.md`): 24 single-mutation copies per type,
+  each tested on the same worlds as the unmutated brain.
+  - **Every type averages within ±0.15 food of no change**, while chance alone moves scores ±2.4. Almost every mutant falls in the noise band.
+  - So the evolved worm brain is **robust to single mutations** (biology term: *mutational robustness*). One rewired synapse out of
+    4,562 rarely matters, which is why the lineage tests saw neutral ratios.
+  - Largest single effects (unconfirmed, near the noise limit): flip SIADL→SIBDL +7.1, restore LUAR→PVR −5.0, knockout ASGR −4.7.
+  - Better resolution needs more test agents per mutant, or larger mutations (several synapses or a whole neuron's outputs at once).
