@@ -1,0 +1,242 @@
+[
+ {
+  "mean_food": 3.316666666666667,
+  "best_food": 77.0,
+  "survivors": 11,
+  "ticks": 1500,
+  "gen": 0,
+  "baseline_mean_food": 5.216666666666667
+ },
+ {
+  "mean_food": 2.875,
+  "best_food": 47.0,
+  "survivors": 10,
+  "ticks": 1500,
+  "gen": 1,
+  "baseline_mean_food": 5.166666666666667
+ },
+ {
+  "mean_food": 3.05,
+  "best_food": 47.0,
+  "survivors": 9,
+  "ticks": 1500,
+  "gen": 2,
+  "baseline_mean_food": 5.066666666666666
+ },
+ {
+  "mean_food": 1.9666666666666666,
+  "best_food": 32.0,
+  "survivors": 7,
+  "ticks": 1500,
+  "gen": 3,
+  "baseline_mean_food": 6.341666666666667
+ },
+ {
+  "mean_food": 2.716666666666667,
+  "best_food": 26.0,
+  "survivors": 10,
+  "ticks": 1500,
+  "gen": 4,
+  "baseline_mean_food": 7.008333333333334
+ },
+ {
+  "mean_food": 5.125,
+  "best_food": 52.0,
+  "survivors": 20,
+  "ticks": 1500,
+  "gen": 5,
+  "baseline_mean_food": 5.775
+ },
+ {
+  "mean_food": 4.35,
+  "best_food": 38.0,
+  "survivors": 18,
+  "ticks": 1500,
+  "gen": 6,
+  "baseline_mean_food": 5.225
+ },
+ {
+  "mean_food": 3.341666666666667,
+  "best_food": 40.0,
+  "survivors": 13,
+  "ticks": 1500,
+  "gen": 7,
+  "baseline_mean_food": 5.741666666666666
+ },
+ {
+  "mean_food": 2.7666666666666666,
+  "best_food": 41.0,
+  "survivors": 8,
+  "ticks": 1500,
+  "gen": 8,
+  "baseline_mean_food": 5.741666666666666
+ },
+ {
+  "mean_food": 4.275,
+  "best_food": 71.0,
+  "survivors": 16,
+  "ticks": 1500,
+  "gen": 9,
+  "baseline_mean_food": 5.816666666666666
+ },
+ {
+  "mean_food": 5.183333333333334,
+  "best_food": 58.0,
+  "survivors": 17,
+  "ticks": 1500,
+  "gen": 10,
+  "baseline_mean_food": 5.558333333333334
+ },
+ {
+  "mean_food": 4.95,
+  "best_food": 48.0,
+  "survivors": 18,
+  "ticks": 1500,
+  "gen": 11,
+  "baseline_mean_food": 5.758333333333334
+ },
+ {
+  "mean_food": 6.408333333333333,
+  "best_food": 36.0,
+  "survivors": 27,
+  "ticks": 1500,
+  "gen": 12,
+  "baseline_mean_food": 6.3
+ },
+ {
+  "mean_food": 4.683333333333334,
+  "best_food": 39.0,
+  "survivors": 18,
+  "ticks": 1500,
+  "gen": 13,
+  "baseline_mean_food": 4.975
+ },
+ {
+  "mean_food": 4.633333333333334,
+  "best_food": 55.0,
+  "survivors": 19,
+  "ticks": 1500,
+  "gen": 14,
+  "baseline_mean_food": 5.416666666666667
+ },
+ {
+  "mean_food": 5.125,
+  "best_food": 52.0,
+  "survivors": 23,
+  "ticks": 1500,
+  "gen": 15,
+  "baseline_mean_food": 6.458333333333333
+ },
+ {
+  "mean_food": 5.566666666666666,
+  "best_food": 60.0,
+  "survivors": 25,
+  "ticks": 1500,
+  "gen": 16,
+  "baseline_mean_food": 5.4
+ },
+ {
+  "mean_food": 5.883333333333334,
+  "best_food": 45.0,
+  "survivors": 28,
+  "ticks": 1500,
+  "gen": 17,
+  "baseline_mean_food": 6.125
+ },
+ {
+  "mean_food": 5.083333333333333,
+  "best_food": 38.0,
+  "survivors": 21,
+  "ticks": 1500,
+  "gen": 18,
+  "baseline_mean_food": 5.7
+ },
+ {
+  "mean_food": 6.15,
+  "best_food": 43.0,
+  "survivors": 25,
+  "ticks": 1500,
+  "gen": 19,
+  "baseline_mean_food": 5.766666666666667
+ },
+ {
+  "mean_food": 5.891666666666667,
+  "best_food": 47.0,
+  "survivors": 27,
+  "ticks": 1500,
+  "gen": 20,
+  "baseline_mean_food": 5.983333333333333
+ },
+ {
+  "mean_food": 5.4,
+  "best_food": 38.0,
+  "survivors": 24,
+  "ticks": 1500,
+  "gen": 21,
+  "baseline_mean_food": 5.258333333333334
+ },
+ {
+  "mean_food": 6.433333333333334,
+  "best_food": 31.0,
+  "survivors": 30,
+  "ticks": 1500,
+  "gen": 22,
+  "baseline_mean_food": 4.75
+ },
+ {
+  "mean_food": 7.441666666666666,
+  "best_food": 55.0,
+  "survivors": 31,
+  "ticks": 1500,
+  "gen": 23,
+  "baseline_mean_food": 6.716666666666667
+ },
+ {
+  "mean_food": 6.858333333333333,
+  "best_food": 52.0,
+  "survivors": 28,
+  "ticks": 1500,
+  "gen": 24,
+  "baseline_mean_food": 5.291666666666667
+ },
+ {
+  "mean_food": 6.208333333333333,
+  "best_food": 82.0,
+  "survivors": 23,
+  "ticks": 1500,
+  "gen": 25,
+  "baseline_mean_food": 5.491666666666666
+ },
+ {
+  "mean_food": 6.266666666666667,
+  "best_food": 87.0,
+  "survivors": 23,
+  "ticks": 1500,
+  "gen": 26,
+  "baseline_mean_food": 4.825
+ },
+ {
+  "mean_food": 6.8,
+  "best_food": 47.0,
+  "survivors": 26,
+  "ticks": 1500,
+  "gen": 27,
+  "baseline_mean_food": 4.991666666666666
+ },
+ {
+  "mean_food": 6.941666666666666,
+  "best_food": 53.0,
+  "survivors": 26,
+  "ticks": 1500,
+  "gen": 28,
+  "baseline_mean_food": 5.491666666666666
+ },
+ {
+  "mean_food": 7.041666666666667,
+  "best_food": 50.0,
+  "survivors": 25,
+  "ticks": 1500,
+  "gen": 29,
+  "baseline_mean_food": 5.458333333333333
+ }
+]

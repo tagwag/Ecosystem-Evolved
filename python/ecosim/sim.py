@@ -2,6 +2,7 @@
 import numpy as np
 
 from .brain import Brains
+from .connectome import WormBrains
 from .config import Config
 from .world import World
 
@@ -13,10 +14,19 @@ def max_speed(cfg: Config, size):
     return np.clip(cfg.speed_slope * size + cfg.speed_max, cfg.speed_min, cfg.speed_max)
 
 
-def run_generation(cfg: Config, genomes, rng, controller='brain', record=None):
+def make_controller(kind, cfg, genomes, conn=None):
+    if kind == 'brain':
+        return Brains(genomes, cfg.hidden)
+    if kind == 'worm':
+        return WormBrains(conn, genomes)
+    return None   # 'random'
+
+
+def run_generation(cfg: Config, genomes, rng, controller='brain', record=None, conn=None):
     """Simulate one generation.
 
-    controller: 'brain' (evolved network) or 'random' (fixed random walk, the baseline).
+    controller: 'brain' (tiny evolved network), 'worm' (C. elegans connectome),
+                or 'random' (fixed random walk, the baseline).
     record: optional list; if given, per-tick snapshots are appended for rendering.
     Returns per-agent fitness (food eaten) and a stats dict.
     """
@@ -29,7 +39,7 @@ def run_generation(cfg: Config, genomes, rng, controller='brain', record=None):
     alive = np.ones(P, bool)
     eaten = np.zeros(P)
     lifetime = np.zeros(P)
-    brains = Brains(genomes, cfg.hidden) if controller == 'brain' else None
+    brains = make_controller(controller, cfg, genomes, conn)
     prev_smell = world.smell_at(pos)
 
     for t in range(cfg.ticks_per_generation):
@@ -39,14 +49,17 @@ def run_generation(cfg: Config, genomes, rng, controller='brain', record=None):
         d_smell = np.clip((smell - prev_smell) * 20.0, -1, 1)
         prev_smell = smell
 
-        if brains is not None:
+        turn = 0.0
+        if controller == 'brain':
             x = np.column_stack([smell, d_smell, energy / cfg.start_energy, np.ones(P)])
             p_tumble, speed_frac = brains.step(x)
+        elif controller == 'worm':
+            p_tumble, speed_frac, turn = brains.step(smell, d_smell, energy / cfg.start_energy)
         else:
             p_tumble, speed_frac = np.full(P, 0.1), np.full(P, 0.7)
 
         tumble = rng.random(P) < p_tumble
-        heading = np.where(tumble, rng.uniform(0, TAU, P), heading)
+        heading = np.where(tumble, rng.uniform(0, TAU, P), heading + np.clip(turn, -0.5, 0.5))
         speed = speed_frac * max_speed(cfg, size)
         step = np.column_stack([np.cos(heading), np.sin(heading)]) * speed[:, None]
         pos = np.where(alive[:, None], (pos + step) % [cfg.width, cfg.height], pos)

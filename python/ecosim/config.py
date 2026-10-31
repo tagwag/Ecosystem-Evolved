@@ -43,3 +43,6 @@ class Config:
     elite_fraction: float = 0.2     # top survivors that become parents (leaderboard)
     mutation_sigma: float = 0.15
     mutation_rate: float = 0.3      # chance each weight mutates
+    # connectome genomes are big (one gene per synapse), so mutate far fewer genes at once
+    worm_mutation_rate: float = 0.02
+    worm_population: int = 60
