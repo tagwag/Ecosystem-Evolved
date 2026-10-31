@@ -30,6 +30,8 @@ def main(run_dir):
         gs = []
         for n in part:
             g = best.copy(); g[np.flatnonzero(conn.pre == n)] = SILENT; gs.append(g)
+        while len(gs) < CHUNK:             # pad: every test world must hold the same number of worms,
+            gs.append(best)                # or fewer competitors = more food = fake gains
         for n, s in zip(part, score(cfg, conn, np.array(gs))):
             eff[conn.names[n]] = s - base.mean()
         print(f'{c + len(part)}/{len(neurons)}', flush=True)
