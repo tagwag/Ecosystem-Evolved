@@ -46,3 +46,10 @@
   Reading: one structural mutation is usually close to **neutral**. Survival here is decided mostly by chance
   (genetic drift) plus the slow build-up of small tweaks, not by single big rewiring events.
   This matches real neutral evolution theory. Next test: harsher food scarcity to make selection stronger.
+- **Scarcity test** (food regrowth 0.6 → 0.45 per tick):
+  - Random-brain founders went **extinct** by tick about 2,100 (and by tick about 3,000 under harsher settings).
+  - Founders given the **evolved worm brain survived all 150,000 ticks** (population about 30, 1,895 births, about 75 generations deep).
+    Evolved wiring is the difference between extinction and survival.
+  - Mutation survival under scarcity: **silencing a synapse was weeded out (0.82×)**; flips and restores were neutral (about 1.07×).
+    Once a brain is tuned, cutting connections tends to hurt. Under easy conditions it was neutral (1.01×).
+    Still a modest effect from one run; it needs repeat seeds to confirm.
