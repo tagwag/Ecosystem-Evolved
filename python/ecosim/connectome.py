@@ -130,3 +130,36 @@ class WormBrains:
         p_reverse = 1.0 / (1.0 + np.exp(-(8.0 * (bwd - fwd) + self.rev_bias))) * 0.2
         turn = self.g_steer * (r[:, self.hd].mean(1) - r[:, self.hv].mean(1))
         return p_reverse, speed_frac, turn
+
+
+SILENT = -6.0   # log-multiplier that effectively removes a synapse (x0.0025)
+
+
+def mutate_worm(parent, conn, cfg, rng):
+    """Returns (child, events). events = list of (type, detail) so selection can be studied."""
+    child = parent.copy()
+    events = []
+    E = conn.n_edges
+    mask = rng.random(E) < cfg.worm_mutation_rate
+    if mask.any():
+        child[:E][mask] += rng.normal(0, cfg.mutation_sigma, mask.sum())
+        events.append(('tweak', int(mask.sum())))
+    gmask = rng.random(N_GAINS) < 0.3
+    if gmask.any():
+        child[E:E + N_GAINS][gmask] += rng.normal(0, cfg.mutation_sigma, gmask.sum())
+        events.append(('gain', int(gmask.sum())))
+    if rng.random() < cfg.p_silence:
+        e = int(rng.integers(E)); child[e] = SILENT
+        events.append(('silence', f'{conn.names[conn.pre[e]]}->{conn.names[conn.post[e]]}'))
+    if rng.random() < cfg.p_restore:
+        silent = np.flatnonzero(child[:E] <= SILENT + 0.5)
+        if len(silent):
+            e = int(rng.choice(silent)); child[e] = 0.0
+            events.append(('restore', f'{conn.names[conn.pre[e]]}->{conn.names[conn.post[e]]}'))
+    if rng.random() < cfg.p_knockout:
+        n = int(rng.integers(conn.N))
+        out = np.flatnonzero(conn.pre == n)
+        if len(out):
+            child[out] = SILENT
+            events.append(('knockout', conn.names[n]))
+    return child, events

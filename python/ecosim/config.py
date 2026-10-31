@@ -46,3 +46,7 @@ class Config:
     # connectome genomes are big (one gene per synapse), so mutate far fewer genes at once
     worm_mutation_rate: float = 0.02
     worm_population: int = 60
+    # structural mutations (per child): silence a synapse, restore one, knock out a whole neuron
+    p_silence: float = 0.3
+    p_restore: float = 0.2
+    p_knockout: float = 0.05
