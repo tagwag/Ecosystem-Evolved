@@ -67,3 +67,13 @@
     4,562 rarely matters, which is why the lineage tests saw neutral ratios.
   - Largest single effects (unconfirmed, near the noise limit): flip SIADL→SIBDL +7.1, restore LUAR→PVR −5.0, knockout ASGR −4.7.
   - Better resolution needs more test agents per mutant, or larger mutations (several synapses or a whole neuron's outputs at once).
+- **Neuron knockout map** (`ecosim/knockout_map.py`): each of 295 neurons switched off one at a time.
+  - First run showed huge "gains" from removing VD neurons. That was a **bug**: the last test batch had fewer worms, so less
+    competition for food. Fixed by padding every batch to the same size.
+  - Corrected map: 1 harmful and 8 helpful outliers out of 295, about what chance alone produces.
+  - **Fair-test check** (each knockout alone, 40 worms, 6 worlds; normal brain = 26.96 ± 0.52): SIBDR 26.89, DA08 26.96,
+    AVEL 27.42, DVA 26.97, AINR 27.39, AVAL 27.08, AVBL 27.18, AIYL 26.96. **No single neuron matters.**
+    Even the command neurons AVA/AVB can each be removed, because their left/right partner and the other readout neurons cover for them.
+  - Lesson: the mixed-population quick tests are too noisy to rank single changes. Rankings must be confirmed with the fair test.
+  - **Overall Step 2 conclusion:** evolved C. elegans wiring is **highly redundant**. Performance comes from many small,
+    spread-out changes, not from a few key synapses or neurons. That matches real worms, which survive many single-neuron ablations.
