@@ -53,3 +53,10 @@
   - Mutation survival under scarcity: **silencing a synapse was weeded out (0.82×)**; flips and restores were neutral (about 1.07×).
     Once a brain is tuned, cutting connections tends to hurt. Under easy conditions it was neutral (1.01×).
     Still a modest effect from one run; it needs repeat seeds to confirm.
+- **Repeat seeds (4 total) under scarcity:** the evolved-brain populations **survived in all 4** (about 30 alive each, 1,800–1,950 births).
+  Silencing ratio across seeds: 0.82, 1.10, 0.93, 1.13 (mean about 1.0), so the "silencing weeded out" result **did not replicate**.
+  Knockouts swing 0.51–1.77 because they are rare (a handful per run).
+  **Conclusion:** with this setup, no single structural mutation type is consistently favoured or removed. Single-run ratios
+  vary by ±20% from chance alone. The robust finding is at the brain level, not the mutation level: evolved wiring survives scarcity
+  and random wiring does not.
+  To find mutation-level effects: many more seeds, or measure each mutation's direct fitness effect (mutate → test → compare).
