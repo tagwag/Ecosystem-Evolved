@@ -1,0 +1,103 @@
+{
+ "growth": {
+  "1": {
+   "food": 27.208333333333332,
+   "food_sd": 0.4740487551109296,
+   "speed": 0.920066869954761,
+   "reversal_rate": 0.029458443529267686,
+   "turning": 0.15954534300151305,
+   "grown_neurons": 5,
+   "added_synapses": 16,
+   "grown_from": [
+    "VA12",
+    "SMBDR",
+    "SMDDR",
+    "I1L",
+    "blank"
+   ]
+  },
+  "2": {
+   "food": 26.849999999999998,
+   "food_sd": 0.8350399192054629,
+   "speed": 0.8751388040424258,
+   "reversal_rate": 0.0130581083883516,
+   "turning": 0.09722011824728756,
+   "grown_neurons": 4,
+   "added_synapses": 8,
+   "grown_from": [
+    "IL2VL",
+    "blank",
+    "RMDL",
+    "VC02"
+   ]
+  },
+  "3": {
+   "food": 26.84166666666667,
+   "food_sd": 1.4385081006221538,
+   "speed": 0.9152028720091631,
+   "reversal_rate": 0.02875288629061819,
+   "turning": 0.1590270721553579,
+   "grown_neurons": 4,
+   "added_synapses": 12,
+   "grown_from": [
+    "ADEL",
+    "AWCR",
+    "IL1R",
+    "blank"
+   ]
+  },
+  "4": {
+   "food": 26.55416666666667,
+   "food_sd": 1.0056524278077172,
+   "speed": 0.7986224139919488,
+   "reversal_rate": 0.025142003249231017,
+   "turning": 0.1148791874169846,
+   "grown_neurons": 0,
+   "added_synapses": 14,
+   "grown_from": []
+  }
+ },
+ "nogrowth": {
+  "1": {
+   "food": 25.733333333333334,
+   "food_sd": 1.0873962274881936,
+   "speed": 0.8310624066511293,
+   "reversal_rate": 0.029981007800492548,
+   "turning": 0.1380481042595368,
+   "grown_neurons": 0,
+   "added_synapses": 0,
+   "grown_from": []
+  },
+  "2": {
+   "food": 27.295833333333334,
+   "food_sd": 1.0788126832567162,
+   "speed": 0.9302381147045047,
+   "reversal_rate": 0.01379778186502575,
+   "turning": 0.07182144779480694,
+   "grown_neurons": 0,
+   "added_synapses": 0,
+   "grown_from": []
+  },
+  "3": {
+   "food": 25.724999999999998,
+   "food_sd": 1.1817183815670023,
+   "speed": 0.8836768207043858,
+   "reversal_rate": 0.0192304147804319,
+   "turning": 0.12170385418338936,
+   "grown_neurons": 0,
+   "added_synapses": 0,
+   "grown_from": []
+  },
+  "4": {
+   "food": 24.870833333333337,
+   "food_sd": 1.9193866569529154,
+   "speed": 0.7941808960333501,
+   "reversal_rate": 0.025541231434096198,
+   "turning": 0.11142472342797353,
+   "grown_neurons": 0,
+   "added_synapses": 0,
+   "grown_from": []
+  }
+ },
+ "random_food": 7.016666666666666
+}

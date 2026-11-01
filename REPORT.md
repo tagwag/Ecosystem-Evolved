@@ -87,11 +87,18 @@ Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (
   hunger 5.42 / 5.60 / 5.66 / 5.61 (mean **5.57**) vs no hunger 4.90 / 5.35 / 5.52 / 5.65 (mean **5.36**). Random walk 2.43.
   - Hunger came out ahead in 3 of 4 seeds, with a mean gain of about 4%: a **weak hint, not a confirmed result**.
   - Slowing down when full (speed full ÷ hungry < 1): 3 of 4 hunger seeds (0.94, 0.89, 0.95, 1.03) vs 1 of 4 without hunger (1.04, 0.92, 1.12, 1.07). This is the same direction as real worms' satiety quiescence, but small.
-  - Making food scarce was the needed fix: Step 3's null result came from worms that were never hungry.
-- **Step 4: brain-growth model** (`ecosim/worm3.py`, `ecosim/step4.py`): neuron duplication, new neurons, new synapses.
-  **Code only; not run yet.**
+  - Scarcity made the signal start to matter. (Correction: with plentiful food the population was hungry ~30% of the time, not "never"; that came from one long-lived worm.)
+- **Step 4: brain growth** (`ecosim/worm3.py`, `ecosim/step4.py`; 60 generations, 4 seeds): neuron duplication, blank new neurons, new synapses.
+  - Brains grew 3.5–5.6 new neurons (top 20%) in 3 seeds, 0.75 in seed 4; best final brains had 0–5 new neurons and 8–16 new synapses. No shared pattern in which neurons were copied.
+  - Every growth type reached the top 20% at ~0.2 of attempts = chance rate. **Growth is neutral; it accumulates by drift.**
+  - Food: growth 26.9 vs no growth 25.9 (3 of 4 seeds ahead), but the gap opened by generation ~4–10, before any neurons had grown, so it is probably seed luck. No consistent change in speed, reversals or turning.
+  - Growth only has a reason to matter once the world offers a new job (new senses, a predator).
+
+![Growth progress](python/results/step4_progress.png)
+![Growth behaviour](python/results/step4_behaviour.png)
+![Scarce-food quiescence](python/results/step3b_quiescence.png)
 
 ## Still open
 - Confirm the hunger hint with more seeds.
-- Run Step 4 (growing brains).
+- Give growth a job: evolvable senses, then a predator (based on *Pristionchus pacificus*).
 - Fruit-fly larva / adult connectome (needs the wiring data, and the RTX 2080 for the adult fly).

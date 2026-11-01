@@ -99,3 +99,31 @@ receptor gene per neuron (all start at 0). Decoder now also reads raw neuron lev
   Food: 17-23 per worm vs random walk 4.9, so the shortcut works.
   This weakens the Step 2 claim that the decoder "rediscovered" AVB-forward: that only happened when we
   hand-picked the readout. The real chemotaxis pathway (ASE/AWC -> AIY/AIZ) did show up, which is a fairer result.
+
+### Step 3b: hunger peptide under scarce food (food regrowth 0.6 -> 0.2, 60 generations, 4 seeds)
+Run: `python -m ecosim.step3 scarce`, analysis `python -m ecosim.step3_analyze scarce` -> `results/step3b_*`.
+- Correction to Step 3: with plentiful food the population was hungry ~30% of the time, not "almost never" (that came
+  from one long-lived worm). Under scarcity, evolved worms are hungry ~45% of the time.
+- **Energy held (fair test):** hunger 5.42 / 5.60 / 5.66 / 5.61 (mean 5.57) vs no hunger 4.90 / 5.35 / 5.52 / 5.65 (mean 5.36).
+  Random walk 2.4. Hunger ahead in 3 of 4 seeds by ~4%.
+- **Quiescence (speed full ÷ hungry):** hunger 0.94 / 0.89 / 0.95 / 1.03 (mean 0.95) vs no hunger 1.04 / 0.92 / 1.12 / 1.08 (mean 1.04).
+  First time the direction matches real worms (slow down when full), but small.
+- **Verdict: weak hint, not confirmed.** Needs 10-12 seeds per side.
+
+### Step 4: brain growth (python -m ecosim.step4 all / analyze -> results/step4_*)
+Model `ecosim/worm3.py`: 50 empty neuron slots. Growth mutations: duplicate a neuron (inputs copied, outputs and
+readout split half/half -> near-neutral; tested: smaller effect than one round of synapse tweaks), blank new neuron
+(3 weak in, 3 weak out), new weak synapse. Same world and food fitness as Step 2. 60 generations, 4 seeds each.
+- **Food (fair test, 6 unseen worlds):** growth 27.2 / 26.9 / 26.8 / 26.6 (mean 26.9) vs no growth 25.7 / 27.3 / 25.7 / 24.9
+  (mean 25.9). Random walk 7.0. Growth ahead in 3 of 4 seeds by ~4%, within the per-world spread (±0.5-1.9).
+- **Brains did grow, slowly:** top-20% brains gained 3.5-5.6 neurons in 3 seeds, 0.75 in seed 4. Best final brains:
+  0-5 new neurons and 8-16 new synapses. Grown neurons were copies of VA12, SMBDR, SMDDR, I1L, IL2VL, RMDL, VC02,
+  ADEL, AWCR, IL1R, plus 3 blank ones: no shared pattern across seeds.
+- **Selection:** every growth type reached the top 20% at ~0.2 of attempts (duplicate 0.16-0.20, new neuron 0.15-0.27,
+  new synapse 0.17-0.19) = exactly the chance rate (elite fraction 0.2). **Growth is neutral; it accumulates by drift.**
+- **Behaviour** (speed, reversals, turning): no consistent difference between growth and no-growth brains.
+- **Pushback on the food gap:** in the progress chart the growth runs pull ahead by generation ~4-10, before brains had
+  grown even one neuron on average. So the small gap is more likely seed luck than an effect of growth.
+- **Verdict:** adding neurons this way neither helps nor hurts in this world; they ride along as neutral passengers,
+  consistent with Step 2's mutational robustness. To make growth matter, the world needs a job the existing brain
+  can't do (e.g. a new sense to wire in, or a predator) - which is exactly the later experiments.
