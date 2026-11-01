@@ -78,3 +78,20 @@ Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (
 ![Quiescence check](python/results/step3_quiescence.png)
 ![Open readout ranks](python/results/step3_open_readout.png)
 ![Progress](python/results/step3_progress.png)
+
+---
+
+# Addendum — Step 3b and Step 4 (Oct 31, 19:17–19:37)
+
+- **Step 3b: hunger peptide with scarce food** (4 seeds, fair test, fitness = average energy held):
+  hunger 5.42 / 5.60 / 5.66 / 5.61 (mean **5.57**) vs no hunger 4.90 / 5.35 / 5.52 / 5.65 (mean **5.36**). Random walk 2.43.
+  - Hunger came out ahead in 3 of 4 seeds, with a mean gain of about 4%: a **weak hint, not a confirmed result**.
+  - Slowing down when full (speed full ÷ hungry < 1): 3 of 4 hunger seeds (0.94, 0.89, 0.95, 1.03) vs 1 of 4 without hunger (1.04, 0.92, 1.12, 1.07). This is the same direction as real worms' satiety quiescence, but small.
+  - Making food scarce was the needed fix: Step 3's null result came from worms that were never hungry.
+- **Step 4: brain-growth model** (`ecosim/worm3.py`, `ecosim/step4.py`): neuron duplication, new neurons, new synapses.
+  **Code only; not run yet.**
+
+## Still open
+- Confirm the hunger hint with more seeds.
+- Run Step 4 (growing brains).
+- Fruit-fly larva / adult connectome (needs the wiring data, and the RTX 2080 for the adult fly).
