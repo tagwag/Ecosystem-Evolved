@@ -62,3 +62,19 @@ The knockout map first showed big "gains" from removing VD neurons. Cause: the l
 1. Larger mutations: duplicate/delete whole neurons (neuroevolution of structure).
 2. Internal states (hunger, fatigue) as brain inputs.
 3. Swap in the fruit fly connectome (FlyWire / MaleCNS) once the worm pipeline is settled. Needs the RTX 2080.
+
+---
+
+# Addendum — Step 3 (Oct 31 evening)
+
+Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (Step 3).
+
+1. **Hunger peptide:** no benefit and no satiety quiescence over 4 seeds. Food was too plentiful, so worms were
+   almost never hungry and the signal had nothing to teach. Next test: scarcer food.
+2. **Open readout:** evolution skipped the command neurons (AVA/AVB/AVD) and read the smell sensors and first relay
+   neurons (ASE, AWC, AWA, AIY, AIZ) directly. The Step 2 "rediscovered AVB" claim depended on the hand-picked readout.
+
+![Hunger vs speed](python/results/step3_hunger_trace.png)
+![Quiescence check](python/results/step3_quiescence.png)
+![Open readout ranks](python/results/step3_open_readout.png)
+![Progress](python/results/step3_progress.png)

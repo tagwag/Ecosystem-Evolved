@@ -77,3 +77,25 @@
   - Lesson: the mixed-population quick tests are too noisy to rank single changes. Rankings must be confirmed with the fair test.
   - **Overall Step 2 conclusion:** evolved C. elegans wiring is **highly redundant**. Performance comes from many small,
     spread-out changes, not from a few key synapses or neurons. That matches real worms, which survive many single-neuron ablations.
+
+### Step 3: hunger peptide + open readout (2026-10-31 evening)
+Code: `ecosim/worm2.py` (model), `ecosim/step3.py` (runs: `python -m ecosim.step3 all`), `ecosim/step3_analyze.py` (fair tests + charts).
+Setup: 3 conditions x 4 seeds x 40 generations, 60 worms. Gut limit 1,500 energy (a full worm can't eat).
+Hunger peptide H rises as energy falls, drops at each meal, and is broadcast to every neuron through an evolvable
+receptor gene per neuron (all start at 0). Decoder now also reads raw neuron levels so slow signals can matter.
+
+- **Q1 Hunger peptide: NO effect in this setup.** Fair test (6 unseen worlds), fitness = average energy held:
+  hunger 3.9 / 6.7 / 6.3 / 5.9 (mean 5.7) vs no hunger 7.4 / 8.0 / 6.1 / 5.9 (mean 6.8). Random walk 2.5.
+  Satiety quiescence did not emerge: speed command full ÷ hungry = 1.03 / 0.91 / 1.16 / 1.02 (hunger) vs
+  1.07 / 1.08 / 1.07 / 1.10 (no hunger). Below 1 would mean slowing down when full.
+  Receptor genes drifted (40-50% changed) with no shared pattern across seeds = **genetic drift, no selection**.
+  **Likely cause (design flaw):** food is too plentiful. The trace (`results/step3_hunger_trace.png`) shows the evolved
+  worm stays almost full the whole run (H near 0), so the hunger signal barely varies and there is nothing to learn from.
+  Fix to test next: scarcer or seasonal food so worms actually get hungry, and longer runs.
+- **Q2 Open readout: NO, evolution did not pick the command neurons.** With all 300 neurons available, AVA/AVB/AVD
+  rank around the middle (40-199 of 300; mostly near chance). Evolution read the **sensory neurons and first
+  interneurons** instead: ASE, AWC, AWA (smell sensors) and AIY, AIA, AIZ (first relay). It takes a **shortcut**
+  around the command layer. Known-locomotion neurons in the top 28: 4-5 per seed vs about 2.6 by chance.
+  Food: 17-23 per worm vs random walk 4.9, so the shortcut works.
+  This weakens the Step 2 claim that the decoder "rediscovered" AVB-forward: that only happened when we
+  hand-picked the readout. The real chemotaxis pathway (ASE/AWC -> AIY/AIZ) did show up, which is a fairer result.
