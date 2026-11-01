@@ -26,13 +26,23 @@ CONDITIONS = {
     'nohunger': w.Opts(hunger=False, readout='known', fitness='energy'),
     'open': w.Opts(hunger=False, readout='all', fitness='food'),
 }
+SCARCE = dict(food_regrow_per_tick=0.2)       # Step 3b: food regrows 3x slower, so worms get hungry
+CONDITIONS.update({
+    'hunger_scarce': CONDITIONS['hunger'],
+    'nohunger_scarce': CONDITIONS['nohunger'],
+})
+CFG_OVERRIDES = {'hunger_scarce': SCARCE, 'nohunger_scarce': SCARCE}
 SEEDS = [1, 2, 3, 4]
 GENERATIONS = 40
 OUT = Path('runs/step3')
 
 
+def cfg_for(cond, seed=1):
+    return Config(seed=seed, **CFG_OVERRIDES.get(cond, {}))
+
+
 def evolve(cond, seed, generations=GENERATIONS, out=OUT):
-    opts, cfg, conn = CONDITIONS[cond], Config(seed=seed), Connectome()
+    opts, cfg, conn = CONDITIONS[cond], cfg_for(cond, seed), Connectome()
     rng = np.random.default_rng(seed)
     P = cfg.worm_population
     genomes = w.random_genomes(conn, P, rng, opts)
@@ -57,15 +67,20 @@ def evolve(cond, seed, generations=GENERATIONS, out=OUT):
     return str(d)
 
 
-def run_all(workers=2):
-    jobs = [(c, s) for s in SEEDS for c in CONDITIONS]
+def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, workers=2):
+    jobs = [(c, s, generations) for s in SEEDS for c in conds]
     with ProcessPoolExecutor(workers) as ex:
         for d in ex.map(evolve, *zip(*jobs)):
             print('saved', d, flush=True)
 
 
 if __name__ == '__main__':
+    # python -m ecosim.step3 all            -> Step 3 (3 conditions, 40 generations)
+    # python -m ecosim.step3 scarce         -> Step 3b (hunger vs no hunger, scarce food, 60 generations)
+    # python -m ecosim.step3 run <cond> <seed>
     if sys.argv[1] == 'all':
         run_all()
+    elif sys.argv[1] == 'scarce':
+        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60)
     else:
         evolve(sys.argv[2], int(sys.argv[3]))

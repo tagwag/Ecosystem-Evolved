@@ -17,7 +17,8 @@ import numpy as np
 from .config import Config
 from .connectome import Connectome, READOUT
 from . import worm2 as w
-from .step3 import CONDITIONS, SEEDS, OUT
+import sys
+from .step3 import CONDITIONS, SEEDS, OUT, cfg_for
 
 RES = Path('results')
 WORLDS = range(2000, 2006)
@@ -29,7 +30,7 @@ def best(cond, seed):
 
 
 def fair(cond, genome, conn, copies=40):
-    opts, cfg = CONDITIONS[cond], Config()
+    opts, cfg = CONDITIONS[cond], cfg_for(cond)
     fits, foods, sf_full, sf_hungry = [], [], [], []
     for s in WORLDS:
         tr = {}
@@ -43,7 +44,7 @@ def fair(cond, genome, conn, copies=40):
 
 
 def random_walk(cond, conn, genome):
-    opts, cfg = CONDITIONS[cond], Config()
+    opts, cfg = CONDITIONS[cond], cfg_for(cond)
     fs = [w.run_generation(cfg, np.repeat(genome[None], 40, 0), np.random.default_rng(s), conn, opts,
                            controller='random')[0].mean() for s in WORLDS]
     return float(np.mean(fs))
@@ -153,5 +154,43 @@ def charts(out, conn):
     fig.tight_layout(); fig.savefig(RES / 'step3_open_readout.png', dpi=130); plt.close(fig)
 
 
+def scarce():
+    """Step 3b: hunger vs no hunger under scarce food."""
+    conn = Connectome()
+    out = {'fair': {}}
+    for cond in ('hunger_scarce', 'nohunger_scarce'):
+        out['fair'][cond] = {s: fair(cond, best(cond, s), conn) for s in SEEDS}
+        print(cond, out['fair'][cond], flush=True)
+    out['random_energy_fitness'] = random_walk('hunger_scarce', conn, best('hunger_scarce', 1))
+    # how often worms are actually full / hungry under scarcity
+    for cond in ('hunger_scarce', 'nohunger_scarce'):
+        tr = {}
+        opts = CONDITIONS[cond]
+        w.run_generation(cfg_for(cond), np.repeat(best(cond, 1)[None], 40, 0), np.random.default_rng(WORLDS[0]),
+                         conn, opts, trace=tr)
+        e = tr['energy'][tr['alive']]
+        out[cond + '_time_full'] = float((e >= FULL * opts.gut_cap).mean())
+        out[cond + '_time_hungry'] = float((e < HUNGRY * opts.gut_cap).mean())
+    (RES / 'step3b_results.json').write_text(json.dumps(out, indent=1, default=str))
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    xs = np.arange(len(SEEDS))
+    for k, (cond, col) in enumerate((('hunger_scarce', '#2a78d6'), ('nohunger_scarce', '#999999'))):
+        r = [out['fair'][cond][s]['speed_full'] / out['fair'][cond][s]['speed_hungry'] for s in SEEDS]
+        ax.bar(xs + (k - 0.5) * 0.38, r, 0.38, color=col, label=cond.replace('_scarce', ''))
+    ax.axhline(1, color='k', lw=1)
+    ax.set_xticks(xs, [f'seed {s}' for s in SEEDS])
+    ax.set_ylabel('speed when full / speed when hungry\n(below 1 = slows down when full)')
+    ax.set_title('Satiety quiescence check, scarce food'); ax.legend(); ax.grid(axis='y', alpha=0.3)
+    fig.tight_layout(); fig.savefig(RES / 'step3b_quiescence.png', dpi=130); plt.close(fig)
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for cond, col in (('hunger_scarce', '#2a78d6'), ('nohunger_scarce', '#999999')):
+        H = np.array([[g['fitness'] for g in json.loads((OUT / f'{cond}_s{s}' / 'history.json').read_text())] for s in SEEDS])
+        ax.plot(H.mean(0), color=col, lw=2, label=cond.replace('_scarce', '') + ' (mean of 4 seeds)')
+        ax.fill_between(range(H.shape[1]), H.min(0), H.max(0), color=col, alpha=0.15)
+    ax.set_xlabel('generation'); ax.set_ylabel('average energy held (food units)')
+    ax.set_title('Scarce food: evolution with vs without the hunger peptide'); ax.legend(); ax.grid(alpha=0.3)
+    fig.tight_layout(); fig.savefig(RES / 'step3b_progress.png', dpi=130); plt.close(fig)
+
+
 if __name__ == '__main__':
-    main()
+    scarce() if sys.argv[1:] == ['scarce'] else main()
