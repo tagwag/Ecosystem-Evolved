@@ -69,8 +69,8 @@ The knockout map first showed big "gains" from removing VD neurons. Cause: the l
 
 Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (Step 3).
 
-1. **Hunger peptide:** no benefit and no satiety quiescence over 4 seeds. Food was too plentiful, so worms were
-   almost never hungry and the signal had nothing to teach. Next test: scarcer food.
+1. **Hunger peptide:** no benefit and no satiety quiescence over 4 seeds. Food was plentiful (see Step 3b for the scarce-food
+   rerun and a correction on how often worms were hungry).
 2. **Open readout:** evolution skipped the command neurons (AVA/AVB/AVD) and read the smell sensors and first relay
    neurons (ASE, AWC, AWA, AIY, AIZ) directly. The Step 2 "rediscovered AVB" claim depended on the hand-picked readout.
 
