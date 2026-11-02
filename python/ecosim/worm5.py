@@ -151,6 +151,8 @@ class LearnBrains:
         self.pred = np.zeros((P, 2), np.float32)                      # running average of odor changes
         self.since_meal = np.zeros(P)                                  # sprint timer
         self.rest_streak = np.zeros(P)
+        self.nbar = np.zeros((P, N), np.float32)                      # running mean rate per neuron (covariance rule)
+        self.Rbar = np.zeros(P)                                        # expected reward (prediction error)
 
     def step(self, a, b, da, db):
         v, P, N = self.v, self.P, self.N
@@ -183,7 +185,12 @@ class LearnBrains:
         if not o.has('hebb'):
             return np.zeros(self.P)
         r = self._r
-        co = r[:, self.pre] * r[:, self.post] * self.edge_ok          # pre * post activity
+        # Covariance rule (fixed 2026-11-01): activity relative to each neuron's own running average,
+        # so synapses can weaken (LTD) as well as strengthen. The old rule used raw rates (always >= 0)
+        # and could only strengthen: weights ratcheted to the cap and brains saturated.
+        self.nbar += 0.01 * (r - self.nbar)
+        x = r - self.nbar
+        co = x[:, self.pre] * x[:, self.post] * self.edge_ok
         dW = pp['eta_h'][:, None] * co
         R = np.zeros(self.P)
         if o.has('dopamine'):
@@ -200,7 +207,10 @@ class LearnBrains:
                 resting = speed_frac < 0.3
                 self.rest_streak = np.where(resting, self.rest_streak + 1, 0)
                 R = R + (self.rest_streak > 20) * pp['rest'] * 0.02
-            dW = dW + (pp['eta_r'] * R)[:, None] * self.elig
+            # Reward prediction error (fixed 2026-11-01): reward minus expected reward, can be negative.
+            rpe = R - self.Rbar
+            self.Rbar += 0.01 * (R - self.Rbar)
+            dW = dW + (pp['eta_r'] * rpe)[:, None] * self.elig
         self.Wp = np.clip(self.Wp + dW, -WP_CAP, WP_CAP).astype(np.float32)
         if o.has('sleep') and t > 0 and t % SLEEP_EVERY == 0:
             self.Wp *= (1 - pp['sleep'])[:, None].astype(np.float32)

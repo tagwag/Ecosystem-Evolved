@@ -30,6 +30,8 @@ GENE_NAMES = ['eta_h', 'eta_r', 'lam', 'curiosity', 'sleep', 'sprint', 'rest']
 
 
 def evolve(cond, seed, generations=GENERATIONS):
+    if (OUT / f'{cond}_s{seed}' / 'best_genome.npy').exists():      # resume: skip finished runs
+        return str(OUT / f'{cond}_s{seed}')
     o, cfg, conn = w.Opts5(cond), Config(seed=seed), Connectome()
     rng = np.random.default_rng(seed)
     P = cfg.worm_population

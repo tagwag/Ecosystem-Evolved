@@ -44,6 +44,13 @@ Step 5 (running 2026-11-01): lifetime learning ladder in a TWO-ODOR world (food 
   so parents won food ties. Now random order each tick (own RNG, layouts unchanged). Steps 1-4 + 3b/3c were
   run with the bias: their FAIR TESTS are unaffected (identical genomes), but evolution itself was slightly
   tilted toward parents. Steps 5 and 6 were restarted with the fix.
+- 2026-11-01 FIXED: learning could only strengthen. Rates are >= 0 and rewards were >= 0, so Hebbian and
+  dopamine updates were always positive: in a dopamine brain 87% of plastic synapses sat at the cap and neurons
+  fired at 0.84 (saturated). First Step 5 run: fixed 18.8 food vs every learner ~5-9 (random walk 5.7), all
+  learners got WORSE during life. Fix: covariance Hebb (rate minus each neuron's running mean) + dopamine as
+  reward prediction error (reward minus running expected reward). Same genome after fix: 0% at cap, ~50% of
+  weights negative, food 3.1 -> 9.7. Flawed runs kept in runs/old_ratchet, results/old_ratchet. Steps 5+6 rerun.
+  step5/step6 now skip finished runs (resume after a time limit).
 
 === HARDWARE ===
 - Main desktop: i9-10900K, 32 GB, RTX 3080 (10 GB).

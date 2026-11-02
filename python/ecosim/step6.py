@@ -34,6 +34,8 @@ WORLDS = range(6000, 6006)
 
 
 def evolve(cond, seed, generations=GENERATIONS):
+    if (OUT / f'{cond}_s{seed}' / 'best_genome.npy').exists():      # resume: skip finished runs
+        return str(OUT / f'{cond}_s{seed}')
     o, cfg, conn = CONDITIONS[cond], Config(seed=seed), Connectome()
     rng = np.random.default_rng(seed)
     P = cfg.worm_population
