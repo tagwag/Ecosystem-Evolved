@@ -2,7 +2,7 @@
 rem Step 10 diagnostic: quick GPU smoke test, then the full run (~30 min) + analysis. Log: step10_log.txt
 rem Do not close this window or click inside it until step10_log.txt says STEP10_DONE.
 cd /d "%~dp0"
-start "keep awake" /min .venv\Scripts\pythonw.exe -c "import ctypes,time,os;ctypes.windll.kernel32.SetThreadExecutionState(0x80000001);[time.sleep(30) for _ in iter(lambda: os.path.exists(step10_done.flag), True)]"
+start "keep awake" /min .venv\Scripts\pythonw.exe -m ecosim.keepawake step10_done.flag
 del step10_done.flag 2>nul
 echo quick test > step10_log.txt
 .venv\Scripts\python.exe -u -m ecosim.step10 quick >> step10_log.txt 2>&1
