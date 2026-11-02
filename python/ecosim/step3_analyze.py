@@ -154,8 +154,9 @@ def charts(out, conn):
     fig.tight_layout(); fig.savefig(RES / 'step3_open_readout.png', dpi=130); plt.close(fig)
 
 
-def scarce():
-    """Step 3b: hunger vs no hunger under scarce food."""
+def scarce(seeds=SEEDS, tag='step3b'):
+    """Step 3b: hunger vs no hunger under scarce food. Step 3c = the same with 12 seeds (tag='step3c')."""
+    SEEDS = list(seeds)
     conn = Connectome()
     out = {'fair': {}}
     for cond in ('hunger_scarce', 'nohunger_scarce'):
@@ -171,7 +172,7 @@ def scarce():
         e = tr['energy'][tr['alive']]
         out[cond + '_time_full'] = float((e >= FULL * opts.gut_cap).mean())
         out[cond + '_time_hungry'] = float((e < HUNGRY * opts.gut_cap).mean())
-    (RES / 'step3b_results.json').write_text(json.dumps(out, indent=1, default=str))
+    (RES / f'{tag}_results.json').write_text(json.dumps(out, indent=1, default=str))
     fig, ax = plt.subplots(figsize=(7, 4.5))
     xs = np.arange(len(SEEDS))
     for k, (cond, col) in enumerate((('hunger_scarce', '#2a78d6'), ('nohunger_scarce', '#999999'))):
@@ -181,16 +182,45 @@ def scarce():
     ax.set_xticks(xs, [f'seed {s}' for s in SEEDS])
     ax.set_ylabel('speed when full / speed when hungry\n(below 1 = slows down when full)')
     ax.set_title('Satiety quiescence check, scarce food'); ax.legend(); ax.grid(axis='y', alpha=0.3)
-    fig.tight_layout(); fig.savefig(RES / 'step3b_quiescence.png', dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(RES / f'{tag}_quiescence.png', dpi=130); plt.close(fig)
     fig, ax = plt.subplots(figsize=(8, 4.5))
     for cond, col in (('hunger_scarce', '#2a78d6'), ('nohunger_scarce', '#999999')):
         H = np.array([[g['fitness'] for g in json.loads((OUT / f'{cond}_s{s}' / 'history.json').read_text())] for s in SEEDS])
-        ax.plot(H.mean(0), color=col, lw=2, label=cond.replace('_scarce', '') + ' (mean of 4 seeds)')
+        ax.plot(H.mean(0), color=col, lw=2, label=cond.replace('_scarce', '') + f' (mean of {len(SEEDS)} seeds)')
         ax.fill_between(range(H.shape[1]), H.min(0), H.max(0), color=col, alpha=0.15)
     ax.set_xlabel('generation'); ax.set_ylabel('average energy held (food units)')
     ax.set_title('Scarce food: evolution with vs without the hunger peptide'); ax.legend(); ax.grid(alpha=0.3)
-    fig.tight_layout(); fig.savefig(RES / 'step3b_progress.png', dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(RES / f'{tag}_progress.png', dpi=130); plt.close(fig)
+
+
+def confirm_stats(tag='step3c'):
+    """Paired comparison over seeds (same seed = same starting worlds for both conditions)."""
+    d = json.loads((RES / f'{tag}_results.json').read_text())
+    seeds = sorted(d['fair']['hunger_scarce'], key=int)
+    out = {}
+    for name, f in (('energy', lambda v: v['fitness']),
+                    ('full_over_hungry', lambda v: v['speed_full'] / v['speed_hungry'])):
+        a = np.array([f(d['fair']['hunger_scarce'][s]) for s in seeds])
+        b = np.array([f(d['fair']['nohunger_scarce'][s]) for s in seeds])
+        diff = a - b
+        rng = np.random.default_rng(0)                       # sign-flip permutation test, 20k draws
+        flips = rng.choice([-1, 1], (20000, len(diff)))
+        p = float((np.abs((flips * diff).mean(1)) >= abs(diff.mean())).mean())
+        boot = rng.choice(diff, (20000, len(diff))).mean(1)
+        out[name] = dict(hunger=a.round(3).tolist(), nohunger=b.round(3).tolist(), mean_hunger=float(a.mean()),
+                         mean_nohunger=float(b.mean()), mean_diff=float(diff.mean()),
+                         ci95=[float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
+                         hunger_wins=int((diff > 0).sum()), p_value=p, n=len(diff))
+        if name == 'full_over_hungry':
+            out[name]['hunger_below_1'] = int((a < 1).sum()); out[name]['nohunger_below_1'] = int((b < 1).sum())
+    (RES / f'{tag}_stats.json').write_text(json.dumps(out, indent=1))
+    print(json.dumps(out, indent=1))
 
 
 if __name__ == '__main__':
-    scarce() if sys.argv[1:] == ['scarce'] else main()
+    if sys.argv[1:] == ['scarce']:
+        scarce()
+    elif sys.argv[1:] == ['confirm']:
+        scarce(range(1, 13), 'step3c'); confirm_stats()
+    else:
+        main()

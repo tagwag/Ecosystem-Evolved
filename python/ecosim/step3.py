@@ -67,8 +67,8 @@ def evolve(cond, seed, generations=GENERATIONS, out=OUT):
     return str(d)
 
 
-def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, workers=2):
-    jobs = [(c, s, generations) for s in SEEDS for c in conds]
+def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, workers=2, seeds=SEEDS):
+    jobs = [(c, s, generations) for s in seeds for c in conds]
     with ProcessPoolExecutor(workers) as ex:
         for d in ex.map(evolve, *zip(*jobs)):
             print('saved', d, flush=True)
@@ -77,10 +77,13 @@ def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, worke
 if __name__ == '__main__':
     # python -m ecosim.step3 all            -> Step 3 (3 conditions, 40 generations)
     # python -m ecosim.step3 scarce         -> Step 3b (hunger vs no hunger, scarce food, 60 generations)
+    # python -m ecosim.step3 confirm        -> Step 3c (same as 3b, seeds 5-12; analyze with step3_analyze confirm)
     # python -m ecosim.step3 run <cond> <seed>
     if sys.argv[1] == 'all':
         run_all()
     elif sys.argv[1] == 'scarce':
         run_all(('hunger_scarce', 'nohunger_scarce'), generations=60)
+    elif sys.argv[1] == 'confirm':          # Step 3c: seeds 5-12 added to Step 3b's 1-4
+        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60, seeds=range(5, 13))
     else:
         evolve(sys.argv[2], int(sys.argv[3]))
