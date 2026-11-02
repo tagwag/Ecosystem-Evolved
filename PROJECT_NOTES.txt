@@ -39,6 +39,12 @@ Step 5 (running 2026-11-01): lifetime learning ladder in a TWO-ODOR world (food 
   (periodic downscaling of learned weights) + branch "sprint_rest" (dopamine + bonus for quick trips to
   food + reward for long rests). Code: ecosim/worm5.py, ecosim/step5.py. Results -> results/step5_*.
 
+=== KNOWN ISSUES / FIXES ===
+- 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
+  so parents won food ties. Now random order each tick (own RNG, layouts unchanged). Steps 1-4 + 3b/3c were
+  run with the bias: their FAIR TESTS are unaffected (identical genomes), but evolution itself was slightly
+  tilted toward parents. Steps 5 and 6 were restarted with the fix.
+
 === HARDWARE ===
 - Main desktop: i9-10900K, 32 GB, RTX 3080 (10 GB).
 - ITX box (being built ~Nov 2-3): Ryzen 3 3200G, RTX 2060 6 GB (NOT 2080), 2x8 GB DDR4-2666,

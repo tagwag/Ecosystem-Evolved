@@ -74,7 +74,14 @@ class World:
         for j, (kx, ky) in zip(fidx, keys):
             buckets.setdefault((kx, ky), []).append(j)
         r2 = self.cfg.eat_radius ** 2
-        for a in np.flatnonzero(alive):
+        # Random order each tick, so no agent wins food ties because of its place in the list.
+        # (Before 2026-11-01 agents went in index order, and evolution puts the elites first:
+        # a small built-in advantage for parents during selection. Fair tests were unaffected,
+        # since there every agent has the same genome.)
+        # Own RNG, seeded from the layout, so world layouts stay identical to earlier runs.
+        if not hasattr(self, '_order_rng'):
+            self._order_rng = np.random.default_rng(int(self.patch_centers.sum() * 1000) % 2**32)
+        for a in self._order_rng.permutation(np.flatnonzero(alive)):
             kx, ky = (pos[a] // cell).astype(int)
             done = False
             for dx in (-1, 0, 1):
