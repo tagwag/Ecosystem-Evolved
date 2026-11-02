@@ -37,7 +37,13 @@ Step 5 lifetime learning ladder (two-odor world, odor meaning flips per world): 
   curiosity -> sleep, + sprint_rest. After the learning-rule fix: fixed 18.8, hebb 17.7, dopamine 12.0, curiosity
   13.8, sleep 12.4, sprint_rest 13.7 (random 5.7). NO step helps. Evolution turned learning rates down. Cause: fixed
   brain eats equally in both odor meanings -> task never needed learning. Retest needs a COSTLY decoy. Code worm5/step5.
-Step 6 (curriculum x memory pool, worm6/step6): running.
+Step 6 curriculum (explore 20 gens, then puzzle spots) x evolvable memory pool, 4 seeds x 60 gens:
+  curriculum -> more puzzle food (1.0-1.3 vs 0.4-0.6 per worm, 7/8 pairs) but p=0.08 = HINT, not confirmed.
+  Puzzle-only brains ~random (0.53). Memory: no effect (p=0.51), pool drifted 4 -> ~6, cost total food (9.8 vs 12.2).
+  Sequence puzzle ~never solved. Puzzle food (~1) tiny vs normal food (~12) -> weak selection.
+Step 7 randomness check (seeded PCG64 x6 vs OS entropy x6, 40 gens): NO difference (all p >= 0.15). No RNG bug.
+BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn't demand it. Make the WORLD
+  harder next (costly decoy, bigger puzzle payoff, predator) before adding more brain features.
 
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
@@ -74,7 +80,8 @@ Step 6 (curriculum x memory pool, worm6/step6): running.
 7. Randomness test (user's hypothesis): evolve many populations with seeded PCG64 vs unseeded hardware entropy
    (quantum source if ever reachable); compare spread of long-run outcomes (final food, pruning pattern, diversity).
    Claude's prediction: indistinguishable. Quick check 2026-11-01 (worlds only, 10 vs 10, best Step 4 brain):
-   27.64 vs 28.05 food, p = 0.08 -> no difference.
+   27.64 vs 28.05 food, p = 0.08 -> no difference. Full Step 7 (6 vs 6 evolutions): no difference. Long-run
+   GPU version still open.
 
 === RELATED WORK (for novelty checks; quick search only, not a full review) ===
 OpenWorm; BAAIWorm/MetaWorm (2024); Izquierdo & Beer 2013 (evolved klinotaxis circuits); Polyworld (Yaeger);

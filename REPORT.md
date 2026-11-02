@@ -125,3 +125,17 @@ smell and a decoy smell whose meaning flips per world. **No learning step helped
 - Rerun food on unseen worlds: fixed 18.8, Hebbian 17.7, dopamine 12.0, curiosity 13.8, sleep 12.4, sprint & rest 13.7 (random walk 5.7).
 - Evolution turned learning rates down. The fixed brain handles both odor meanings almost equally, so the task
   never needed learning. A fair retest needs a decoy that costs something.
+
+---
+
+# Addendum — Steps 6 and 7 (Nov 2)
+
+**Step 6, curriculum + memory pool:** exploring first, then puzzles, gave more puzzle food in 7 of 8 pairings
+(about 1.0-1.3 vs 0.4-0.6 per worm) but p = 0.08: a hint, not confirmed. The evolvable memory pool grew from 4 to
+about 6 neurons and did nothing measurable. The sequence puzzle was essentially never solved.
+
+**Step 7, randomness check:** seeded pseudo-random vs hardware entropy, 6 evolutions each: no difference on any
+measure (all p ≥ 0.15). No sign of a bug in how the code uses randomness.
+
+**Pattern so far:** hunger, growth, learning and memory each came out null because the world never needed them.
+Next work should make the world harder (costly decoy, bigger puzzle payoffs, a predator) before adding brain features.

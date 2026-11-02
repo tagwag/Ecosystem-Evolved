@@ -1,0 +1,144 @@
+{
+ "runs": [
+  {
+   "path": "runs/step7/hardware_0",
+   "kind": "hardware",
+   "entropy": "327903264014311668439136249324941491131",
+   "final_food": 18.523333333333333,
+   "fair_food": 25.537500000000005,
+   "silenced": 14,
+   "diversity": 0.0316867134233011
+  },
+  {
+   "path": "runs/step7/hardware_1",
+   "kind": "hardware",
+   "entropy": "288330745289178726657439119088295488597",
+   "final_food": 18.88,
+   "fair_food": 27.041666666666668,
+   "silenced": 1,
+   "diversity": 0.02465562730937089
+  },
+  {
+   "path": "runs/step7/hardware_2",
+   "kind": "hardware",
+   "entropy": "241016355754640612475144814001892770134",
+   "final_food": 19.026666666666664,
+   "fair_food": 27.016666666666666,
+   "silenced": 10,
+   "diversity": 0.035045810641544134
+  },
+  {
+   "path": "runs/step7/hardware_3",
+   "kind": "hardware",
+   "entropy": "55396201240325784821859566519836903421",
+   "final_food": 18.353333333333335,
+   "fair_food": 26.166666666666668,
+   "silenced": 7,
+   "diversity": 0.04432416407771086
+  },
+  {
+   "path": "runs/step7/hardware_4",
+   "kind": "hardware",
+   "entropy": "269595708454353209251249922398411637368",
+   "final_food": 18.216666666666665,
+   "fair_food": 26.075000000000003,
+   "silenced": 11,
+   "diversity": 0.02906890995399443
+  },
+  {
+   "path": "runs/step7/hardware_5",
+   "kind": "hardware",
+   "entropy": "204720175009821851643175961166231063031",
+   "final_food": 18.30333333333333,
+   "fair_food": 26.229166666666668,
+   "silenced": 2,
+   "diversity": 0.0411328189757566
+  },
+  {
+   "path": "runs/step7/seeded_101",
+   "kind": "seeded",
+   "entropy": "101",
+   "final_food": 18.869999999999997,
+   "fair_food": 27.099999999999998,
+   "silenced": 6,
+   "diversity": 0.014596463807125305
+  },
+  {
+   "path": "runs/step7/seeded_102",
+   "kind": "seeded",
+   "entropy": "102",
+   "final_food": 14.326666666666664,
+   "fair_food": 18.545833333333334,
+   "silenced": 52,
+   "diversity": 0.03832706567663032
+  },
+  {
+   "path": "runs/step7/seeded_103",
+   "kind": "seeded",
+   "entropy": "103",
+   "final_food": 17.766666666666666,
+   "fair_food": 24.787499999999998,
+   "silenced": 3,
+   "diversity": 0.02299345878449113
+  },
+  {
+   "path": "runs/step7/seeded_104",
+   "kind": "seeded",
+   "entropy": "104",
+   "final_food": 18.67,
+   "fair_food": 26.150000000000006,
+   "silenced": 25,
+   "diversity": 0.025840675697736924
+  },
+  {
+   "path": "runs/step7/seeded_105",
+   "kind": "seeded",
+   "entropy": "105",
+   "final_food": 17.50333333333333,
+   "fair_food": 23.191666666666666,
+   "silenced": 2,
+   "diversity": 0.05118235180907706
+  },
+  {
+   "path": "runs/step7/seeded_106",
+   "kind": "seeded",
+   "entropy": "106",
+   "final_food": 18.556666666666665,
+   "fair_food": 26.220833333333335,
+   "silenced": 24,
+   "diversity": 0.06835019929929133
+  }
+ ],
+ "tests": {
+  "final_food": {
+   "seeded_mean": 17.615555555555556,
+   "hardware_mean": 18.550555555555555,
+   "diff": -0.9349999999999987,
+   "p_value": 0.17045
+  },
+  "fair_food": {
+   "seeded_mean": 24.33263888888889,
+   "hardware_mean": 26.344444444444445,
+   "diff": -2.0118055555555543,
+   "p_value": 0.15155
+  },
+  "silenced": {
+   "seeded_mean": 18.666666666666668,
+   "hardware_mean": 7.5,
+   "diff": 11.166666666666668,
+   "p_value": 0.19775
+  },
+  "diversity": {
+   "seeded_mean": 0.03688170251239201,
+   "hardware_mean": 0.03431900739694634,
+   "diff": 0.0025626951154456706,
+   "p_value": 0.7788
+  },
+  "fair_food_spread": {
+   "seeded_sd": 2.8729253954692417,
+   "hardware_sd": 0.5333315248811916,
+   "p_value": 0.2547
+  }
+ },
+ "any_difference": false
+}

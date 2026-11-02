@@ -157,3 +157,20 @@ Rule set BEFORE results: a step helps only if it beats the step before it in all
   (food depletion), so it can't show within-life improvement as measured.
 - **Verdict:** not a test of whether learning helps worms; a test design that didn't need learning. Next version
   would need a costly decoy (poison / dead zone) and a learning check not confounded by depletion. Not started.
+
+### Step 6: curriculum x memory pool (ecosim/worm6.py, ecosim/step6.py)
+Puzzle spots (linger / revisit / A-then-B sequence) release food. Curriculum = 20 gens exploration reward, then puzzles.
+Memory = evolvable pool of self-loop neurons (start 4, max 40) feeding the decoder. 4 seeds x 60 gens; fair test 6 worlds.
+Rule: curriculum helps if it beats puzzle-only on puzzle food; memory helps if it beats no-memory (esp. revisit+sequence).
+- Puzzle food per worm (random walk 0.53): puzzle_nomem 0.61 | puzzle_mem 0.43 | curric_nomem 1.01 | curric_mem 1.29.
+- Total food: 12.2 | 9.8 | 13.6 | 11.9. Memory pool final ~5.5-6 neurons.
+- Tests (8 pairs): curriculum on puzzle food +0.63, 7/8, p=0.084 (hint, NOT confirmed); memory on puzzle food +0.05,
+  2/8, p=0.90; memory on revisit+sequence +0.07, 5/8, p=0.51; curriculum on total food +2.4, 5/8, p=0.17.
+- Sequence puzzle ~0.01 per worm (essentially never). Puzzle payoff too small vs normal food for strong selection.
+- Verdict: curriculum hint; memory neutral (drift, like Step 4 growth).
+
+### Step 7: randomness sanity check (ecosim/step7_rng.py)
+6 seeded (PCG64 101-106) vs 6 OS-entropy evolutions, Step 4 no-growth model, 40 gens. Rule: any p < 0.05 flags a bug.
+- Final food 17.6 vs 18.6 (p=0.17); fair-test food 24.3 vs 26.3 (p=0.15); silenced synapses 18.7 vs 7.5 (p=0.20);
+  diversity p=0.78; spread of fair food SD 2.9 vs 0.5 (p=0.25). Seeded mean pulled down by one weak seed.
+- Verdict: no difference -> no randomness-handling bug; seeded results stand.
