@@ -9,13 +9,14 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Step 10: is the late fitness decline real? (1 vs 3 worlds per evaluation, checkpoints) | 2026-11-02 15:10 MT | run_step10.bat | step10_log.txt | ~15:45 MT |
+| idle | (last: Step 10 + head-to-head, finished 2026-11-02 ~15:55 MT) | | | | |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
 - Step 4g: growth neutral (p=0.99). Step 3f: ASH alarm null. Step 8: predators costly, touch gives no escape.
 - Step 6b (12 seeds): curriculum hint was noise, memory null. Step 9: see PROJECT_NOTES.
-- Open problem: fitness drifts down after ~gen 20 (Step 8, all arms) -> Step 10 is testing it.
+- Step 10: the late decline is a TRAGEDY OF THE COMMONS: evolution selects food-competitive brains that do worse as a group
+  (late beat early head-to-head 30/32, but alone are worse 29/32). Fair tests used clones = measured something else. Fix pending.
 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat
