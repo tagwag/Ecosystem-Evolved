@@ -99,6 +99,17 @@ Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (
 ![Scarce-food quiescence](python/results/step3b_quiescence.png)
 
 ## Still open
-- Confirm the hunger hint with more seeds.
+- ~~Confirm the hunger hint with more seeds.~~ Done (Step 3c): not confirmed.
 - Give growth a job: evolvable senses, then a predator (based on *Pristionchus pacificus*).
 - Fruit-fly larva / adult connectome (needs the wiring data, and the RTX 2080 for the adult fly).
+
+---
+
+# Addendum — Step 3c: hunger confirmation (Nov 1)
+
+12 seeds per side, success rule fixed in advance (p < 0.05). **Not confirmed.**
+- Energy: hunger 5.30 vs no hunger 5.38, p = 0.64. Step 3b's edge reversed: it was luck.
+- Slowing when full: 0.99 vs 1.04, p = 0.33. Right direction (8 of 12 vs 4 of 12 seeds below 1), not significant.
+- Probable cause: resting saves too little energy in this world for a hunger signal to pay off.
+
+![Quiescence, 12 seeds](python/results/step3c_quiescence.png)

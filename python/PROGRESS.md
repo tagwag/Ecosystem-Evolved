@@ -127,3 +127,14 @@ readout split half/half -> near-neutral; tested: smaller effect than one round o
 - **Verdict:** adding neurons this way neither helps nor hurts in this world; they ride along as neutral passengers,
   consistent with Step 2's mutational robustness. To make growth matter, the world needs a job the existing brain
   can't do (e.g. a new sense to wire in, or a predator) - which is exactly the later experiments.
+
+### Step 3c: hunger confirmation, 12 seeds per side (Step 3b setup; seeds 1-4 reused, 5-12 new)
+Run: `python -m ecosim.step3 confirm`, then `python -m ecosim.step3_analyze confirm` -> `results/step3c_*`.
+Success rule set BEFORE results: p < 0.05 (paired sign-flip permutation test over seeds) on energy or on slowing when full.
+- **Energy held:** hunger mean 5.30 vs no hunger 5.38. Difference -0.08 (95% CI -0.37 to +0.18), p = 0.64. Hunger ahead in 5 of 12.
+- **Slowing when full (speed full ÷ hungry):** hunger 0.99 vs no hunger 1.04. Difference -0.045 (95% CI -0.12 to +0.04), p = 0.33.
+  Below 1 in 8 of 12 hunger seeds vs 4 of 12 without.
+- **Verdict: NOT confirmed.** Step 3b's 4% energy edge was luck (it reversed with more seeds). The slowing-when-full
+  direction persists but is small and not significant.
+- Likely design reason: resting saves little. Moving costs 0.25 × speed per tick on top of 0.6 just for existing, so a
+  full worm that stops saves at most ~40% of its burn, and the fitness (average energy held) gives little reward for it.
