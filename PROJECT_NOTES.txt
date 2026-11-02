@@ -63,6 +63,20 @@ Step 7 randomness check (seeded PCG64 x6 vs OS entropy x6, 40 gens): NO differen
 BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn't demand it. Make the WORLD
   harder next (costly decoy, bigger puzzle payoff, predator) before adding more brain features.
 
+=== LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
+- python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py (load(name), info, names, add).
+- Rule: fair-test score in top 3 of its condition AND >= 2x that condition's median. Check after EVERY step, add passes.
+- Holds 14 (all Step 6/6b puzzle brains, worm6 type). Food-only steps 3c/4/5 have no passes (seeds too similar).
+  GPU steps run on the user's PC (3d, 3e, 4g, 3f, 8) not checked yet: their genomes are on his PC.
+- Only final best genomes are saved; a true Lenski replay from earlier generations needs checkpoints (not saved yet).
+
+=== STEP 9 (queued on user's PC, 2026-11-02) ===
+Reserved breeding slots, GPU (ecosim/step9_gpu.py, run_step9.bat). Starts from lucky 6b-puzzle_nomem s12/s9/s5,
+3 lineages x 10 replicates x 2 arms (food_only vs slots: up to 3 of 12 parent places for worms with 2+ solves), 60 gens.
+Rule (set before): slots beat food_only on puzzle food (parent pool, 6 unseen worlds), paired p < 0.05 over 30 pairs.
+Side question: do lucky lineages keep their edge (replay)? GPU port check on CPU: lucky genomes score 3.07/2.61/1.82
+vs CPU 3.35/2.68/2.52 (matches statistically). run_step9.bat waits for run_queue.bat (QUEUE_DONE) before starting.
+
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
   so parents won food ties. Now random order each tick (own RNG, layouts unchanged). Steps 1-4 + 3b/3c were
@@ -112,8 +126,7 @@ BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn
    User said "not right now" (2026-11-02). Real worms: hunger OVERRIDES aversion (Ghosh 2016) -> expect desperation.
 9. Replay experiment on a standout Step 6b lineage (Lenski-style): save checkpoints, rerun 10+ times from each.
    Needs checkpoint saving in step6. Candidates: puzzle_nomem s12 (3.35), s9 (2.68), s5 (2.52).
-13. Reserved breeding slot for task-solvers (proposed 2026-11-02): Step 6 + guaranteed slots (e.g. 3 of 12) for
-   worms solving puzzles 2+ times vs food-only selection. Not started; waiting on user.
+13. -> now Step 9 (built 2026-11-02, see below).
 10. New food sources / key innovation (Lenski citrate): food a worm can't digest until it evolves the ability, at a
    cost. Meat (ties to Pristionchus mouth-form switch), "radioactive" (radiotrophic fungi, evidence contested).
 11. Viruses = horizontal gene transfer: contagious agent that copies genome segments between worms (basis: Orsay
