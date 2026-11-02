@@ -41,6 +41,12 @@ Step 3e (move_cost sweep 0.25/0.5/1/2, 32 seeds): 0.25 = 3d exactly (determinist
   slowly starving (600 energy over ~1000 ticks -> avg ~2.0) beats moving when moving is too expensive. The
   peptide gives a steady internal signal brains use to shut movement off. NOT evidence the peptide helps foraging.
   Fix before rerun: fitness that punishes starving (energy at end, or longer generations so idlers die early).
+Step 3e2 (same sweep, fitness = energy left at end + survival): 0.25: no fitness difference (p=0.30). 0.5: peptide
+  slightly better (+0.24, p=0.036; not significant after correcting for 4 tests) while eating LESS (8.0 vs 8.7) =
+  a hint of real efficiency. 1.0/2.0: unlivable worlds (moving costs more than food gives); peptide brains idle to
+  survive longest (food ~1 and 0.03), still a degenerate win. Takeaway: the peptide works as an "off switch" for
+  movement; it only helps where resting truly pays. The 2x/4x/8x costs were an arbitrary sweep, not biology.
+  Better next: a physical reason to rest (predators that notice moving prey; digestion while still).
 Step 4 brain growth (duplicate neuron / new neuron / new synapse, cap 50): brains grew 3-6 neurons by
   DRIFT; growth selected at chance rate = neutral. Lesson: new parts need a new job in the world.
 Step 5 lifetime learning ladder (two-odor world, odor meaning flips per world): fixed -> hebb -> dopamine ->
