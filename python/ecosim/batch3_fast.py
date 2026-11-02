@@ -71,6 +71,10 @@ class FastSim:
         # starvation alarm (Step 3f): input into ASHL/ASHR when energy runs low
         self.ash = torch.as_tensor(conn.ids(['ASHL', 'ASHR']), device=dev) if opts.ash_alarm > 0 else None
         self.ash_level = opts.ash_start * opts.gut_cap
+        # predators (Step 8): touch neurons for prey
+        self.Q = cfg.predators
+        self.t_front = torch.as_tensor(conn.ids(['ALML', 'ALMR', 'AVM']), device=dev)
+        self.t_back = torch.as_tensor(conn.ids(['PLML', 'PLMR', 'PVM']), device=dev)
         # --- per-brain buffers (refilled each generation)
         z = lambda *s: torch.zeros(*s, **f)
         self.vals, self.g3 = z(B, E), z(B, 3)
@@ -87,6 +91,9 @@ class FastSim:
         self.size, self.energy, self.H = z(K, P), z(K, P), z(K, P)
         self.alive = torch.zeros(K, P, dtype=torch.bool, device=dev)
         self.eaten, self.lifetime, self.esum = z(K, P), z(K, P), z(K, P)
+        Q = max(cfg.predators, 1)
+        self.ppos, self.phead, self.pcool = z(K, Q, 2), z(K, Q), z(K, Q)
+        self.touchF, self.touchB, self.bites = z(K, P), z(K, P), z(K, P)
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
         T = cfg.ticks_per_generation
         acc, n = 0.0, []
@@ -113,7 +120,8 @@ class FastSim:
                             alive=torch.zeros(T, R, P, dtype=torch.bool, device=dev),
                             heading=torch.zeros(T, R, P, **h),
                             food=torch.zeros(T, R, self.Fd, 2, **h),
-                            falive=torch.zeros(T, R, self.Fd, dtype=torch.bool, device=dev))
+                            falive=torch.zeros(T, R, self.Fd, dtype=torch.bool, device=dev),
+                            pred=torch.zeros(T, R, Q, 2, **h))
         else:
             self.recbuf = None
 
@@ -141,6 +149,10 @@ class FastSim:
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_()
+        self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_()
+        if self.Q:
+            self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
+            self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
         self.smap.copy_(self._smell_map())
         self.prev.copy_(self._smell_at(self.pos))
 
@@ -164,7 +176,7 @@ class FastSim:
         gy = torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1)
         return self.smap.view(self.K, -1).gather(1, gx * gh + gy)
 
-    def _brain(self, v, rbar, smell, d, H, alarm=None):
+    def _brain(self, v, rbar, smell, d, H, alarm=None, touch=None):
         r = torch.tanh(torch.clamp(v, min=0))
         I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
         I = I + v @ self.G - self.G_deg * v                          # gap junctions
@@ -176,6 +188,9 @@ class FastSim:
             I = I + H[:, None] * self.rec
         if alarm is not None:
             I[:, self.ash] += (self.opts.ash_alarm * alarm)[:, None]
+        if touch is not None:
+            I[:, self.t_front] += (self.cfg.touch_gain * touch[0])[:, None]
+            I[:, self.t_back] += (self.cfg.touch_gain * touch[1])[:, None]
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
@@ -190,6 +205,9 @@ class FastSim:
         v, rbar, pos, heading = self.v, self.rbar, self.pos, self.heading
         size, energy, H, alive = self.size, self.energy, self.H, self.alive
         eaten, lifetime, esum, food, falive, prev = self.eaten, self.lifetime, self.esum, self.food, self.falive, self.prev
+        ppos, phead, pcool, touchF, touchB, bites = self.ppos, self.phead, self.pcool, self.touchF, self.touchB, self.bites
+        Q, half = self.Q, self.wh / 2
+        inf = torch.full((), float('inf'), **self.f)
         self.smap.copy_(self._smell_map())
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
         r2, BIG = cfg.eat_radius ** 2, K * Fd + 1
@@ -201,7 +219,8 @@ class FastSim:
             alarm = None
             if self.ash is not None:            # 0 above ash_start of the gut, rising to 1 at zero energy
                 alarm = (torch.clamp((self.ash_level - energy) / self.ash_level, 0, 1) * alive).view(-1)
-            v, rbar, p_tumble, speed_frac, turn = self._brain(v, rbar, smell.view(-1), d.view(-1), H.view(-1), alarm)
+            touch = (touchF.view(-1), touchB.view(-1)) if (Q and cfg.touch_gain > 0) else None
+            v, rbar, p_tumble, speed_frac, turn = self._brain(v, rbar, smell.view(-1), d.view(-1), H.view(-1), alarm, touch)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
@@ -209,6 +228,29 @@ class FastSim:
             step = torch.stack([torch.cos(heading), torch.sin(heading)], -1) * speed[..., None]
             pos = torch.where(alive[..., None], torch.remainder(pos + step, self.wh), pos)
             energy = energy - torch.where(alive, cfg.base_cost + cfg.move_cost * speed, zero)
+            if Q:   # predators: chase nearest living prey in range, bite on contact, pause after a bite
+                delta = torch.remainder(pos[:, None] - ppos[:, :, None] + half, self.wh) - half     # (K,Q,P,2), wraps
+                dist2 = torch.where(alive[:, None, :], (delta ** 2).sum(-1), inf)
+                nd, ni = dist2.min(2)                                                            # nearest prey
+                ready = pcool <= 0
+                tv = delta.gather(2, ni[..., None, None].expand(-1, -1, 1, 2)).squeeze(2)
+                hunt = ready & (nd < cfg.pred_sense ** 2)
+                phead = torch.where(hunt, torch.atan2(tv[..., 1], tv[..., 0]),
+                                    phead + (self._rand(K, Q) - 0.5) * 0.6)
+                bite = ready & (nd < cfg.pred_bite ** 2)
+                dmg = torch.zeros(K, P, **self.f).scatter_add(1, ni, bite.float() * cfg.pred_damage)
+                energy = energy - dmg * alive
+                bites = bites + (dmg > 0).float()
+                pcool = torch.where(bite, torch.full_like(pcool, float(cfg.pred_cooldown)), torch.clamp(pcool - 1, min=0))
+                pspd = torch.where(pcool > 0, zero, torch.full_like(pcool, cfg.pred_speed))
+                ppos = torch.remainder(ppos + torch.stack([torch.cos(phead), torch.sin(phead)], -1) * pspd[..., None], self.wh)
+                # touch felt by prey next tick: closest predator, front or back of the body
+                md, mq = dist2.min(1)                                                            # (K,P)
+                dist = torch.sqrt(torch.clamp(md, max=1e12))
+                tch = torch.clamp(1 - dist / cfg.touch_radius, 0, 1) * alive
+                to_pred = -delta.gather(1, mq[:, None, :, None].expand(-1, 1, -1, 2)).squeeze(1)  # prey -> predator
+                ahead = (torch.cos(heading) * to_pred[..., 0] + torch.sin(heading) * to_pred[..., 1]) > 0
+                touchF, touchB = tch * ahead, tch * ~ahead
             # eating: parallel rounds, random winner per contested food (branch-free)
             can = alive & (energy < opts.gut_cap - cfg.food_value)
             d2 = ((pos[:, :, None, :] - food[:, None, :, :]) ** 2).sum(-1)
@@ -239,7 +281,7 @@ class FastSim:
                                      (speed_frac * hung).sum(1), hung.sum(1)], 1)
             if self.recbuf is not None:
                 ri, t1 = self.rec_idx, self.ti.view(1)
-                for name, x in (('pos', pos), ('energy', energy), ('alive', alive), ('heading', heading)):
+                for name, x in (('pos', pos), ('energy', energy), ('alive', alive), ('heading', heading), ('pred', ppos)):
                     self.recbuf[name].index_copy_(0, t1, x.index_select(0, ri)[None].to(self.recbuf[name].dtype))
             alive = alive & (energy > 0)
             # regrowth: up to nmax dead foods per world, as many as this tick's schedule says
@@ -261,7 +303,8 @@ class FastSim:
         # write back into the fixed buffers (needed for graph replay)
         for name, val in (('v', v), ('rbar', rbar), ('pos', pos), ('heading', heading), ('size', size),
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
-                          ('esum', esum), ('food', food), ('falive', falive), ('prev', prev)):
+                          ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
+                          ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites)):
             getattr(self, name).copy_(val)
         self.bi.add_(1)
 
@@ -289,12 +332,13 @@ class FastSim:
                 self._block()
         T, cfg = self.cfg.ticks_per_generation, self.cfg
         fit = self.esum / T / cfg.food_value if self.opts.fitness == 'energy' else self.eaten + self.lifetime / T
-        fit, eaten, esum, alive, sat = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat))
+        fit, eaten, esum, alive, sat, bites = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat, self.bites))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
                       fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
-                      speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k])) for k in range(self.K)]
+                      speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
+                      bites=float(bites[k].mean())) for k in range(self.K)]
         return fit.astype(np.float64), stats
 
     def recording(self):
@@ -361,7 +405,7 @@ def write_live(folder, sim, fit, stats, hist, seeds, gen, cond, cfg):
     """One file per generation for the viewer; written to a temp name, then renamed (never half-read)."""
     rec = sim.recording()
     R = len(seeds)
-    data = dict(gen=gen, cond=cond, seeds=np.array(seeds), width=cfg.width, height=cfg.height,
+    data = dict(gen=gen, cond=cond, seeds=np.array(seeds), width=cfg.width, height=cfg.height, predators=cfg.predators,
                 gut_cap=sim.opts.gut_cap, fitness=fit[:R].astype(np.float32),
                 history=np.array([[h['fitness'] for h in hist[k]] for k in range(len(hist))], np.float32),
                 **rec)

@@ -14,6 +14,7 @@ What you see
                     colour = energy: red = starving, yellow = half full, cyan = full gut
     white ring      the worm that ended this generation with the best fitness, with its trail
     grey x          dead worm
+    red triangles   predators (Step 8)
     right panel     generation, alive count, food left, fitness curve (this seed + mean of all seeds)
 
 Keys
@@ -138,6 +139,10 @@ def main():
             pygame.draw.circle(layer, c + (150,), (x, y), 4)
             h = float(hd[ti, i])
             pygame.draw.line(layer, c + (200,), (x, y), (x + 7 * np.cos(h), y + 7 * np.sin(h)), 1)
+        npred = int(data['predators']) if 'predators' in data else 0
+        for q in range(npred):                         # predators: red triangles
+            qx, qy = float(data['pred'][ti, k, q, 0] * sx), float(data['pred'][ti, k, q, 1] * sy)
+            pygame.draw.polygon(layer, (230, 50, 60, 235), [(qx, qy - 8), (qx - 7, qy + 6), (qx + 7, qy + 6)])
         if al[ti, best]:
             pygame.draw.circle(layer, (255, 255, 255, 230), (float(pos[ti, best, 0] * sx), float(pos[ti, best, 1] * sy)), 8, 2)
         screen.blit(layer, (0, 0))

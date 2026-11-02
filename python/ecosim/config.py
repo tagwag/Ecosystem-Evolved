@@ -51,3 +51,15 @@ class Config:
     p_restore: float = 0.2
     p_knockout: float = 0.05
     p_flip: float = 0.2
+
+    # ---- predators (Step 8; 0 = none). GPU code only (batch3_fast). Pristionchus-style v1:
+    # fixed hunting rule (chase the nearest prey within pred_sense, else wander), bite on contact,
+    # then a handling pause. Prey feel a predator by touch (front -> ALM/AVM, back -> PLM/PVM).
+    predators: int = 0              # per world
+    pred_speed: float = 2.5         # prey max speed is 5: fast prey can outrun, slow/resting prey can't
+    pred_sense: float = 150.0       # chase range
+    pred_bite: float = 12.0         # contact distance
+    pred_damage: float = 150.0      # energy taken per bite (1.5 food)
+    pred_cooldown: int = 60         # ticks a predator stops after a bite (handling time)
+    touch_radius: float = 40.0      # prey touch range
+    touch_gain: float = 3.0         # touch input strength; 0 = prey can't feel predators

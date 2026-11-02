@@ -48,7 +48,8 @@ def fair_all(cond, seeds, conn, dev, out=OUT):
         out[s] = dict(fitness=float(np.mean(fits)), fitness_sd=float(np.std(fits)),
                       food=float(np.mean([x['mean_food'] for x in st])),
                       speed_full=float(np.nanmean([x['speed_full'] for x in st])),
-                      speed_hungry=float(np.nanmean([x['speed_hungry'] for x in st])))
+                      speed_hungry=float(np.nanmean([x['speed_hungry'] for x in st])),
+                      bites=float(np.mean([x.get('bites', 0.0) for x in st])))
     return out
 
 
