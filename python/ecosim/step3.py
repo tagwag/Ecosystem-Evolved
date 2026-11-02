@@ -41,7 +41,7 @@ def cfg_for(cond, seed=1):
     return Config(seed=seed, **CFG_OVERRIDES.get(cond, {}))
 
 
-def evolve(cond, seed, generations=GENERATIONS, out=OUT):
+def evolve(cond, seed, generations=GENERATIONS, out=OUT, device=None):
     opts, cfg, conn = CONDITIONS[cond], cfg_for(cond, seed), Connectome()
     rng = np.random.default_rng(seed)
     P = cfg.worm_population
@@ -49,7 +49,7 @@ def evolve(cond, seed, generations=GENERATIONS, out=OUT):
     n_elite = max(2, int(P * cfg.elite_fraction))
     hist = []
     for gen in range(generations):
-        fit, st = w.run_generation(cfg, genomes, rng, conn, opts)
+        fit, st = w.run_generation(cfg, genomes, rng, conn, opts, device=device)
         st['gen'] = gen; hist.append(st)
         print(f'{cond} s{seed} gen {gen:2d} fitness {st["fitness"]:6.2f} food {st["mean_food"]:5.2f} '
               f'energy {st["mean_energy"]:6.1f} alive {st["survivors"]}', flush=True)
@@ -67,8 +67,8 @@ def evolve(cond, seed, generations=GENERATIONS, out=OUT):
     return str(d)
 
 
-def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, workers=2, seeds=SEEDS):
-    jobs = [(c, s, generations) for s in seeds for c in conds]
+def run_all(conds=('hunger', 'nohunger', 'open'), generations=GENERATIONS, workers=2, seeds=SEEDS, device=None):
+    jobs = [(c, s, generations, OUT, device) for s in seeds for c in conds]
     with ProcessPoolExecutor(workers) as ex:
         for d in ex.map(evolve, *zip(*jobs)):
             print('saved', d, flush=True)
@@ -79,11 +79,17 @@ if __name__ == '__main__':
     # python -m ecosim.step3 scarce         -> Step 3b (hunger vs no hunger, scarce food, 60 generations)
     # python -m ecosim.step3 confirm        -> Step 3c (same as 3b, seeds 5-12; analyze with step3_analyze confirm)
     # python -m ecosim.step3 run <cond> <seed>
+    # add --gpu to any of these to run the brains on the graphics card (results go to runs/step3_gpu)
+    # add --workers N to run N jobs at once (default 2)
+    dev = 'cuda' if '--gpu' in sys.argv else None
+    if dev:
+        OUT = Path('runs/step3_gpu')
+    workers = int(sys.argv[sys.argv.index('--workers') + 1]) if '--workers' in sys.argv else 2
     if sys.argv[1] == 'all':
-        run_all()
+        run_all(workers=workers, device=dev)
     elif sys.argv[1] == 'scarce':
-        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60)
+        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60, workers=workers, device=dev)
     elif sys.argv[1] == 'confirm':          # Step 3c: seeds 5-12 added to Step 3b's 1-4
-        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60, seeds=range(5, 13))
+        run_all(('hunger_scarce', 'nohunger_scarce'), generations=60, seeds=range(5, 13), workers=workers, device=dev)
     else:
-        evolve(sys.argv[2], int(sys.argv[3]))
+        evolve(sys.argv[2], int(sys.argv[3]), out=OUT, device=dev)

@@ -129,11 +129,13 @@ class WormBrains2:
         return p_reverse, speed_frac, turn
 
 
-def run_generation(cfg, genomes, rng, conn, opts: Opts, controller='worm', trace=None, hook=None):
+def run_generation(cfg, genomes, rng, conn, opts: Opts, controller='worm', trace=None, hook=None, device=None):
     """controller: 'worm' or 'random' (random walk baseline).
     trace: optional dict; filled with per-tick arrays (speed, speed_frac, energy, H, alive).
            speed_frac is the brain's own speed command, before the body-size limit.
-    hook: optional function(brains) called every tick (for readout analysis)."""
+    hook: optional function(brains) called every tick (for readout analysis).
+    device: None = NumPy brain on the CPU (default, reproduces earlier results);
+            'cuda' = PyTorch brain on the GPU (see worm2_gpu.py)."""
     P = genomes.shape[0]
     world = World(cfg, rng)
     pos = np.column_stack([rng.uniform(0, cfg.width, P), rng.uniform(0, cfg.height, P)])
@@ -143,7 +145,13 @@ def run_generation(cfg, genomes, rng, conn, opts: Opts, controller='worm', trace
     H = np.clip(1 - energy / opts.gut_cap, 0, 1)
     alive = np.ones(P, bool)
     eaten, lifetime, energy_sum = np.zeros(P), np.zeros(P), np.zeros(P)
-    brains = WormBrains2(conn, genomes, opts) if controller == 'worm' else None
+    if controller != 'worm':
+        brains = None
+    elif device is None:
+        brains = WormBrains2(conn, genomes, opts)
+    else:
+        from .worm2_gpu import WormBrainsTorch, pick_device
+        brains = WormBrainsTorch(conn, genomes, opts, pick_device(device))
     prev_smell = world.smell_at(pos)
     if trace is not None:
         for k in ('speed', 'speed_frac', 'energy', 'H', 'alive'):

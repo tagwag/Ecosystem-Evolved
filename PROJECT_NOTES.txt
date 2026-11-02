@@ -65,7 +65,12 @@ BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn
   Needs thermal paste (old paste dried), SSD 250-500 GB M.2 NVMe, Ethernet.
 - Plan: headless Ubuntu Server + NVIDIA driver + PyTorch + Tailscale + GitHub Actions self-hosted runner
   (repo is public -> make private or lock runner down first).
-- Biggest speedup = port sim math to GPU (PyTorch). Not done yet. Spec doc: Claude Doc "Ecosystem-Evolved Home Compute Spec".
+- GPU port DONE 2026-11-02 (Step 3 only): ecosim/batch3_gpu.py runs brains + world on the GPU, many seeds at once.
+  Desktop set up: python/.venv (Python 3.12, torch 2.11 cu128), driver 591.74. setup_gpu.bat redoes it.
+  Sec per seed per generation: cloud CPU 11.4, desktop CPU 8.0, brain-on-GPU 3.3, full GPU 0.75 (8 seeds) / 0.23 (32).
+  Limit now: ~4 ms fixed GPU launch cost per tick -> use big batches. CUDA graphs could cut it (not done).
+  GPU results match CPU statistically, not number for number (float32, parallel eating). Compare GPU with GPU.
+  Steps 4-7 (worm3/5/6) still CPU only. Spec doc: Claude Doc "Ecosystem-Evolved Home Compute Spec".
 - Parts on hand: Raspberry Pis (incl. Pi 3), many ESP32s, GPS, accelerometers, buttons, HC-SR04 ultrasonic
   distance sensors, mmWave radar. Can solder + order PCBs. Robot body later needs only motor shields + wire.
 

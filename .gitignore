@@ -3,3 +3,7 @@
 __pycache__/
 *.pyc
 python/runs/
+
+# GPU setup (Windows)
+python/.venv/
+python/*_log.txt

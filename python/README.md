@@ -40,6 +40,30 @@ python -m ecosim.ecosystem --brain worm --ticks 20000        # open-ended ecosys
 Each evolution line prints the generation's average food eaten next to a random walk's on the
 same settings. Evolution is working when the evolved number pulls ahead.
 
+## GPU (NVIDIA, Windows)
+One-time: double-click `setup_gpu.bat` (makes `.venv`, installs PyTorch with CUDA, runs `gpu_check`).
+
+| File | What it does |
+|---|---|
+| `ecosim/worm2_gpu.py` | Step 3 worm brain in PyTorch (same equations as `worm2.py`) |
+| `ecosim/batch3_gpu.py` | Step 3 with brains AND world on the GPU, many seeds at once (fastest) |
+| `ecosim/batch3.py` | Step 3 with brains on the GPU, world in NumPy (middle step, kept for checking) |
+| `ecosim/gpu_check.py` | Checks the GPU, compares CPU vs GPU brain, times both |
+
+```
+python -m ecosim.batch3_gpu confirm                          # Step 3d: hunger vs no hunger, seeds 1-32
+python -m ecosim.batch3_gpu run hunger_scarce 1 2 3 4 --gens 60
+python -m ecosim.step3 run hunger_scarce 1 --gpu             # old single-run code, brain on GPU
+```
+Or double-click `run_gpu_confirm.bat`. Results: `runs/step3_gpu_full/`.
+
+Speed (seconds per seed per generation, RTX 3080 / i9-10900K, 2026-11-02):
+original CPU 8.0, brain on GPU 3.3, everything on GPU 0.75 (8 seeds) or 0.23 (32 seeds).
+More seeds per batch are almost free, so use many.
+
+Results are float32 and eating is resolved in parallel, so GPU runs match CPU runs statistically,
+not number for number. Compare GPU runs with GPU runs. A seed reproduces only with the same seed list.
+
 ## Terms
 - **Genome**: the list of numbers that defines one brain (here: one gene per synapse + a few gains).
 - **Connectome**: a full wiring map of a nervous system.
