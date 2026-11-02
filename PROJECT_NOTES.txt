@@ -35,6 +35,12 @@ Step 3d (32 seeds, GPU, 2026-11-02): satiety slowing CONFIRMED but small: full/h
   (p=0.0004; below 1 in 19/32 vs 8/32). But hunger brains hold LESS energy: 3.84 vs 4.08 (p=0.006; still
   p=0.01 without outlier seed 27) and eat less (9.0 vs 9.8). Peptide makes worms rest when full, and resting
   doesn't pay in this world -> costs fitness. Same lesson: make resting worth it (higher move cost / danger).
+Step 3e (move_cost sweep 0.25/0.5/1/2, 32 seeds): 0.25 = 3d exactly (deterministic). 0.5: no difference (p=0.65).
+  1.0 and 2.0: hunger brains "win" big on energy (1.77 vs 1.05; 2.02 vs 0.43, p<0.0001) BUT eat almost nothing
+  (food 1.17 vs 4.75; 0.03 vs 0.94). REWARD HACKING: fitness = average energy held, and sitting still while
+  slowly starving (600 energy over ~1000 ticks -> avg ~2.0) beats moving when moving is too expensive. The
+  peptide gives a steady internal signal brains use to shut movement off. NOT evidence the peptide helps foraging.
+  Fix before rerun: fitness that punishes starving (energy at end, or longer generations so idlers die early).
 Step 4 brain growth (duplicate neuron / new neuron / new synapse, cap 50): brains grew 3-6 neurons by
   DRIFT; growth selected at chance rate = neutral. Lesson: new parts need a new job in the world.
 Step 5 lifetime learning ladder (two-odor world, odor meaning flips per world): fixed -> hebb -> dopamine ->

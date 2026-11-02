@@ -38,6 +38,7 @@ from .step3 import CONDITIONS, CFG_OVERRIDES, GENERATIONS
 from . import worm2 as w
 from .worm2 import Layout, N_OUT, WormBrains2, readout_names
 from .worm2_gpu import pick_device
+from .gpu_brains import make_brain
 from .world import World
 
 OUT = Path('runs/step3_fast')
@@ -53,34 +54,16 @@ class FastSim:
         self.use_graph = use_graph and dev.type == 'cuda'
         self.graph = None
         f = self.f = dict(dtype=torch.float32, device=dev)
-        B, N, E = K * P, conn.N, conn.n_edges
-        L = self.L = Layout(conn, opts)
-        # --- fixed connectome pieces
-        self.pre = torch.as_tensor(conn.pre, device=dev)
-        M = torch.zeros(E, N, **f)
-        M[torch.arange(E, device=dev), torch.as_tensor(conn.post, device=dev)] = 1.0
-        self.M = M                                                       # synapse -> target map
-        self.w_base = torch.as_tensor(conn.w_norm * WormBrains2.chem_scale, **f)
-        self.G = torch.as_tensor(conn.G * WormBrains2.gap_scale, **f)
-        self.G_deg = torch.as_tensor(conn.G_deg * WormBrains2.gap_scale, **f)
-        self.rd = torch.as_tensor(conn.ids(readout_names(conn, opts)), device=dev)
-        self.s_on, self.s_off, self.s_lvl = (torch.as_tensor(conn.ids(SENSORS[k]), device=dev)
-                                             for k in ('on', 'off', 'level'))
-        c = WormBrains2
-        self.k_dt, self.inh, self.adapt = c.dt / c.tau, c.inhibition, c.adapt
-        # starvation alarm (Step 3f): input into ASHL/ASHR when energy runs low
-        self.ash = torch.as_tensor(conn.ids(['ASHL', 'ASHR']), device=dev) if opts.ash_alarm > 0 else None
-        self.ash_level = opts.ash_start * opts.gut_cap
-        # predators (Step 8): touch neurons for prey
-        self.Q = cfg.predators
-        self.t_front = torch.as_tensor(conn.ids(['ALML', 'ALMR', 'AVM']), device=dev)
-        self.t_back = torch.as_tensor(conn.ids(['PLML', 'PLMR', 'PVM']), device=dev)
-        # --- per-brain buffers (refilled each generation)
         z = lambda *s: torch.zeros(*s, **f)
-        self.vals, self.g3 = z(B, E), z(B, 3)
-        self.D, self.Dl, self.bias = z(B, L.R, N_OUT), z(B, L.R, N_OUT), z(B, N_OUT)
-        self.rec = z(B, N) if opts.hunger else None
-        self.v, self.rbar = z(B, N), z(B, L.R)
+        # --- the brain model (Worm2Brain or GrowBrain, see gpu_brains.py)
+        self.brain = make_brain(conn, opts, cfg, K * P, dev)
+        # world rules that depend on the condition (Step 4 conditions have no gut limit / peptide)
+        self.gut_cap = getattr(opts, 'gut_cap', float('inf'))
+        self.h_rate, self.meal_drop = getattr(opts, 'h_rate', 0.0), getattr(opts, 'meal_drop', 0.0)
+        self.fitness_mode = getattr(opts, 'fitness', 'food')
+        self.ash_on = getattr(opts, 'ash_alarm', 0.0) > 0
+        self.ash_level = getattr(opts, 'ash_start', 0.2) * min(self.gut_cap, 1e9)
+        self.Q = cfg.predators
         # --- world buffers
         w0 = World(cfg, np.random.default_rng(0))
         self.gw, self.gh, self.Fd, self.C = w0.gw, w0.gh, len(w0.food), len(w0.patch_centers)
@@ -108,7 +91,7 @@ class FastSim:
         self.wh = torch.tensor([cfg.width, cfg.height], **f)
         self.ar_nmax = torch.arange(self.nmax, device=dev)
         # --- satiety check (as in step3_analyze): brain's speed command when full vs hungry, per world
-        self.full_e, self.hungry_e = FULL * opts.gut_cap, HUNGRY * opts.gut_cap
+        self.full_e, self.hungry_e = FULL * self.gut_cap, HUNGRY * self.gut_cap
         self.sat = z(K, 4)                     # sum speed_frac full, count full, sum hungry, count hungry
         # --- recording for the viewer: positions, energy, food of the chosen worlds, every tick
         self.rec_idx = torch.as_tensor(list(record), dtype=torch.long, device=dev)
@@ -127,16 +110,8 @@ class FastSim:
 
     # ------------------------------------------------------------------ setup each generation
     def load(self, genomes, rngs):
-        cfg, opts, L, f, K, P = self.cfg, self.opts, self.L, self.f, self.K, self.P
-        g = torch.as_tensor(genomes.reshape(K * P, -1), **f)
-        self.vals.copy_(self.w_base * (1.0 + torch.clamp(g[:, :L.E], -3, 3)))
-        self.g3.copy_(torch.exp(torch.clamp(g[:, L.sens], -3, 3)))
-        self.D.copy_(g[:, L.dev].reshape(-1, L.R, N_OUT) * 10.0)
-        self.Dl.copy_(g[:, L.lvl].reshape(-1, L.R, N_OUT) * 3.0)
-        self.bias.copy_(g[:, L.bias])
-        if self.rec is not None:
-            self.rec.copy_(g[:, L.rec] * opts.receptor_scale)
-        self.v.zero_(); self.rbar.zero_()
+        cfg, opts, f, K, P = self.cfg, self.opts, self.f, self.K, self.P
+        self.brain.load(genomes.reshape(K * P, -1))
         ws = [World(cfg, r) for r in rngs]                      # same layouts as step3 for the same rng
         self.centers.copy_(torch.as_tensor(np.stack([x.patch_centers for x in ws]), **f))
         self.food.copy_(torch.as_tensor(np.stack([x.food for x in ws]), **f))
@@ -145,7 +120,7 @@ class FastSim:
                                                  for r in rngs]), **f))
         self.heading.copy_(torch.as_tensor(np.stack([r.uniform(0, TAU, P) for r in rngs]), **f))
         self.size.fill_(cfg.start_size); self.energy.fill_(cfg.start_energy)
-        self.H.copy_(torch.clamp(1 - self.energy / opts.gut_cap, 0, 1))
+        self.H.copy_(torch.clamp(1 - self.energy / self.gut_cap, 0, 1))
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_()
@@ -176,33 +151,11 @@ class FastSim:
         gy = torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1)
         return self.smap.view(self.K, -1).gather(1, gx * gh + gy)
 
-    def _brain(self, v, rbar, smell, d, H, alarm=None, touch=None):
-        r = torch.tanh(torch.clamp(v, min=0))
-        I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
-        I = I + v @ self.G - self.G_deg * v                          # gap junctions
-        I = I - self.inh * r.mean(1, keepdim=True)
-        I[:, self.s_on] += (self.g3[:, 0] * torch.clamp(d, min=0))[:, None]
-        I[:, self.s_off] += (self.g3[:, 1] * torch.clamp(-d, min=0))[:, None]
-        I[:, self.s_lvl] += (self.g3[:, 2] * smell)[:, None]
-        if self.rec is not None:
-            I = I + H[:, None] * self.rec
-        if alarm is not None:
-            I[:, self.ash] += (self.opts.ash_alarm * alarm)[:, None]
-        if touch is not None:
-            I[:, self.t_front] += (self.cfg.touch_gain * touch[0])[:, None]
-            I[:, self.t_back] += (self.cfg.touch_gain * touch[1])[:, None]
-        v = v + self.k_dt * (-v + I)
-        r = torch.tanh(torch.clamp(v, min=0))
-        x = r[:, self.rd]
-        dev = x - rbar
-        rbar = rbar + self.adapt * dev
-        o = torch.einsum('pr,pro->po', dev, self.D) + torch.einsum('pr,pro->po', x, self.Dl) + self.bias
-        return v, rbar, torch.sigmoid(o[:, 1] - 2.0) * 0.3, torch.sigmoid(o[:, 0] + 1.0), torch.tanh(o[:, 2]) * 0.4
-
     # ------------------------------------------------------------------ one block of ticks
     def _block(self):
         cfg, opts, K, P, Fd, dev = self.cfg, self.opts, self.K, self.P, self.Fd, self.dev
-        v, rbar, pos, heading = self.v, self.rbar, self.pos, self.heading
+        bs = {k: getattr(self.brain, k) for k in self.brain.state_names}
+        pos, heading = self.pos, self.heading
         size, energy, H, alive = self.size, self.energy, self.H, self.alive
         eaten, lifetime, esum, food, falive, prev = self.eaten, self.lifetime, self.esum, self.food, self.falive, self.prev
         ppos, phead, pcool, touchF, touchB, bites = self.ppos, self.phead, self.pcool, self.touchF, self.touchB, self.bites
@@ -217,10 +170,10 @@ class FastSim:
             d = torch.clamp((smell - prev) * 20.0, -1, 1)
             prev = smell
             alarm = None
-            if self.ash is not None:            # 0 above ash_start of the gut, rising to 1 at zero energy
+            if self.ash_on:                     # 0 above ash_start of the gut, rising to 1 at zero energy
                 alarm = (torch.clamp((self.ash_level - energy) / self.ash_level, 0, 1) * alive).view(-1)
             touch = (touchF.view(-1), touchB.view(-1)) if (Q and cfg.touch_gain > 0) else None
-            v, rbar, p_tumble, speed_frac, turn = self._brain(v, rbar, smell.view(-1), d.view(-1), H.view(-1), alarm, touch)
+            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
@@ -252,7 +205,7 @@ class FastSim:
                 ahead = (torch.cos(heading) * to_pred[..., 0] + torch.sin(heading) * to_pred[..., 1]) > 0
                 touchF, touchB = tch * ahead, tch * ~ahead
             # eating: parallel rounds, random winner per contested food (branch-free)
-            can = alive & (energy < opts.gut_cap - cfg.food_value)
+            can = alive & (energy < self.gut_cap - cfg.food_value)
             d2 = ((pos[:, :, None, :] - food[:, None, :, :]) ** 2).sum(-1)
             reach = (d2 <= r2) & falive[:, None, :] & can[:, :, None]
             ate = torch.zeros(K, P, dtype=torch.bool, device=dev)
@@ -274,7 +227,7 @@ class FastSim:
             eaten = eaten + atef
             lifetime = lifetime + alive.float()
             esum = esum + torch.where(alive, torch.clamp(energy, min=0), zero)
-            H = torch.clamp(H + opts.h_rate * (torch.clamp(1 - energy / opts.gut_cap, 0, 1) - H) - opts.meal_drop * atef, 0, 1)
+            H = torch.clamp(H + self.h_rate * (torch.clamp(1 - energy / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
@@ -301,7 +254,9 @@ class FastSim:
                 self.recbuf['falive'].index_copy_(0, t1, falive.index_select(0, self.rec_idx)[None])
             self.ti.add_(1)
         # write back into the fixed buffers (needed for graph replay)
-        for name, val in (('v', v), ('rbar', rbar), ('pos', pos), ('heading', heading), ('size', size),
+        for name in self.brain.state_names:
+            getattr(self.brain, name).copy_(bs[name])
+        for name, val in (('pos', pos), ('heading', heading), ('size', size),
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
                           ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
                           ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites)):
@@ -331,7 +286,7 @@ class FastSim:
             else:
                 self._block()
         T, cfg = self.cfg.ticks_per_generation, self.cfg
-        fit = self.esum / T / cfg.food_value if self.opts.fitness == 'energy' else self.eaten + self.lifetime / T
+        fit = self.esum / T / cfg.food_value if self.fitness_mode == 'energy' else self.eaten + self.lifetime / T
         fit, eaten, esum, alive, sat, bites = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat, self.bites))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
@@ -406,7 +361,7 @@ def write_live(folder, sim, fit, stats, hist, seeds, gen, cond, cfg):
     rec = sim.recording()
     R = len(seeds)
     data = dict(gen=gen, cond=cond, seeds=np.array(seeds), width=cfg.width, height=cfg.height, predators=cfg.predators,
-                gut_cap=sim.opts.gut_cap, fitness=fit[:R].astype(np.float32),
+                gut_cap=min(sim.gut_cap, 3000.0), fitness=fit[:R].astype(np.float32),
                 history=np.array([[h['fitness'] for h in hist[k]] for k in range(len(hist))], np.float32),
                 **rec)
     tmp = folder / 'latest_tmp.npz'
