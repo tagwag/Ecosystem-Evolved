@@ -135,6 +135,10 @@ vs CPU 3.35/2.68/2.52 (matches statistically). run_step9.bat waits for run_queue
    (NSM/ADF) as real satiety signal, unused senses (touch ALM/AVM/PLM, temp AFD, O2 URX, ASH), muscles unused,
    gap junctions fixed at 5%, no in-world reproduction, no worm-worm interaction.
 
+PINNED (user, 2026-11-02): IDE-like experiment app to cut Claude usage. Stage 1: config-file experiments (world,
+  brain, seeds, generations, score as settings; one command runs + fair-tests + charts; parameter sweeps).
+  Stage 2: GUI (settings, run queue, live viewer, results browser). Not started; don't start without a clear go.
+
 === RELATED WORK (for novelty checks; quick search only, not a full review) ===
 OpenWorm; BAAIWorm/MetaWorm (2024); Izquierdo & Beer 2013 (evolved klinotaxis circuits); Polyworld (Yaeger);
 GasNets (Husbands/Philippides, diffusing neuromodulator); Shiu et al. 2024 fly brain model; NeuroMechFly v2.
