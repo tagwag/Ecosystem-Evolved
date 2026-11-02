@@ -31,11 +31,11 @@ CONDS = ('hunger_scarce', 'nohunger_scarce')
 TAG = 'step3d'
 
 
-def fair_all(cond, seeds, conn, dev):
+def fair_all(cond, seeds, conn, dev, out=OUT):
     """Every seed's best genome on every test world, in one GPU batch. Returns {seed: dict}."""
     opts, cfg = CONDITIONS[cond], Config(**CFG_OVERRIDES.get(cond, {}))
     P = cfg.worm_population
-    best = {s: np.load(OUT / f'{cond}_s{s}' / 'best_genome.npy') for s in seeds}
+    best = {s: np.load(out / f"{cond}_s{s}" / "best_genome.npy") for s in seeds}
     pairs = [(s, wd) for s in seeds for wd in WORLDS]
     genomes = np.stack([np.repeat(best[s][None], P, 0) for s, _ in pairs])
     gen = torch.Generator(device=dev); gen.manual_seed(12345)
