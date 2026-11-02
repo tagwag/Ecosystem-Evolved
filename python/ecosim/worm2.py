@@ -43,7 +43,7 @@ N_OUT = 3
 class Opts:
     hunger: bool = True
     readout: str = 'known'        # 'known' | 'all'
-    fitness: str = 'energy'       # 'energy' | 'food'
+    fitness: str = 'energy'       # 'energy' | 'food' | 'end' (energy left at the end + survival; GPU code only)
     gut_cap: float = 1500.0
     h_rate: float = 0.01          # how fast H follows the energy level (per tick)
     meal_drop: float = 0.25       # instant H drop per meal

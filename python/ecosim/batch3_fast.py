@@ -286,7 +286,12 @@ class FastSim:
             else:
                 self._block()
         T, cfg = self.cfg.ticks_per_generation, self.cfg
-        fit = self.esum / T / cfg.food_value if self.fitness_mode == 'energy' else self.eaten + self.lifetime / T
+        if self.fitness_mode == 'energy':          # average energy held (Step 3; can be gamed by idling, see 3e)
+            fit = self.esum / T / cfg.food_value
+        elif self.fitness_mode == 'end':           # energy left at the end (dead = 0) + time survived as tie-break
+            fit = torch.where(self.alive, self.energy, torch.zeros_like(self.energy)) / cfg.food_value + self.lifetime / T
+        else:                                      # 'food': food eaten + time survived (Steps 1-2, 4)
+            fit = self.eaten + self.lifetime / T
         fit, eaten, esum, alive, sat, bites = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat, self.bites))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
