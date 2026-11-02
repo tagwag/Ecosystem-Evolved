@@ -72,3 +72,11 @@ class Config:
     stomach_cap: float = 300.0      # gut holds 3 meals; a full gut blocks eating until digestion frees room
     dig_rate: float = 1.5           # energy per tick moved from gut to body when still (a meal = ~67 ticks)
     dig_moving: float = 0.25        # fraction of dig_rate left at full speed (4x slower)
+
+    # ---- worm-to-worm scent (Step 11, "ascarosides"; off by default). GPU code only (batch3_fast).
+    # Every living worm leaves scent; the field is the blurred worm density, refreshed with the food smell.
+    # Level -> ASKL/ASKR (the main ascaroside-sensing neurons), rising -> ADLL, falling -> ADLR.
+    pheromone: bool = False
+    pher_gain: float = 3.0          # input strength (like the food sensors' starting gain)
+    pher_sigma_cells: float = 3.0   # how far the scent spreads (grid cells of smell_cell units)
+    pher_full: float = 5.0          # this many worms in one spot = scent level 1 (field is capped at 1)

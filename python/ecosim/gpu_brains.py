@@ -30,13 +30,21 @@ class _Base:
         self.touch_gain = cfg.touch_gain if cfg.predators else 0.0
         self.t_front = torch.as_tensor(conn.ids(['ALML', 'ALMR', 'AVM']), device=dev)
         self.t_back = torch.as_tensor(conn.ids(['PLML', 'PLMR', 'PVM']), device=dev)
+        self.pher_gain = cfg.pher_gain if cfg.pheromone else 0.0          # Step 11 worm scent
+        self.p_lvl = torch.as_tensor(conn.ids(['ASKL', 'ASKR']), device=dev)
+        self.p_up, self.p_down = (torch.as_tensor(conn.ids([n]), device=dev) for n in ('ADLL', 'ADLR'))
 
-    def _extras(self, I, alarm, touch):
+    def _extras(self, I, alarm, touch, pher=None):
         if alarm is not None and self.ash is not None:
             I[:, self.ash] += (self.ash_gain * alarm)[:, None]
         if touch is not None and self.touch_gain > 0:
             I[:, self.t_front] += (self.touch_gain * touch[0])[:, None]
             I[:, self.t_back] += (self.touch_gain * touch[1])[:, None]
+        if pher is not None and self.pher_gain > 0:          # pher = (level, change)
+            g = self.pher_gain
+            I[:, self.p_lvl] += (g * pher[0])[:, None]
+            I[:, self.p_up] += (g * torch.clamp(pher[1], min=0))[:, None]
+            I[:, self.p_down] += (g * torch.clamp(-pher[1], min=0))[:, None]
         return I
 
     @staticmethod
@@ -79,7 +87,7 @@ class Worm2Brain(_Base):
             self.rec.copy_(g[:, L.rec] * opts.receptor_scale)
         self.v.zero_(); self.rbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None):
         v, rbar = s['v'], s['rbar']
         r = torch.tanh(torch.clamp(v, min=0))
         I = (r[:, self.pre] * self.vals) @ self.M                       # chemical synapses (sparse as a matmul)
@@ -90,7 +98,7 @@ class Worm2Brain(_Base):
         I[:, self.s_lvl] += (self.g3[:, 2] * smell)[:, None]
         if self.rec is not None:
             I = I + H[:, None] * self.rec
-        I = self._extras(I, alarm, touch)
+        I = self._extras(I, alarm, touch, pher)
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
@@ -161,7 +169,7 @@ class GrowBrain(_Base):
                                                 np.isin(src, self.s_lvl_np)], 1), **f))
         self.v.zero_(); self.rbar.zero_(); self.sbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None):
         v, rbar, sbar, N = s['v'], s['rbar'], s['sbar'], self.N
         r = torch.tanh(torch.clamp(v, min=0))
         I = torch.bmm(r.unsqueeze(1), self.W).squeeze(1)
@@ -174,7 +182,7 @@ class GrowBrain(_Base):
         I[:, self.s_off] += off[:, None]
         I[:, self.s_lvl] += lvl[:, None]
         I[:, N:] += self.m3[:, 0] * on[:, None] + self.m3[:, 1] * off[:, None] + self.m3[:, 2] * lvl[:, None]
-        I = self._extras(I, alarm, touch)
+        I = self._extras(I, alarm, touch, pher)
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x, xs = r[:, self.rd], r[:, N:]

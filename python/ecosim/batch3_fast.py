@@ -70,6 +70,12 @@ class FastSim:
         self.centers, self.food = z(K, self.C, 2), z(K, self.Fd, 2)
         self.falive = torch.zeros(K, self.Fd, dtype=torch.bool, device=dev)
         self.smap, self.prev = z(K, self.gw, self.gh), z(K, P)
+        # Step 11 worm scent: field from worm positions, sensed like food smell
+        self.pher_on = cfg.pheromone
+        self.pmap, self.pprev = z(K, self.gw, self.gh), z(K, P)
+        self.pkern, self.pkr = gauss_kernel(cfg.pher_sigma_cells, dev)
+        self.pnorm = float(self.pkern[self.pkr] ** 2) * cfg.pher_full
+        self.nn = z(K, 2)                      # sum of nearest-neighbour distances, count (clumping measure)
         self.pos, self.heading = z(K, P, 2), z(K, P)
         self.size, self.energy, self.H = z(K, P), z(K, P), z(K, P)
         self.alive = torch.zeros(K, P, dtype=torch.bool, device=dev)
@@ -124,13 +130,16 @@ class FastSim:
         self.H.copy_(torch.clamp(1 - self.energy / self.gut_cap, 0, 1))
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
-        self.sat.zero_(); self.ti.zero_()
+        self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         if self.Q:
             self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
             self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
         self.smap.copy_(self._smell_map())
         self.prev.copy_(self._smell_at(self.pos))
+        if self.pher_on:
+            self.pmap.copy_(self._pher_map(self.pos, self.alive))
+            self.pprev.copy_(self._smell_at(self.pos, self.pmap))
 
     # ------------------------------------------------------------------ pieces
     def _rand(self, *s):
@@ -146,11 +155,20 @@ class FastSim:
         m = s.amax(dim=(1, 2), keepdim=True)
         return torch.where(m > 0, s / m.clamp(min=1e-12), s)
 
-    def _smell_at(self, p):
+    def _smell_at(self, p, field=None):
         cfg, gw, gh = self.cfg, self.gw, self.gh
         gx = torch.clamp((p[..., 0] / cfg.smell_cell).long(), 0, gw - 1)
         gy = torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1)
-        return self.smap.view(self.K, -1).gather(1, gx * gh + gy)
+        return (self.smap if field is None else field).view(self.K, -1).gather(1, gx * gh + gy)
+
+    def _pher_map(self, pos, alive):
+        """Worm scent: blurred density of living worms, 1 = pher_full worms in one spot (capped at 1)."""
+        cfg, K, gw, gh = self.cfg, self.K, self.gw, self.gh
+        gx = torch.clamp((pos[..., 0] / cfg.smell_cell).long(), 0, gw - 1)
+        gy = torch.clamp((pos[..., 1] / cfg.smell_cell).long(), 0, gh - 1)
+        cnt = torch.zeros(K, gw * gh, **self.f)
+        cnt.scatter_add_(1, gx * gh + gy, alive.float())
+        return torch.clamp(blur_wrap(cnt.view(K, gw, gh), self.pkern, self.pkr) / self.pnorm, 0, 1)
 
     # ------------------------------------------------------------------ one block of ticks
     def _block(self):
@@ -164,6 +182,9 @@ class FastSim:
         Q, half = self.Q, self.wh / 2
         inf = torch.full((), float('inf'), **self.f)
         self.smap.copy_(self._smell_map())
+        pprev = self.pprev
+        if self.pher_on:
+            self.pmap.copy_(self._pher_map(pos, alive))
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
         r2, BIG = cfg.eat_radius ** 2, K * Fd + 1
         zero = torch.zeros((), **self.f)
@@ -175,7 +196,12 @@ class FastSim:
             if self.ash_on:                     # 0 above ash_start of the gut, rising to 1 at zero energy
                 alarm = (torch.clamp((self.ash_level - energy) / self.ash_level, 0, 1) * alive).view(-1)
             touch = (touchF.view(-1), touchB.view(-1)) if (Q and cfg.touch_gain > 0) else None
-            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch)
+            pher = None
+            if self.pher_on:
+                pl = self._smell_at(pos, self.pmap)
+                pher = (pl.view(-1), torch.clamp((pl - pprev) * 20.0, -1, 1).view(-1))
+                pprev = pl
+            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
@@ -247,6 +273,13 @@ class FastSim:
             esum = esum + torch.where(alive, torch.clamp(energy, min=0), zero)
             fullness = (energy + stomach) if DIG else energy
             H = torch.clamp(H + self.h_rate * (torch.clamp(1 - fullness / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
+            # clumping: distance from each living worm to its nearest living neighbour (wraps at edges)
+            dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
+            nd2 = (dd ** 2).sum(-1)
+            both = alive[:, :, None] & alive[:, None, :] & ~torch.eye(P, dtype=torch.bool, device=dev)[None]
+            nnd = torch.sqrt(torch.where(both, nd2, inf).min(2).values)
+            okn = torch.isfinite(nnd)
+            self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
@@ -279,7 +312,7 @@ class FastSim:
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
                           ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
                           ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites),
-                          ('stomach', stomach)):
+                          ('stomach', stomach), ('pprev', pprev)):
             getattr(self, name).copy_(val)
         self.bi.add_(1)
 
@@ -312,13 +345,15 @@ class FastSim:
             fit = torch.where(self.alive, self.energy, torch.zeros_like(self.energy)) / cfg.food_value + self.lifetime / T
         else:                                      # 'food': food eaten + time survived (Steps 1-2, 4)
             fit = self.eaten + self.lifetime / T
-        fit, eaten, esum, alive, sat, bites = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat, self.bites))
+        fit, eaten, esum, alive, sat, bites, nn = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat,
+                                                                            self.bites, self.nn))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
                       fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
                       speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
-                      bites=float(bites[k].mean())) for k in range(self.K)]
+                      bites=float(bites[k].mean()),
+                      nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0))) for k in range(self.K)]
         return fit.astype(np.float64), stats
 
     def recording(self):
@@ -327,11 +362,15 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0):
+           eval_worlds=1, checkpoint_every=0, clonal=0):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
-    checkpoint_every: also save each seed's best brain every N generations (ckpt_g<N>.npy), for re-testing."""
+    checkpoint_every: also save each seed's best brain every N generations (ckpt_g<N>.npy), for re-testing.
+    clonal: G > 0 = clonal-group scoring (Step 11): each brain is scored by G copies of itself sharing a world,
+            with food scaled by G / population so each worm faces the same scarcity. All groups of a seed get the
+            SAME world each generation. Stops evolution from rewarding stealing food from your own kind
+            (the tragedy of the commons found in Step 10), and matches the clone-based fair test."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -339,6 +378,8 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     gen = torch.Generator(device=dev)
     gen.manual_seed(int(np.random.default_rng(list(seeds)).integers(2**62)))
     P = cfg.worm_population
+    if clonal:
+        return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -393,6 +434,65 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
             (d / 'history.json').write_text(json.dumps(hist[k], indent=1))
         print(f'saved {out}  ({time.perf_counter() - t_all:.0f} s total)', flush=True)
     return hist, times
+
+
+def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G):
+    opts, conn = CONDITIONS[cond], Connectome()
+    base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
+    P = base.worm_population
+    f = G / P                                            # each worm keeps the same share of food as before
+    cfg = Config(seed=seeds[0], **dict(CFG_OVERRIDES.get(cond, {}), food_per_patch=max(1, round(base.food_per_patch * f)),
+                                       food_regrow_per_tick=base.food_regrow_per_tick * f))
+    dev = pick_device(device)
+    rngs = [np.random.default_rng(s) for s in seeds]
+    gen = torch.Generator(device=dev)
+    gen.manual_seed(int(np.random.default_rng(list(seeds) + [G]).integers(2**62)))
+    K = len(seeds)
+    sim = FastSim(cfg, opts, conn, K * P, G, dev, graph, gen)
+    pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
+    n_elite = max(2, int(P * base.elite_fraction))
+    hist, best = [[] for _ in seeds], [None] * K
+    print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '
+          f'({K * P} worlds, {K * P * G} worms on {dev}); food per world {cfg.food_patches}x{cfg.food_per_patch}', flush=True)
+    t_all = time.perf_counter()
+    for g in range(generations):
+        t0 = time.perf_counter()
+        wseed = [int(r.integers(2**63)) for r in rngs]               # one world layout per seed per generation
+        world_rngs = [np.random.default_rng(wseed[k]) for k in range(K) for _ in range(P)]
+        genomes = pop.reshape(K * P, 1, -1).repeat(G, 1)
+        fitw, statw = sim.run(genomes, world_rngs)
+        fit = fitw.mean(1).reshape(K, P)                             # a brain's score = its group's mean
+        t1 = time.perf_counter()
+        new = np.empty_like(pop)
+        for k, r in enumerate(rngs):
+            sk = statw[k * P:(k + 1) * P]
+            st = {key: float(np.nanmean([x[key] for x in sk])) for key in sk[0]}
+            st['fitness'] = float(fit[k].mean()); st['best_fitness'] = float(fit[k].max()); st['gen'] = g
+            hist[k].append(st)
+            order = np.argsort(fit[k])[::-1][:n_elite]
+            best[k] = pop[k, order[0]].copy()
+            if checkpoint_every and (g + 1) % checkpoint_every == 0 and out is not None:
+                d = out / f'{cond}_s{seeds[k]}'
+                d.mkdir(parents=True, exist_ok=True)
+                np.save(d / f'ckpt_g{g + 1}.npy', best[k])
+            elites = pop[k, order]
+            kids = [elites[i] for i in range(n_elite)]
+            while len(kids) < P:
+                kids.append(w.mutate(elites[r.integers(n_elite)], conn, base, r, opts)[0])
+            new[k] = np.array(kids)
+        pop = new
+        if not quiet:
+            fm = np.array([h[-1]['fitness'] for h in hist]); nn = np.nanmean([h[-1]['nn_dist'] for h in hist])
+            print(f'{cond} gen {g:3d}  fitness mean {fm.mean():5.2f} (min {fm.min():5.2f}, max {fm.max():5.2f})  '
+                  f'nearest-worm dist {nn:6.1f}  sim {t1 - t0:5.2f} s  evolve {time.perf_counter() - t1:4.2f} s', flush=True)
+    if out is not None:
+        for k, s in enumerate(seeds):
+            d = out / f'{cond}_s{s}'
+            d.mkdir(parents=True, exist_ok=True)
+            np.save(d / 'best_genome.npy', best[k])
+            (d / 'history.json').write_text(json.dumps(hist[k], indent=1))
+        print(f'saved {out}  ({time.perf_counter() - t_all:.0f} s total)', flush=True)
+    return hist, None
 
 
 LIVE = Path('runs/live')
