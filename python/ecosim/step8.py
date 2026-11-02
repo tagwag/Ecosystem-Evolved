@@ -5,7 +5,7 @@ speed 2.5 (prey max 5), bite on contact (-150 energy = 1.5 food), then pause 60 
 Prey feel a predator by TOUCH within 40 units: in front -> ALM/AVM, behind -> PLM/PVM (the real
 gentle-touch neurons; front touch normally triggers backing up, back touch speeds the worm forward).
 
-Arms (hunger peptide on, scarce food, 32 seeds, 100 generations):
+Arms (hunger peptide on, scarce food, fitness = energy left at the end + survival, 32 seeds, 100 generations):
     nopred        no predators (baseline)
     pred_touch    6 predators per world, prey can feel them
     pred_notouch  6 predators per world, touch input switched off (control: does the sense matter?)
@@ -16,6 +16,7 @@ Arms (hunger peptide on, scarce food, 32 seeds, 100 generations):
 Questions: (1) do predators change what evolves (energy, bites over generations)?
 (2) does touch let prey escape (fewer bites with touch than without)?
 """
+import dataclasses
 import json
 import sys
 from pathlib import Path
@@ -35,7 +36,7 @@ ARMS = {'nopred': dict(predators=0), 'pred_touch': dict(predators=6, touch_gain=
         'pred_notouch': dict(predators=6, touch_gain=0.0)}
 
 for _k, _v in ARMS.items():
-    CONDITIONS[_k] = CONDITIONS['hunger']
+    CONDITIONS[_k] = dataclasses.replace(CONDITIONS['hunger'], fitness='end')
     CFG_OVERRIDES[_k] = dict(SCARCE, **_v)
 
 
@@ -70,7 +71,7 @@ def analyze():
         Hb = np.array([[g['bites'] for g in json.loads((OUT / f'{k}_s{s}' / 'history.json').read_text())] for s in SEEDS])
         axes[0].plot(Hh.mean(0), color=cols[k], lw=2, label=k)
         axes[1].plot(Hb.mean(0), color=cols[k], lw=2, label=k)
-    axes[0].set_ylabel('average energy held (food units)'); axes[1].set_ylabel('bites per worm per generation')
+    axes[0].set_ylabel('fitness (energy left at end + survival)'); axes[1].set_ylabel('bites per worm per generation')
     for ax in axes:
         ax.set_xlabel('generation'); ax.grid(alpha=0.3); ax.legend()
     fig.suptitle('Step 8: evolving with predators (mean of 32 seeds)')

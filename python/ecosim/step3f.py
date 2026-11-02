@@ -8,6 +8,7 @@ response to aversive cues (Ghosh et al. 2016), so the peptide and the alarm migh
 Alarm: input into ASHL/ASHR = ash_alarm (3.0, like the smell sensors) x a level that is 0 above 20% of
 the gut and rises linearly to 1 at zero energy. Its effect on behaviour is left to evolution (synapses).
 
+Fitness = energy left at the end + survival ('end'; see Step 3e2: average energy can be gamed by idling).
 2 x 2 design at one movement cost (scarce food, 32 seeds, 60 generations):
     peptide on/off  x  ASH alarm on/off
 
@@ -41,7 +42,7 @@ def cname(pep, alarm, m):
 def register(m):
     for pep, alarm in ARMS:
         base = CONDITIONS['hunger' if pep else 'nohunger']
-        CONDITIONS[cname(pep, alarm, m)] = dataclasses.replace(base, ash_alarm=GAIN if alarm else 0.0)
+        CONDITIONS[cname(pep, alarm, m)] = dataclasses.replace(base, ash_alarm=GAIN if alarm else 0.0, fitness='end')
         CFG_OVERRIDES[cname(pep, alarm, m)] = dict(SCARCE, move_cost=m)
 
 
@@ -83,7 +84,7 @@ def analyze(m):
         ax.scatter(np.full(len(v), i) + np.random.default_rng(i).uniform(-0.12, 0.12, len(v)), v,
                    color='#2a78d6' if p else '#999999', alpha=0.5, s=18)
         ax.errorbar(i, v.mean(), yerr=1.96 * v.std() / np.sqrt(len(v)), fmt='o', color='k', capsize=6, ms=8)
-    ax.set_xticks(range(4), labels); ax.set_ylabel('fair-test energy held (food units)')
+    ax.set_xticks(range(4), labels); ax.set_ylabel('fair-test fitness (energy left at end + survival)')
     ax.set_title(f'Step 3f: starvation alarm x hunger peptide (move cost {m}, 32 seeds)'); ax.grid(axis='y', alpha=0.3)
     fig.tight_layout(); fig.savefig(RES / f'{tag}.png', dpi=130); plt.close(fig)
 
