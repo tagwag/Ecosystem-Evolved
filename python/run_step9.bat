@@ -1,19 +1,17 @@
 @echo off
 rem Step 9 on the GPU: reserved breeding slots, started from the lucky Step 6b lineages (s12, s9, s5).
-rem Safe to start now: it first WAITS for run_queue.bat (Steps 4g, 3f, 8) to finish, so the two never share the GPU.
+rem Safe to start now: it first WAITS until no other experiment (any python.exe, e.g. Step 10) is running, so they never share the GPU.
 rem Order: wait -> quick self-test (~1 min) -> evolution (2 arms x 30 runs x 60 gens, ~15-30 min) -> fair test.
 rem Log: step9_log.txt. Don't close this window while it says RUNNING. Closing it while WAITING is harmless.
 cd /d "%~dp0"
 echo WAITING for the queue to finish > step9_log.txt
 :wait
-if not exist queue_log.txt goto go
-findstr /c:"QUEUE_DONE" queue_log.txt >nul && goto go
 tasklist /fi "imagename eq python.exe" | find /i "python.exe" >nul && goto sleep
 rem no Python running: check again in 15 s (the queue starts a new Python between steps)
 timeout /t 15 /nobreak >nul
 tasklist /fi "imagename eq python.exe" | find /i "python.exe" >nul || goto go
 :sleep
-echo WAITING for the queue (Steps 4g, 3f, 8) to finish... checking every minute.
+echo WAITING for the running experiment to finish... checking every minute.
 timeout /t 60 /nobreak >nul
 goto wait
 :go
