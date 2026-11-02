@@ -1,0 +1,429 @@
+{
+ "summary": {
+  "puzzle_nomem": {
+   "1": {
+    "mean_food": 7.654166666666666,
+    "mean_puzzle": 0.375,
+    "puzzle_linger": 0.3,
+    "puzzle_revisit": 0.049999999999999996,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 0.0
+   },
+   "2": {
+    "mean_food": 14.429166666666667,
+    "mean_puzzle": 1.25,
+    "puzzle_linger": 0.8125,
+    "puzzle_revisit": 0.4375,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "3": {
+    "mean_food": 14.775,
+    "mean_puzzle": 0.7125,
+    "puzzle_linger": 0.39999999999999997,
+    "puzzle_revisit": 0.3125,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "4": {
+    "mean_food": 12.916666666666666,
+    "mean_puzzle": 0.15,
+    "puzzle_linger": 0.15,
+    "puzzle_revisit": 0.0,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "5": {
+    "mean_food": 14.295833333333334,
+    "mean_puzzle": 2.525,
+    "puzzle_linger": 0.7624999999999998,
+    "puzzle_revisit": 1.5374999999999999,
+    "puzzle_seqB": 0.225,
+    "mem_size": 0.0
+   },
+   "6": {
+    "mean_food": 13.558333333333335,
+    "mean_puzzle": 0.16249999999999998,
+    "puzzle_linger": 0.075,
+    "puzzle_revisit": 0.08749999999999998,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "7": {
+    "mean_food": 13.383333333333333,
+    "mean_puzzle": 0.9,
+    "puzzle_linger": 0.5499999999999999,
+    "puzzle_revisit": 0.35000000000000003,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "8": {
+    "mean_food": 6.9375,
+    "mean_puzzle": 0.42500000000000004,
+    "puzzle_linger": 0.08750000000000001,
+    "puzzle_revisit": 0.28750000000000003,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 0.0
+   },
+   "9": {
+    "mean_food": 14.583333333333334,
+    "mean_puzzle": 2.6750000000000003,
+    "puzzle_linger": 1.5499999999999998,
+    "puzzle_revisit": 0.975,
+    "puzzle_seqB": 0.15,
+    "mem_size": 0.0
+   },
+   "10": {
+    "mean_food": 6.5,
+    "mean_puzzle": 0.3125,
+    "puzzle_linger": 0.25,
+    "puzzle_revisit": 0.0625,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "11": {
+    "mean_food": 9.741666666666665,
+    "mean_puzzle": 0.3125,
+    "puzzle_linger": 0.15,
+    "puzzle_revisit": 0.1625,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "12": {
+    "mean_food": 8.85,
+    "mean_puzzle": 3.35,
+    "puzzle_linger": 3.0124999999999997,
+    "puzzle_revisit": 0.33749999999999997,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   }
+  },
+  "puzzle_mem": {
+   "1": {
+    "mean_food": 8.441666666666666,
+    "mean_puzzle": 0.8125,
+    "puzzle_linger": 0.6749999999999999,
+    "puzzle_revisit": 0.13749999999999998,
+    "puzzle_seqB": 0.0,
+    "mem_size": 6.0
+   },
+   "2": {
+    "mean_food": 14.174999999999999,
+    "mean_puzzle": 0.7125,
+    "puzzle_linger": 0.5,
+    "puzzle_revisit": 0.2125,
+    "puzzle_seqB": 0.0,
+    "mem_size": 13.0
+   },
+   "3": {
+    "mean_food": 5.7749999999999995,
+    "mean_puzzle": 0.0625,
+    "puzzle_linger": 0.0625,
+    "puzzle_revisit": 0.0,
+    "puzzle_seqB": 0.0,
+    "mem_size": 6.0
+   },
+   "4": {
+    "mean_food": 6.504166666666667,
+    "mean_puzzle": 0.0625,
+    "puzzle_linger": 0.049999999999999996,
+    "puzzle_revisit": 0.012499999999999999,
+    "puzzle_seqB": 0.0,
+    "mem_size": 9.0
+   },
+   "5": {
+    "mean_food": 8.916666666666666,
+    "mean_puzzle": 0.39999999999999997,
+    "puzzle_linger": 0.27499999999999997,
+    "puzzle_revisit": 0.125,
+    "puzzle_seqB": 0.0,
+    "mem_size": 10.0
+   },
+   "6": {
+    "mean_food": 3.7083333333333335,
+    "mean_puzzle": 0.5499999999999999,
+    "puzzle_linger": 0.425,
+    "puzzle_revisit": 0.125,
+    "puzzle_seqB": 0.0,
+    "mem_size": 2.0
+   },
+   "7": {
+    "mean_food": 5.108333333333333,
+    "mean_puzzle": 0.13749999999999998,
+    "puzzle_linger": 0.12499999999999999,
+    "puzzle_revisit": 0.012499999999999999,
+    "puzzle_seqB": 0.0,
+    "mem_size": 9.0
+   },
+   "8": {
+    "mean_food": 14.529166666666667,
+    "mean_puzzle": 1.0250000000000001,
+    "puzzle_linger": 0.6749999999999999,
+    "puzzle_revisit": 0.3,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 6.0
+   },
+   "9": {
+    "mean_food": 14.458333333333334,
+    "mean_puzzle": 0.9874999999999999,
+    "puzzle_linger": 0.47500000000000003,
+    "puzzle_revisit": 0.46249999999999997,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 5.0
+   },
+   "10": {
+    "mean_food": 9.783333333333333,
+    "mean_puzzle": 0.41250000000000003,
+    "puzzle_linger": 0.13749999999999998,
+    "puzzle_revisit": 0.25,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 8.0
+   },
+   "11": {
+    "mean_food": 3.6583333333333337,
+    "mean_puzzle": 0.2625,
+    "puzzle_linger": 0.1875,
+    "puzzle_revisit": 0.075,
+    "puzzle_seqB": 0.0,
+    "mem_size": 12.0
+   },
+   "12": {
+    "mean_food": 14.429166666666667,
+    "mean_puzzle": 0.6875,
+    "puzzle_linger": 0.28750000000000003,
+    "puzzle_revisit": 0.39999999999999997,
+    "puzzle_seqB": 0.0,
+    "mem_size": 5.0
+   }
+  },
+  "curric_nomem": {
+   "1": {
+    "mean_food": 10.6,
+    "mean_puzzle": 0.049999999999999996,
+    "puzzle_linger": 0.024999999999999998,
+    "puzzle_revisit": 0.024999999999999998,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "2": {
+    "mean_food": 14.270833333333334,
+    "mean_puzzle": 0.1125,
+    "puzzle_linger": 0.0625,
+    "puzzle_revisit": 0.049999999999999996,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "3": {
+    "mean_food": 13.641666666666667,
+    "mean_puzzle": 0.7999999999999999,
+    "puzzle_linger": 0.3625,
+    "puzzle_revisit": 0.4375,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "4": {
+    "mean_food": 14.641666666666666,
+    "mean_puzzle": 0.6,
+    "puzzle_linger": 0.25,
+    "puzzle_revisit": 0.325,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 0.0
+   },
+   "5": {
+    "mean_food": 6.091666666666668,
+    "mean_puzzle": 0.5125000000000001,
+    "puzzle_linger": 0.43750000000000006,
+    "puzzle_revisit": 0.075,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "6": {
+    "mean_food": 14.625,
+    "mean_puzzle": 1.8,
+    "puzzle_linger": 0.6625,
+    "puzzle_revisit": 1.0125,
+    "puzzle_seqB": 0.125,
+    "mem_size": 0.0
+   },
+   "7": {
+    "mean_food": 14.670833333333333,
+    "mean_puzzle": 0.5499999999999999,
+    "puzzle_linger": 0.28750000000000003,
+    "puzzle_revisit": 0.2125,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 0.0
+   },
+   "8": {
+    "mean_food": 13.979166666666666,
+    "mean_puzzle": 2.025,
+    "puzzle_linger": 1.25,
+    "puzzle_revisit": 0.75,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 0.0
+   },
+   "9": {
+    "mean_food": 14.325000000000001,
+    "mean_puzzle": 0.375,
+    "puzzle_linger": 0.11249999999999999,
+    "puzzle_revisit": 0.2625,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "10": {
+    "mean_food": 14.170833333333333,
+    "mean_puzzle": 1.7750000000000004,
+    "puzzle_linger": 0.8374999999999999,
+    "puzzle_revisit": 0.8624999999999999,
+    "puzzle_seqB": 0.075,
+    "mem_size": 0.0
+   },
+   "11": {
+    "mean_food": 4.879166666666666,
+    "mean_puzzle": 0.2125,
+    "puzzle_linger": 0.13749999999999998,
+    "puzzle_revisit": 0.075,
+    "puzzle_seqB": 0.0,
+    "mem_size": 0.0
+   },
+   "12": {
+    "mean_food": 14.495833333333332,
+    "mean_puzzle": 2.225,
+    "puzzle_linger": 0.9875000000000002,
+    "puzzle_revisit": 1.0125,
+    "puzzle_seqB": 0.225,
+    "mem_size": 0.0
+   }
+  },
+  "curric_mem": {
+   "1": {
+    "mean_food": 15.666666666666666,
+    "mean_puzzle": 1.1874999999999998,
+    "puzzle_linger": 0.4875,
+    "puzzle_revisit": 0.6749999999999999,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 8.0
+   },
+   "2": {
+    "mean_food": 13.816666666666665,
+    "mean_puzzle": 0.625,
+    "puzzle_linger": 0.33749999999999997,
+    "puzzle_revisit": 0.28750000000000003,
+    "puzzle_seqB": 0.0,
+    "mem_size": 11.0
+   },
+   "3": {
+    "mean_food": 15.466666666666667,
+    "mean_puzzle": 0.65,
+    "puzzle_linger": 0.1875,
+    "puzzle_revisit": 0.4625000000000001,
+    "puzzle_seqB": 0.0,
+    "mem_size": 4.0
+   },
+   "4": {
+    "mean_food": 15.037500000000001,
+    "mean_puzzle": 1.3375000000000001,
+    "puzzle_linger": 0.65,
+    "puzzle_revisit": 0.6875,
+    "puzzle_seqB": 0.0,
+    "mem_size": 7.0
+   },
+   "5": {
+    "mean_food": 10.5875,
+    "mean_puzzle": 0.012499999999999999,
+    "puzzle_linger": 0.012499999999999999,
+    "puzzle_revisit": 0.0,
+    "puzzle_seqB": 0.0,
+    "mem_size": 3.0
+   },
+   "6": {
+    "mean_food": 2.5166666666666666,
+    "mean_puzzle": 0.1625,
+    "puzzle_linger": 0.1125,
+    "puzzle_revisit": 0.049999999999999996,
+    "puzzle_seqB": 0.0,
+    "mem_size": 9.0
+   },
+   "7": {
+    "mean_food": 13.949999999999998,
+    "mean_puzzle": 0.7125,
+    "puzzle_linger": 0.3125,
+    "puzzle_revisit": 0.35000000000000003,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 8.0
+   },
+   "8": {
+    "mean_food": 3.9333333333333336,
+    "mean_puzzle": 0.1875,
+    "puzzle_linger": 0.125,
+    "puzzle_revisit": 0.0625,
+    "puzzle_seqB": 0.0,
+    "mem_size": 6.0
+   },
+   "9": {
+    "mean_food": 14.745833333333335,
+    "mean_puzzle": 0.6749999999999999,
+    "puzzle_linger": 0.3,
+    "puzzle_revisit": 0.325,
+    "puzzle_seqB": 0.049999999999999996,
+    "mem_size": 4.0
+   },
+   "10": {
+    "mean_food": 14.966666666666669,
+    "mean_puzzle": 2.1999999999999997,
+    "puzzle_linger": 0.8000000000000002,
+    "puzzle_revisit": 1.3,
+    "puzzle_seqB": 0.09999999999999999,
+    "mem_size": 7.0
+   },
+   "11": {
+    "mean_food": 5.9125000000000005,
+    "mean_puzzle": 0.3,
+    "puzzle_linger": 0.13749999999999998,
+    "puzzle_revisit": 0.13749999999999998,
+    "puzzle_seqB": 0.024999999999999998,
+    "mem_size": 3.0
+   },
+   "12": {
+    "mean_food": 4.0458333333333325,
+    "mean_puzzle": 0.024999999999999998,
+    "puzzle_linger": 0.012499999999999999,
+    "puzzle_revisit": 0.012499999999999999,
+    "puzzle_seqB": 0.0,
+    "mem_size": 7.0
+   }
+  }
+ },
+ "tests": {
+  "curriculum (puzzle food)": {
+   "mean_diff": -0.006250000000000015,
+   "wins": 11,
+   "n": 24,
+   "p_value": 0.981
+  },
+  "memory (puzzle food)": {
+   "mean_diff": -0.4166666666666667,
+   "wins": 11,
+   "n": 24,
+   "p_value": 0.0664
+  },
+  "memory (revisit + sequence)": {
+   "mean_diff": -0.15989583333333332,
+   "wins": 14,
+   "n": 24,
+   "p_value": 0.1718
+  },
+  "curriculum (total food)": {
+   "mean_diff": 1.4072916666666666,
+   "wins": 14,
+   "n": 24,
+   "p_value": 0.29385
+  }
+ },
+ "random": {
+  "mean_food": 6.012499999999999,
+  "mean_puzzle": 0.525,
+  "puzzle_linger": 0.45,
+  "puzzle_revisit": 0.075,
+  "puzzle_seqB": 0.0
+ }
+}

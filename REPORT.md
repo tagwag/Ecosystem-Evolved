@@ -139,3 +139,13 @@ measure (all p ≥ 0.15). No sign of a bug in how the code uses randomness.
 
 **Pattern so far:** hunger, growth, learning and memory each came out null because the world never needed them.
 Next work should make the world harder (costly decoy, bigger puzzle payoffs, a predator) before adding brain features.
+
+---
+
+# Addendum — Step 6b: bigger sample (Nov 2)
+Step 6 rerun with 12 seeds x 100 generations (was 4 x 60), same rules.
+- **Curriculum: gone.** Puzzle food 0.92/0.67 with curriculum vs 1.10/0.51 without; p = 0.98. The Step 6 hint (p = 0.08) was noise.
+- **Memory: no help, leans harmful** (puzzle food -0.42/worm, p = 0.07; total food lower). Pool still grows by drift.
+- Luck dominates: the same setup gives 0.15 to 3.35 puzzle food per worm depending on the seed.
+- Takeaway unchanged and stronger: the world doesn't reward these features enough. Next step is a harder world
+  (bigger puzzle payoff or reserved breeding slots for solvers, costly decoys), not more brain parts.

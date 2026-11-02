@@ -51,6 +51,8 @@ Step 6 curriculum (explore 20 gens, then puzzle spots) x evolvable memory pool, 
   curriculum -> more puzzle food (1.0-1.3 vs 0.4-0.6 per worm, 7/8 pairs) but p=0.08 = HINT, not confirmed.
   Puzzle-only brains ~random (0.53). Memory: no effect (p=0.51), pool drifted 4 -> ~6, cost total food (9.8 vs 12.2).
   Sequence puzzle ~never solved. Puzzle food (~1) tiny vs normal food (~12) -> weak selection.
+Step 6b (12 seeds x 100 gens): curriculum hint GONE (p=0.98) = was noise. Memory no help, leans harmful
+  (p=0.07). Seed luck huge (0.15-3.35 puzzle food). Results in results/step6b_*.
 Step 7 randomness check (seeded PCG64 x6 vs OS entropy x6, 40 gens): NO difference (all p >= 0.15). No RNG bug.
 BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn't demand it. Make the WORLD
   harder next (costly decoy, bigger puzzle payoff, predator) before adding more brain features.
@@ -103,7 +105,9 @@ BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn
 8. Starvation alarm into ASH (nociceptor) as energy runs low: Step 3 hunger setup (scarce food) + sprint_rest brain.
    User said "not right now" (2026-11-02). Real worms: hunger OVERRIDES aversion (Ghosh 2016) -> expect desperation.
 9. Replay experiment on a standout Step 6b lineage (Lenski-style): save checkpoints, rerun 10+ times from each.
-   Needs checkpoint saving in step6. Wait for 6b fair-test results first.
+   Needs checkpoint saving in step6. Candidates: puzzle_nomem s12 (3.35), s9 (2.68), s5 (2.52).
+13. Reserved breeding slot for task-solvers (proposed 2026-11-02): Step 6 + guaranteed slots (e.g. 3 of 12) for
+   worms solving puzzles 2+ times vs food-only selection. Not started; waiting on user.
 10. New food sources / key innovation (Lenski citrate): food a worm can't digest until it evolves the ability, at a
    cost. Meat (ties to Pristionchus mouth-form switch), "radioactive" (radiotrophic fungi, evidence contested).
 11. Viruses = horizontal gene transfer: contagious agent that copies genome segments between worms (basis: Orsay

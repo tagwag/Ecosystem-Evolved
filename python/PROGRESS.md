@@ -174,3 +174,14 @@ Rule: curriculum helps if it beats puzzle-only on puzzle food; memory helps if i
 - Final food 17.6 vs 18.6 (p=0.17); fair-test food 24.3 vs 26.3 (p=0.15); silenced synapses 18.7 vs 7.5 (p=0.20);
   diversity p=0.78; spread of fair food SD 2.9 vs 0.5 (p=0.25). Seeded mean pulled down by one weak seed.
 - Verdict: no difference -> no randomness-handling bug; seeded results stand.
+
+### Step 6b: Step 6 again, 12 seeds x 100 gens (step6.py `big`)
+Same code and rules as Step 6 (p < 0.05 over 24 pairs, or wins in all pairs), fixed before results. Curriculum puzzle phase = 80 gens.
+- Puzzle food per worm (random walk 0.53): puzzle_nomem 1.10 | puzzle_mem 0.51 | curric_nomem 0.92 | curric_mem 0.67.
+- Total food: 11.5 | 9.1 | 12.5 | 10.9. Memory pool drifts up to ~6.5-7.5 (range 3-13 across seeds).
+- Tests (24 pairs): curriculum on puzzle food -0.01, 11/24, p=0.98; memory on puzzle food -0.42, 11/24, p=0.066;
+  memory on revisit+sequence -0.16, 14/24, p=0.17; curriculum on total food +1.4, 14/24, p=0.29.
+- Seed-to-seed spread is huge: puzzle_nomem ranges 0.15 to 3.35 per worm. Seeds 1-4 after 100 gens do not match
+  the 60-gen Step 6 values (more generations reshuffled them).
+- Verdict: the Step 6 curriculum hint was noise (4 seeds was too few). Memory: no benefit, leans harmful (costs total
+  food, puzzle food lower, not significant). Both null, same pattern as Steps 3-5.
