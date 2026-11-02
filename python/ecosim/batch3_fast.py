@@ -326,8 +326,12 @@ class FastSim:
         return {k: v.cpu().numpy() for k, v in self.recbuf.items()} if self.recbuf is not None else None
 
 
-def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0):
-    """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer)."""
+def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
+           eval_worlds=1, checkpoint_every=0):
+    """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
+    eval_worlds: score every brain on this many different worlds per generation and average (less luck in
+                 selection; costs eval_worlds x the time). 1 = as before (identical results).
+    checkpoint_every: also save each seed's best brain every N generations (ckpt_g<N>.npy), for re-testing."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -335,7 +339,10 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     gen = torch.Generator(device=dev)
     gen.manual_seed(int(np.random.default_rng(list(seeds)).integers(2**62)))
     P = cfg.worm_population
-    sim = FastSim(cfg, opts, conn, len(seeds), P, dev, graph, gen, record=range(min(watch, len(seeds))))
+    W = eval_worlds
+    # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
+    wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
+    sim = FastSim(cfg, opts, conn, len(seeds) * W, P, dev, graph, gen, record=range(min(watch, len(seeds))))
     live = LIVE / cond if watch else None
     if live:
         live.mkdir(parents=True, exist_ok=True)
@@ -347,13 +354,23 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     t_all, times = time.perf_counter(), []
     for g in range(generations):
         t0 = time.perf_counter()
-        fit, stats = sim.run(pop, rngs)
+        if W == 1:
+            fit, stats = sim.run(pop, rngs)
+        else:                                            # same brains on W worlds; average the scores
+            fitw, statw = sim.run(np.repeat(pop, W, axis=0), [r for k in range(len(seeds)) for r in wrngs[k]])
+            fit = fitw.reshape(len(seeds), W, -1).mean(1)
+            stats = [{key: float(np.mean([statw[k * W + i][key] for i in range(W)])) for key in statw[0]}
+                     for k in range(len(seeds))]
         t1 = time.perf_counter()
         new = np.empty_like(pop)
         for k, r in enumerate(rngs):
             st = stats[k]; st['gen'] = g; hist[k].append(st)
             order = np.argsort(fit[k])[::-1][:n_elite]
             best[k] = pop[k, order[0]].copy()
+            if checkpoint_every and (g + 1) % checkpoint_every == 0 and out is not None:
+                d = out / f'{cond}_s{seeds[k]}'
+                d.mkdir(parents=True, exist_ok=True)
+                np.save(d / f'ckpt_g{g + 1}.npy', best[k])
             elites = pop[k, order]
             kids = [elites[i] for i in range(n_elite)]
             while len(kids) < P:
