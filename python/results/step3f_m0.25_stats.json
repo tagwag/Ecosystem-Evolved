@@ -1,0 +1,68 @@
+{
+ "mean_energy": {
+  "pep_noash_move0.25": 2.9431421806414924,
+  "pep_ash_move0.25": 2.8764912926902375,
+  "nopep_noash_move0.25": 2.787221433594823,
+  "nopep_ash_move0.25": 2.7195444237440825
+ },
+ "alarm_effect_with_peptide": {
+  "mean_hunger": 2.8764912926902375,
+  "mean_nohunger": 2.9431421806414924,
+  "mean_diff": -0.06665088795125484,
+  "ci95": [
+   -0.3460724915377796,
+   0.23227759200769127
+  ],
+  "hunger_wins": 13,
+  "p_value": 0.653,
+  "n": 32
+ },
+ "alarm_effect_without_peptide": {
+  "mean_hunger": 2.7195444237440825,
+  "mean_nohunger": 2.787221433594823,
+  "mean_diff": -0.06767700985074046,
+  "ci95": [
+   -0.2884818277632197,
+   0.1548807479906826
+  ],
+  "hunger_wins": 14,
+  "p_value": 0.55465,
+  "n": 32
+ },
+ "peptide_effect_without_alarm": {
+  "mean_hunger": 2.9431421806414924,
+  "mean_nohunger": 2.787221433594823,
+  "mean_diff": 0.15592074704666933,
+  "ci95": [
+   -0.13400639154327412,
+   0.4471901950736835
+  ],
+  "hunger_wins": 17,
+  "p_value": 0.3046,
+  "n": 32
+ },
+ "peptide_effect_with_alarm": {
+  "mean_hunger": 2.8764912926902375,
+  "mean_nohunger": 2.7195444237440825,
+  "mean_diff": 0.15694686894615495,
+  "ci95": [
+   -0.1156579796535273,
+   0.4150488789348551
+  ],
+  "hunger_wins": 18,
+  "p_value": 0.25815,
+  "n": 32
+ },
+ "interaction": {
+  "mean_hunger": -0.06665088795125484,
+  "mean_nohunger": -0.06767700985074046,
+  "mean_diff": 0.0010261218994856297,
+  "ci95": [
+   -0.40005911688009904,
+   0.4110009172620871
+  ],
+  "hunger_wins": 15,
+  "p_value": 0.99635,
+  "n": 32
+ }
+}

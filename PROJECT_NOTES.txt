@@ -47,6 +47,18 @@ Step 3e2 (same sweep, fitness = energy left at end + survival): 0.25: no fitness
   survive longest (food ~1 and 0.03), still a degenerate win. Takeaway: the peptide works as an "off switch" for
   movement; it only helps where resting truly pays. The 2x/4x/8x costs were an arbitrary sweep, not biology.
   Better next: a physical reason to rest (predators that notice moving prey; digestion while still).
+Step 4g (growth, 32 seeds, GPU): growth NEUTRAL confirmed: food 18.63 vs 18.63 (p=0.99). Brains grew 1-10 neurons (drift).
+Step 3f (ASH starvation alarm x peptide, 32 seeds, end fitness): NULL. Alarm p=0.65/0.55, peptide p=0.30, no interaction.
+Step 8 (6 predators, 100 gens): predators cost a lot (fitness 1.75 vs 2.63, p<0.0001) but TOUCH DOES NOT HELP
+  (bites 1.08 vs 1.05, p=0.37): prey never evolved escape. ODD: fitness peaks ~gen 20 then slowly declines in every
+  arm, even without predators -> investigate (noisy single-world selection? harmful mutations piling up in elites?).
+Step 8b (predators notice motion): peptide again slows worms when full (0.98 vs 1.05, p=0.0001) and eats less, but
+  fitness gain not significant (+0.15, p=0.17), bites not reduced, no interaction with motion-sensing (p=0.58).
+Step 8c (8b + digestion while still): peptide HURTS (fitness 0.97 vs 1.53, p=0.0001). Bimodal: ~2/3 of peptide seeds
+  FREEZE (0 food, fitness ~0.62 = survive on start energy) = stuck in a local optimum; the rest forage like no-peptide.
+BIG PATTERN Steps 3d-8c: the peptide reliably becomes an "off switch" for movement; evolution often gets trapped
+  by it (freeze/idle) and it never turns into a clear fitness gain. Next ideas: escape from the freeze trap (start
+  energy lower / longer generations so freezing can't survive), and fix the late-generation fitness decline first.
 Step 4 brain growth (duplicate neuron / new neuron / new synapse, cap 50): brains grew 3-6 neurons by
   DRIFT; growth selected at chance rate = neutral. Lesson: new parts need a new job in the world.
 Step 5 lifetime learning ladder (two-odor world, odor meaning flips per world): fixed -> hebb -> dopamine ->

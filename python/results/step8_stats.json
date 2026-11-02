@@ -1,0 +1,48 @@
+{
+ "mean_energy": {
+  "nopred": 2.6337424075851836,
+  "pred_touch": 1.748223995169004,
+  "pred_notouch": 1.6963186382005613
+ },
+ "mean_bites_per_worm": {
+  "nopred": 0.0,
+  "pred_touch": 1.0809895809118948,
+  "pred_notouch": 1.0493055541689198
+ },
+ "touch_vs_notouch_energy": {
+  "mean_hunger": 1.748223995169004,
+  "mean_nohunger": 1.6963186382005613,
+  "mean_diff": 0.051905356968442604,
+  "ci95": [
+   -0.1442513581831008,
+   0.24756240467540902
+  ],
+  "hunger_wins": 15,
+  "p_value": 0.6185,
+  "n": 32
+ },
+ "touch_vs_notouch_bites": {
+  "mean_hunger": 1.0809895809118948,
+  "mean_nohunger": 1.0493055541689198,
+  "mean_diff": 0.03168402674297491,
+  "ci95": [
+   -0.03845486450009046,
+   0.09635416731083145
+  ],
+  "hunger_wins": 21,
+  "p_value": 0.37215,
+  "n": 32
+ },
+ "predator_cost_energy": {
+  "mean_hunger": 1.748223995169004,
+  "mean_nohunger": 2.6337424075851836,
+  "mean_diff": -0.88551841241618,
+  "ci95": [
+   -1.0906688888091596,
+   -0.6794950811813277
+  ],
+  "hunger_wins": 3,
+  "p_value": 0.0,
+  "n": 32
+ }
+}

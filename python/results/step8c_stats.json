@@ -1,0 +1,114 @@
+{
+ "motion": {
+  "fitness": {
+   "mean_hunger": 0.9742247662506998,
+   "mean_nohunger": 1.532649534754455,
+   "mean_diff": -0.5584247685037553,
+   "ci95": [
+    -0.7721252487545521,
+    -0.3347892342329337
+   ],
+   "hunger_wins": 6,
+   "p_value": 5e-05,
+   "n": 32
+  },
+  "food": {
+   "mean_hunger": 2.0675347246966944,
+   "mean_nohunger": 5.353038192726672,
+   "mean_diff": -3.285503468029977,
+   "ci95": [
+    -4.121365018515402,
+    -2.4333311555004915
+   ],
+   "hunger_wins": 4,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "bites": {
+   "mean_hunger": 0.6294270816724747,
+   "mean_nohunger": 0.8562499989445012,
+   "mean_diff": -0.22682291727202633,
+   "ci95": [
+    -0.3065993903418227,
+    -0.1467881978605874
+   ],
+   "hunger_wins": 7,
+   "p_value": 5e-05,
+   "n": 32
+  },
+  "full_over_hungry": {
+   "mean_hunger": NaN,
+   "mean_nohunger": NaN,
+   "mean_diff": NaN,
+   "ci95": [
+    NaN,
+    NaN
+   ],
+   "hunger_wins": 0,
+   "p_value": 0.0,
+   "n": 0
+  }
+ },
+ "blind": {
+  "fitness": {
+   "mean_hunger": 0.6537700075035294,
+   "mean_nohunger": 1.0629108184948564,
+   "mean_diff": -0.409140810991327,
+   "ci95": [
+    -0.5568988785729744,
+    -0.24897439144551778
+   ],
+   "hunger_wins": 5,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "food": {
+   "mean_hunger": 2.064583336808331,
+   "mean_nohunger": 5.040885423310101,
+   "mean_diff": -2.97630208650177,
+   "ci95": [
+    -3.7891601535353403,
+    -2.1614236093591925
+   ],
+   "hunger_wins": 3,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "bites": {
+   "mean_hunger": 1.027083336065213,
+   "mean_nohunger": 1.1556423618458211,
+   "mean_diff": -0.1285590257806083,
+   "ci95": [
+    -0.20442708182381467,
+    -0.052864582553350685
+   ],
+   "hunger_wins": 10,
+   "p_value": 0.003,
+   "n": 32
+  },
+  "full_over_hungry": {
+   "mean_hunger": NaN,
+   "mean_nohunger": NaN,
+   "mean_diff": NaN,
+   "ci95": [
+    NaN,
+    NaN
+   ],
+   "hunger_wins": 0,
+   "p_value": 0.0,
+   "n": 0
+  }
+ },
+ "interaction_fitness": {
+  "mean_hunger": -0.5584247685037553,
+  "mean_nohunger": -0.409140810991327,
+  "mean_diff": -0.1492839575124284,
+  "ci95": [
+   -0.35632458160786584,
+   0.05924535066199782
+  ],
+  "hunger_wins": 13,
+  "p_value": 0.1752,
+  "n": 32
+ }
+}
