@@ -76,11 +76,18 @@ BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn
   harder next (costly decoy, bigger puzzle payoff, predator) before adding more brain features.
 
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
-- python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py (load(name), info, names, add).
-- Rule: fair-test score in top 3 of its condition AND >= 2x that condition's median. Check after EVERY step, add passes.
-- Holds 14 (all Step 6/6b puzzle brains, worm6 type). Food-only steps 3c/4/5 have no passes (seeds too similar).
-  GPU steps run on the user's PC (3d, 3e, 4g, 3f, 8) not checked yet: their genomes are on his PC.
-- Only final best genomes are saved; a true Lenski replay from earlier generations needs checkpoints (not saved yet).
+- python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
+  start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a
+  genome between brain types (synapses + decoder exact, rest approximate: worm2 -> worm5 output diff up to 0.18).
+- Rule: lucky = fair-test score in top 3 of its condition AND >= 2x that condition's median (4+ seeds).
+  Also 'champion' = best seed of every condition of every step (so every step has a reusable best brain).
+- AFTER EVERY STEP: `python -m ecosim.lineages scan` (or register_lineages.bat on the desktop), then commit lineages/.
+  A new step must be added to lineages._experiments() (results file, score, runs folder) so scan sees it.
+- 2026-11-02: 30 entries here (14 lucky = Step 6/6b puzzle brains). 41 more qualify (12 lucky: 8c x6, 3e2 x5,
+  3e x1) but their genomes are on the desktop (GPU steps): run register_lineages.bat there, then commit.
+  Lucky in 8c/3e/3e2 = survivors in harsh worlds where most seeds nearly die (median tiny): check before chasing.
+- Only final best genomes are saved (Step 9: parent pools of 12). A true Lenski replay from earlier generations
+  needs checkpoints (Step 10 adds checkpoint_every in batch3_fast).
 
 === STEP 9 (queued on user's PC, 2026-11-02) ===
 Reserved breeding slots, GPU (ecosim/step9_gpu.py, run_step9.bat). Starts from lucky 6b-puzzle_nomem s12/s9/s5,

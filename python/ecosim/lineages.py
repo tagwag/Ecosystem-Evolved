@@ -10,9 +10,18 @@ Use from any step:
     lineages.info('6b-puzzle-s12')            # dict: step, condition, seed, score, brain, ...
     lineages.names(brain='worm6')             # all lineages of one brain type
 
+    lineages.start_population('6b-puzzle_nomem-s12', 60, rng, mutate)   # lineage + 59 mutants, for any evolve()
+    lineages.convert(g, 'worm2')              # move a genome to another brain type (approximate, see convert)
+
 Command line:
     python -m ecosim.lineages list
+    python -m ecosim.lineages scan            # check EVERY finished step's results against the rule, add what passes
     python -m ecosim.lineages add <name> <genome.npy> step=6b condition=puzzle_nomem seed=12 score=3.35 ...
+
+Two kinds of entry:
+    lucky      passes the rule below (an outlier: luck worth chasing)
+    champion   the best seed of each condition of each step, lucky or not, so every step has a reusable
+               best brain (added by scan; 'kind' says which)
 
 "Lucky" rule (set 2026-11-02): a run whose fair-test score is in the top 3 of its condition AND at least
 2x that condition's median across seeds. Every finished step should check its runs against this rule
@@ -34,8 +43,15 @@ BRAINS = {
     'worm2': 'Step 2-3 connectome brain (ecosim/worm2.py; GPU: gpu_brains.Worm2Brain)',
     'worm3': 'Step 4 growing brain (ecosim/worm3.py; GPU: gpu_brains.GrowBrain)',
     'worm5': 'Step 5 learning brain (ecosim/worm5.py)',
+    'worm2_open': 'Step 3 open-readout brain (decoder reads all 300 neurons; cannot be converted)',
     'worm6': 'Step 6 learning brain + memory-pool genes (ecosim/worm6.py; GPU: step9_gpu.LearnBrainTorch, no memory)',
 }
+
+
+def _stepkey(st):
+    import re
+    m = re.match(r'(\d+)(.*)', str(st))
+    return (int(m.group(1)), m.group(2)) if m else (999, str(st))
 
 
 def _reg():
@@ -63,20 +79,224 @@ def add(name, genome_path, **meta):
     write_md(reg)
 
 
-def write_md(reg=None):
+def write_md(reg=None, missing=()):
     reg = reg if reg is not None else _reg()
     lines = ['# Lucky lineages', '',
              'Standout evolved brains, kept so any experiment can start from them. Load with',
-             "`from ecosim import lineages; g = lineages.load('<name>')`. Rule for adding one: fair-test score in",
-             "the top 3 of its condition and at least 2x that condition's median. A genome only runs on its own brain type.",
-             '', '| name | step | condition | seed | score | condition median | brain | notes |',
-             '|---|---|---|---|---|---|---|---|']
-    for n, v in reg.items():
-        lines.append(f"| `{n}` | {v.get('step', '')} | {v.get('condition', '')} | {v.get('seed', '')} | "
-                     f"{v.get('score', '')} {v.get('score_unit', '')} | {v.get('median', '')} | {v.get('brain', '')} | "
-                     f"{v.get('notes', '')} |")
-    lines += ['', '## Brain types', ''] + [f'- **{k}**: {d}' for k, d in BRAINS.items()]
+             "`from ecosim import lineages; g = lineages.load('<name>')`. Start any step from one with",
+             "`lineages.start_population(name, P, rng, mutate)`; move it to another brain type with `lineages.convert`.",
+             '', '**lucky** = fair-test score in the top 3 of its condition AND at least 2x that condition\'s median',
+             '(4+ seeds). **champion** = best seed of its condition, kept so every step has a reusable best brain.',
+             'Refresh after any experiment: `python -m ecosim.lineages scan` (or double-click register_lineages.bat).', '']
+    for kind, title in (('lucky', 'Lucky lineages'), ('champion', 'Champions (best per condition, not lucky)')):
+        rows = {n: v for n, v in reg.items() if v.get('kind', 'lucky') == kind}
+        lines += [f'## {title} ({len(rows)})', '', '| name | step | condition | seed | score | condition median | brain | notes |',
+                  '|---|---|---|---|---|---|---|---|']
+        for n, v in sorted(rows.items(), key=lambda x: (_stepkey(x[1].get('step')), -float(x[1].get('score', 0)))):
+            lines.append(f"| `{n}` | {v.get('step', '')} | {v.get('condition', '')} | {v.get('seed', '')} | "
+                         f"{v.get('score', '')} {v.get('score_unit', '')} | {v.get('median', '')} | {v.get('brain', '')} | "
+                         f"{v.get('notes', '')} |")
+        lines.append('')
+    if missing:
+        lines += ['## Qualify, but genome is on another machine', '',
+                  'Run `python -m ecosim.lineages scan` on the machine that has these runs (the desktop for GPU steps).', '']
+        lines += [f'- `{n}` ({k}): {p}' for n, k, p in missing] + ['']
+    lines += ['## Brain types', ''] + [f'- **{k}**: {d}' for k, d in BRAINS.items()]
+    lines += ['', 'A genome runs as-is only on its own brain type. `lineages.convert(g, to)` moves synapses and',
+              'decoder exactly and approximates the rest (details in ecosim/lineages.py).']
     (DIR / 'LINEAGES.md').write_text('\n'.join(lines) + '\n')
+
+
+# ------------------------------------------------------------------ brain type from genome length
+def brain_of(g):  # works for one genome or a pool (rows)
+    """'worm2' (hunger or not), 'worm2_open' (all-neuron readout), 'worm3', 'worm5' or 'worm6'."""
+    from .connectome import Connectome
+    from . import worm2, worm3, worm5, worm6
+    c = Connectome()
+    sizes = {worm2.Layout(c, worm2.Opts(hunger=True)).size: 'worm2', worm2.Layout(c, worm2.Opts(hunger=False)).size: 'worm2',
+             worm2.Layout(c, worm2.Opts(hunger=False, readout='all')).size: 'worm2_open',
+             worm3.Layout3(c, worm3.Opts3()).size: 'worm3', worm5.Layout5(c).size: 'worm5', worm6.Layout6(c).size: 'worm6'}
+    return sizes.get(np.asarray(g).shape[-1], 'unknown')
+
+
+# ------------------------------------------------------------------ converting between brain types
+def convert(g, to, hunger=True):
+    """Move a genome to another brain type. What carries over exactly: every synapse strength gene, the
+    motor decoder (28 readout neurons) and its bias. What is approximated:
+        food-smell gains   worm2/3 order (on=ASEL, off=ASER+AWC, level=AWA) <-> worm5/6 odor A (level, up, down)
+        -> worm5/6         odor-B (puzzle smell) gains start at the default; plasticity genes set to -6 = learning
+                           almost off (the brain behaves like the fixed brain until evolution turns learning up);
+                           memory pool off
+        -> worm2           hunger receptors start at 0 (no effect); learning, odor B and memory are dropped
+        -> worm3           no grown neurons or added synapses yet
+        worm3 -> anything  grown neurons and added synapses are DROPPED: a big brain can lose its tricks
+    Not convertible: worm2_open (decoder reads all 300 neurons).
+    Check (2026-11-02): a Step 3 worm2 brain vs its worm5 conversion, same inputs, learning off: outputs differ by up
+    to 0.18 (worm2 also feeds smell decreases into AWC, which worm5 uses for odor B). Similar, not identical:
+    re-test a converted lineage before trusting its old score."""
+    from .connectome import Connectome
+    from . import worm2, worm3, worm5, worm6
+    c, g = Connectome(), np.asarray(g, float)
+    if g.ndim == 2:
+        return np.array([convert(x, to, hunger) for x in g])
+    src = brain_of(g)
+    if src == to:
+        return g.copy()
+    if src in ('worm2_open', 'unknown') or to == 'worm2_open':
+        raise ValueError(f'cannot convert {src} -> {to}')
+    L = {'worm2': lambda: worm2.Layout(c, worm2.Opts(hunger=(len(g) == worm2.Layout(c, worm2.Opts(hunger=True)).size))),
+         'worm3': lambda: worm3.Layout3(c, worm3.Opts3()), 'worm5': lambda: worm5.Layout5(c),
+         'worm6': lambda: worm6.Layout6(c).base}[src]()
+    E = c.n_edges
+    syn, dev, lvl, bias = g[:E], g[L.dev], g[L.lvl], g[L.bias]
+    s = g[L.sens]
+    if src in ('worm2', 'worm3'):
+        level, up, down = s[2], s[0], s[1]
+    else:
+        level, up, down = s[0], s[1], s[2]
+    if to in ('worm5', 'worm6'):
+        L5 = worm5.Layout5(c)
+        out = np.zeros(L5.size)
+        out[L5.sens] = [level, up, down] + [np.log(3)] * 3
+        out[L5.plast] = -6.0
+        if to == 'worm6':
+            L6 = worm6.Layout6(c)
+            full = np.zeros(L6.size)
+            full[L6.m_self] = 1.0
+            full[:L5.size] = out
+            out, L5 = full, L6.base
+    elif to == 'worm2':
+        L5 = worm2.Layout(c, worm2.Opts(hunger=hunger))
+        out = np.zeros(L5.size)
+        out[L5.sens] = [up, down, level]
+    elif to == 'worm3':
+        L5 = worm3.Layout3(c, worm3.Opts3())
+        out = np.zeros(L5.size)
+        out[L5.sens] = [up, down, level]
+    else:
+        raise ValueError(to)
+    out[:E], out[L5.dev], out[L5.lvl], out[L5.bias] = syn, dev, lvl, bias
+    return out
+
+
+def start_population(name_or_genome, P, rng, mutate, to=None):
+    """A starting population for any step: the lineage itself + P-1 mutated copies.
+    mutate: a function genome -> child (e.g. lambda g: worm6.mutate(g, conn, cfg, rng, opts)).
+    to: convert to this brain type first (see convert)."""
+    g = load(name_or_genome) if isinstance(name_or_genome, str) else np.asarray(name_or_genome)
+    pool = g if g.ndim == 2 else g[None]                 # a saved parent pool starts as all its members
+    if to:
+        pool = np.array([convert(x, to) for x in pool])
+    pop = list(pool[:P])
+    i = 0
+    while len(pop) < P:
+        pop.append(mutate(pool[i % len(pool)])); i += 1
+    return np.array(pop)
+
+
+# ------------------------------------------------------------------ scanning every step's results
+def _experiments():
+    """(step, results file, function results -> {condition: {seed: score}}, score unit, runs folder,
+    function condition -> run-folder prefix). Every per-seed fair test the project has."""
+    fit = lambda d, key='fitness': {c: {s: v[key] for s, v in seeds.items() if isinstance(v, dict) and key in v}
+                                    for c, seeds in d.items() if isinstance(seeds, dict)}
+    same = lambda c: c
+    ex = [('3', 'step3_results.json', lambda d: fit(d['fair']), 'energy fitness', 'runs/step3', same),
+          ('3b', 'step3b_results.json', lambda d: fit(d['fair']), 'energy fitness', 'runs/step3', same),
+          ('3c', 'step3c_results.json', lambda d: fit(d['fair']), 'energy fitness', 'runs/step3', same),
+          ('3d', 'step3d_results.json', lambda d: fit(d['fair']), 'energy fitness', 'runs/step3_fast', same),
+          ('3f', 'step3f_m0.25_results.json', fit, 'end-energy fitness', 'runs/step3f', same),
+          ('4', 'step4_results.json', lambda d: fit(d, 'food'), 'food/worm', 'runs/step4', same),
+          ('4g', 'step4g_results.json', lambda d: fit(d, 'food'), 'food/worm', 'runs/step4g', same),
+          ('5', 'step5_results.json', lambda d: fit(d['summary'], 'food'), 'food/worm', 'runs/step5', same),
+          ('6', 'step6_results.json', lambda d: fit(d['summary'], 'mean_puzzle'), 'puzzle food/worm', 'runs/step6', same),
+          ('6b', 'step6b_results.json', lambda d: fit(d['summary'], 'mean_puzzle'), 'puzzle food/worm', 'runs/step6b', same),
+          ('8', 'step8_results.json', fit, 'end-energy fitness', 'runs/step8', same),
+          ('8b', 'step8b_results.json', fit, 'end-energy fitness', 'runs/step8b', same),
+          ('8c', 'step8c_results.json', fit, 'end-energy fitness', 'runs/step8c', same)]
+    for tag, end in (('3e', ''), ('3e2', '_end')):       # move-cost sweep: one condition per cost
+        ex.append((tag, f'{tag}_results.json'.replace(tag, 'step' + tag),
+                   lambda d: {f'{h}_move{m}': {s: v['fitness'] for s, v in d[m][h].items()} for m in d for h in d[m]},
+                   'energy fitness' if tag == '3e' else 'end-energy fitness', f'runs/step{tag}',
+                   (lambda e: lambda c: c + e)(end)))
+    ex.append(('9', 'step9_results.json',                 # Step 9 saves each run's parent POOL (12 genomes)
+               lambda d: _step9(d['fair']), 'puzzle food/worm', 'runs/step9', lambda c: c + '_r', 'parents.npy'))
+    ex.append(('7', 'step7_rng_results.json',
+               lambda d: {k: {r['path'].rsplit('_', 1)[1]: r['fair_food'] for r in d['runs'] if r['kind'] == k}
+                          for k in {r['kind'] for r in d['runs']}},
+               'food/worm', 'runs/step7', lambda c: c + '_'))   # folders are <kind>_<i>, no '_s'
+    return ex
+
+
+def _step9(fair):
+    out = {}
+    for k, v in fair.items():
+        if '_r' in k and not k.startswith('start_'):
+            cond, rep = k.rsplit('_r', 1)
+            out.setdefault(cond, {})[rep] = v['mean_puzzle']
+    return out
+
+
+def scan(root=None, verbose=True):
+    """Apply the lucky rule (and pick champions) for every step with results. Adds genomes found on this
+    machine; lists the ones whose genome lives on another machine (e.g. GPU runs on the desktop)."""
+    root = Path(root) if root else DIR.parent
+    reg, added, missing = _reg(), [], []
+    for step, res, get, unit, runs, folder, *gfile in _experiments():
+        gfile = gfile[0] if gfile else 'best_genome.npy'
+        f = root / 'results' / res
+        if not f.exists():
+            continue
+        try:
+            table = get(json.loads(f.read_text()))
+        except (KeyError, TypeError, IndexError, AttributeError, ValueError) as e:
+            print(f'  step {step}: results format not understood ({e!r}), skipped')
+            continue
+        for cond, seeds in table.items():
+            if not seeds:
+                continue
+            vals = {str(s): float(v) for s, v in seeds.items()}
+            med = float(np.median(list(vals.values())))
+            top = sorted(vals, key=vals.get, reverse=True)
+            for rank, s in enumerate(top[:3]):
+                lucky = len(vals) >= 4 and med > 0 and vals[s] >= 2 * med
+                if not lucky and rank > 0:
+                    continue
+                kind = 'lucky' if lucky else 'champion'
+                name = f'{step}-{cond}-s{s}'
+                sep = '' if step in ('7', '9') else '_s'
+                gp = root / runs / f'{folder(cond)}{sep}{s}' / gfile
+                meta = dict(step=step, condition=cond, seed=int(s) if s.isdigit() else s, score=round(vals[s], 3),
+                            score_unit=unit, median=round(med, 3), rank=rank + 1, n_seeds=len(vals), kind=kind)
+                if name in reg and (DIR / reg[name].get('file', '')).exists():
+                    if reg[name].get('kind') != kind or 'rank' not in reg[name]:
+                        reg[name].update(meta)
+                    continue
+                if gp.exists():
+                    g = np.load(gp)
+                    meta['brain'] = brain_of(g)
+                    if g.ndim == 2:
+                        meta['pool'] = len(g)       # a group of genomes (parents), not one
+                    meta['notes'] = reg.get(name, {}).get('notes', f'{len(vals)} seeds; from {runs}')
+                    DIR.mkdir(exist_ok=True)
+                    np.save(DIR / f'{name}.npy', g)
+                    reg[name] = dict(meta, file=f'{name}.npy')
+                    added.append(name)
+                else:
+                    missing.append((name, kind, str(gp.relative_to(root))))
+    REG.write_text(json.dumps(reg, indent=1))
+    write_md(reg, missing)
+    if verbose:
+        print(f'lineage library: {len(reg)} entries ({sum(v.get("kind") == "lucky" for v in reg.values())} lucky); '
+              f'added now: {len(added)}')
+        for n in added:
+            print('  +', n, reg[n]['kind'], reg[n]['score'], reg[n]['score_unit'])
+        if missing:
+            print(f'  {len(missing)} more qualify but their genome is not on this machine '
+                  f'(run "python -m ecosim.lineages scan" where those runs are, e.g. the desktop):')
+            for n, k, p in missing:
+                print(f'    {n} ({k})  needs {p}')
+    return added, missing
 
 
 def _num(x):
@@ -90,5 +310,7 @@ if __name__ == '__main__':
     if sys.argv[1] == 'list':
         for n, v in _reg().items():
             print(f"{n:24s} step {v.get('step')}  {v.get('condition')} s{v.get('seed')}  score {v.get('score')}  ({v.get('brain')})")
+    elif sys.argv[1] == 'scan':
+        scan()
     elif sys.argv[1] == 'add':
         add(sys.argv[2], sys.argv[3], **{k: _num(v) for k, v in (a.split('=', 1) for a in sys.argv[4:])})
