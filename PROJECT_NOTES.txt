@@ -83,6 +83,18 @@ BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn
    27.64 vs 28.05 food, p = 0.08 -> no difference. Full Step 7 (6 vs 6 evolutions): no difference. Long-run
    GPU version still open.
 
+8. Starvation alarm into ASH (nociceptor) as energy runs low: Step 3 hunger setup (scarce food) + sprint_rest brain.
+   User said "not right now" (2026-11-02). Real worms: hunger OVERRIDES aversion (Ghosh 2016) -> expect desperation.
+9. Replay experiment on a standout Step 6b lineage (Lenski-style): save checkpoints, rerun 10+ times from each.
+   Needs checkpoint saving in step6. Wait for 6b fair-test results first.
+10. New food sources / key innovation (Lenski citrate): food a worm can't digest until it evolves the ability, at a
+   cost. Meat (ties to Pristionchus mouth-form switch), "radioactive" (radiotrophic fungi, evidence contested).
+11. Viruses = horizontal gene transfer: contagious agent that copies genome segments between worms (basis: Orsay
+   virus). Pure extra mutation is just a higher mutation rate (error threshold). Related: no crossover/sex yet.
+12. Other features off: real synapse signs (Fenyves 2020), real peptide connectome (Ripoll-Sanchez 2023), serotonin
+   (NSM/ADF) as real satiety signal, unused senses (touch ALM/AVM/PLM, temp AFD, O2 URX, ASH), muscles unused,
+   gap junctions fixed at 5%, no in-world reproduction, no worm-worm interaction.
+
 === RELATED WORK (for novelty checks; quick search only, not a full review) ===
 OpenWorm; BAAIWorm/MetaWorm (2024); Izquierdo & Beer 2013 (evolved klinotaxis circuits); Polyworld (Yaeger);
 GasNets (Husbands/Philippides, diffusing neuromodulator); Shiu et al. 2024 fly brain model; NeuroMechFly v2.
