@@ -101,6 +101,7 @@ Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (
 ## Still open
 - ~~Confirm the hunger hint with more seeds.~~ Done (Step 3c): not confirmed.
 - Give growth a job: evolvable senses, then a predator (based on *Pristionchus pacificus*).
+- Retest learning in a world where the wrong smell costs something.
 - Fruit-fly larva / adult connectome (needs the wiring data, and the RTX 2080 for the adult fly).
 
 ---
@@ -113,3 +114,14 @@ Two questions, both answered **no**. Details and numbers: `python/PROGRESS.md` (
 - Probable cause: resting saves too little energy in this world for a hunger signal to pay off.
 
 ![Quiescence, 12 seeds](python/results/step3c_quiescence.png)
+
+---
+
+# Addendum — Step 5: lifetime learning (Nov 2)
+
+Ladder: fixed → Hebbian → dopamine (reward) → curiosity → sleep, plus a sprint & rest branch, in a world with a food
+smell and a decoy smell whose meaning flips per world. **No learning step helped** (rule fixed in advance).
+- First run had a bug (learning could only strengthen synapses → saturated brains). Fixed and rerun.
+- Rerun food on unseen worlds: fixed 18.8, Hebbian 17.7, dopamine 12.0, curiosity 13.8, sleep 12.4, sprint & rest 13.7 (random walk 5.7).
+- Evolution turned learning rates down. The fixed brain handles both odor meanings almost equally, so the task
+  never needed learning. A fair retest needs a decoy that costs something.

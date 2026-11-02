@@ -138,3 +138,22 @@ Success rule set BEFORE results: p < 0.05 (paired sign-flip permutation test ove
   direction persists but is small and not significant.
 - Likely design reason: resting saves little. Moving costs 0.25 × speed per tick on top of 0.6 just for existing, so a
   full worm that stops saves at most ~40% of its burn, and the fitness (average energy held) gives little reward for it.
+
+### Step 5: lifetime learning ladder in a two-odor world (ecosim/worm5.py, ecosim/step5.py)
+World: food smell + a static decoy smell; which one is "odor A" flips randomly per world, so a fixed brain can't
+know in advance which smell means food. 6 conditions x 4 seeds x 40 gens; fair test on 8 unseen worlds (4 each meaning).
+Rule set BEFORE results: a step helps only if it beats the step before it in all 4 seeds, or p < 0.05 (paired sign-flip).
+- **First run discarded (bug):** the learning rule could only strengthen (rates >= 0, rewards >= 0). Dopamine brains
+  had 87% of plastic synapses at the cap, neurons firing at 0.84. All learners ~random walk (5-9 vs 5.7), fixed 18.8.
+  Kept in results/old_ratchet. Fix: covariance Hebb (rate minus running mean) + dopamine as reward prediction error.
+- **Rerun (fixed rule), food on unseen worlds (random walk 5.7):** fixed 18.8 | hebb 17.7 | dopamine 12.0 |
+  curiosity 13.8 | sleep 12.4 | sprint_rest 13.7.
+- Tests: hebb vs fixed -1.1 (1/4 wins, p=0.37); dopamine vs hebb -5.7 (0/4, p=0.12); curiosity vs dopamine +1.8
+  (3/4, p=0.25); sleep vs curiosity -1.4 (2/4, p=0.75); sprint_rest vs dopamine +1.7 (3/4, p=0.37). **No step helps.**
+- Evolved learning rates sit low (eta_h 0.0002-0.0018 vs 0.002 at gene 0; eta_r ~0.003-0.005 vs 0.01): evolution
+  turns learning down when it doesn't pay.
+- **Why:** the fixed brain eats about the same in food=A and food=B worlds, so the decoy barely costs anything and
+  the task never required lifetime learning. Also the 2nd/1st-half ratio is < 1 for every brain incl. fixed
+  (food depletion), so it can't show within-life improvement as measured.
+- **Verdict:** not a test of whether learning helps worms; a test design that didn't need learning. Next version
+  would need a costly decoy (poison / dead zone) and a learning check not confounded by depletion. Not started.

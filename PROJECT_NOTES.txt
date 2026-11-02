@@ -1,6 +1,6 @@
 ECOSYSTEM-EVOLVED — CONDENSED PROJECT NOTES
 (Read this first in a new session instead of re-reading old chats. Keep it short; update at the end of each session.)
-Last updated: 2026-11-01
+Last updated: 2026-11-02
 
 === WHO / HOW TO WORK ===
 - Owner: tagwag. Programmer, weak with GitHub, very visual (wants charts/pictures).
@@ -33,11 +33,11 @@ Step 3b hunger + scarce food (4 seeds): weak hint.  Step 3c (12 seeds): NOT conf
   p=0.33 slowing-when-full; direction right 8/12 vs 4/12). Cause: resting saves too little energy.
 Step 4 brain growth (duplicate neuron / new neuron / new synapse, cap 50): brains grew 3-6 neurons by
   DRIFT; growth selected at chance rate = neutral. Lesson: new parts need a new job in the world.
-Step 5 (running 2026-11-01): lifetime learning ladder in a TWO-ODOR world (food odor vs decoy odor,
-  meaning flipped randomly per world so only lifetime learning can solve it):
-  fixed -> hebb -> dopamine (three-factor, reward on meals) -> curiosity (reward for surprise) -> sleep
-  (periodic downscaling of learned weights) + branch "sprint_rest" (dopamine + bonus for quick trips to
-  food + reward for long rests). Code: ecosim/worm5.py, ecosim/step5.py. Results -> results/step5_*.
+Step 5 lifetime learning ladder (two-odor world, odor meaning flips per world): fixed -> hebb -> dopamine ->
+  curiosity -> sleep, + sprint_rest. After the learning-rule fix: fixed 18.8, hebb 17.7, dopamine 12.0, curiosity
+  13.8, sleep 12.4, sprint_rest 13.7 (random 5.7). NO step helps. Evolution turned learning rates down. Cause: fixed
+  brain eats equally in both odor meanings -> task never needed learning. Retest needs a COSTLY decoy. Code worm5/step5.
+Step 6 (curriculum x memory pool, worm6/step6): running.
 
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
