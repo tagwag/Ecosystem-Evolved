@@ -48,6 +48,8 @@ class Opts:
     h_rate: float = 0.01          # how fast H follows the energy level (per tick)
     meal_drop: float = 0.25       # instant H drop per meal
     receptor_scale: float = 2.0
+    ash_alarm: float = 0.0        # starvation alarm into ASH (nociceptor) neurons; 0 = off. GPU code only (batch3_fast)
+    ash_start: float = 0.2        # alarm starts below this fraction of gut_cap and rises linearly to 1 at zero energy
 
 
 def readout_names(conn: Connectome, opts: Opts):

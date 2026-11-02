@@ -68,6 +68,9 @@ class FastSim:
                                              for k in ('on', 'off', 'level'))
         c = WormBrains2
         self.k_dt, self.inh, self.adapt = c.dt / c.tau, c.inhibition, c.adapt
+        # starvation alarm (Step 3f): input into ASHL/ASHR when energy runs low
+        self.ash = torch.as_tensor(conn.ids(['ASHL', 'ASHR']), device=dev) if opts.ash_alarm > 0 else None
+        self.ash_level = opts.ash_start * opts.gut_cap
         # --- per-brain buffers (refilled each generation)
         z = lambda *s: torch.zeros(*s, **f)
         self.vals, self.g3 = z(B, E), z(B, 3)
@@ -161,7 +164,7 @@ class FastSim:
         gy = torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1)
         return self.smap.view(self.K, -1).gather(1, gx * gh + gy)
 
-    def _brain(self, v, rbar, smell, d, H):
+    def _brain(self, v, rbar, smell, d, H, alarm=None):
         r = torch.tanh(torch.clamp(v, min=0))
         I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
         I = I + v @ self.G - self.G_deg * v                          # gap junctions
@@ -171,6 +174,8 @@ class FastSim:
         I[:, self.s_lvl] += (self.g3[:, 2] * smell)[:, None]
         if self.rec is not None:
             I = I + H[:, None] * self.rec
+        if alarm is not None:
+            I[:, self.ash] += (self.opts.ash_alarm * alarm)[:, None]
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
@@ -193,7 +198,10 @@ class FastSim:
             smell = self._smell_at(pos)
             d = torch.clamp((smell - prev) * 20.0, -1, 1)
             prev = smell
-            v, rbar, p_tumble, speed_frac, turn = self._brain(v, rbar, smell.view(-1), d.view(-1), H.view(-1))
+            alarm = None
+            if self.ash is not None:            # 0 above ash_start of the gut, rising to 1 at zero energy
+                alarm = (torch.clamp((self.ash_level - energy) / self.ash_level, 0, 1) * alive).view(-1)
+            v, rbar, p_tumble, speed_frac, turn = self._brain(v, rbar, smell.view(-1), d.view(-1), H.view(-1), alarm)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
