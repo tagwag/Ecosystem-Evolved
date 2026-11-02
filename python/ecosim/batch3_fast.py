@@ -13,6 +13,9 @@ Same model and rules as batch3_gpu.py. Speedups:
     python -m ecosim.batch3_fast confirm               # Step 3d: hunger vs no hunger, seeds 1-32
     python -m ecosim.batch3_fast run hunger_scarce 1 2 3 4 [--gens 60] [--cpu] [--nograph]
     python -m ecosim.batch3_fast bench                 # speed test: 8, 32, 128 seeds
+    add --out <folder> to save somewhere other than runs/step3_fast
+    add --watch N to record the first N seeds every generation for the live viewer:
+    python -m ecosim.viewer                            # in a second window
 
 Results: runs/step3_fast/<cond>_s<seed>/ (best_genome.npy, history.json), same format as step3.
 GPU randomness comes from one generator per run seeded from the seed list, so (as in batch3_gpu)
@@ -39,10 +42,12 @@ from .world import World
 
 OUT = Path('runs/step3_fast')
 BLOCK = 10           # ticks per graph replay; must equal cfg.smell_update_every
+FULL, HUNGRY = 0.8, 0.4   # fractions of the gut cap, as in step3_analyze
 
 
 class FastSim:
-    def __init__(self, cfg, opts, conn, K, P, dev, use_graph, gen):
+    def __init__(self, cfg, opts, conn, K, P, dev, use_graph, gen, record=()):
+        """record: indices of worlds (0..K-1) to record every tick for the viewer (ecosim/viewer.py)."""
         assert cfg.smell_update_every == BLOCK and cfg.ticks_per_generation % BLOCK == 0
         self.cfg, self.opts, self.conn, self.K, self.P, self.dev, self.gen = cfg, opts, conn, K, P, dev, gen
         self.use_graph = use_graph and dev.type == 'cuda'
@@ -92,6 +97,22 @@ class FastSim:
         self.kidx = torch.arange(K, device=dev)
         self.wh = torch.tensor([cfg.width, cfg.height], **f)
         self.ar_nmax = torch.arange(self.nmax, device=dev)
+        # --- satiety check (as in step3_analyze): brain's speed command when full vs hungry, per world
+        self.full_e, self.hungry_e = FULL * opts.gut_cap, HUNGRY * opts.gut_cap
+        self.sat = z(K, 4)                     # sum speed_frac full, count full, sum hungry, count hungry
+        # --- recording for the viewer: positions, energy, food of the chosen worlds, every tick
+        self.rec_idx = torch.as_tensor(list(record), dtype=torch.long, device=dev)
+        R, T = len(record), cfg.ticks_per_generation
+        h = dict(dtype=torch.float16, device=dev)
+        self.ti = torch.zeros((), dtype=torch.long, device=dev)
+        if R:
+            self.recbuf = dict(pos=torch.zeros(T, R, P, 2, **h), energy=torch.zeros(T, R, P, **h),
+                            alive=torch.zeros(T, R, P, dtype=torch.bool, device=dev),
+                            heading=torch.zeros(T, R, P, **h),
+                            food=torch.zeros(T, R, self.Fd, 2, **h),
+                            falive=torch.zeros(T, R, self.Fd, dtype=torch.bool, device=dev))
+        else:
+            self.recbuf = None
 
     # ------------------------------------------------------------------ setup each generation
     def load(self, genomes, rngs):
@@ -116,6 +137,7 @@ class FastSim:
         self.H.copy_(torch.clamp(1 - self.energy / opts.gut_cap, 0, 1))
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
+        self.sat.zero_(); self.ti.zero_()
         self.smap.copy_(self._smell_map())
         self.prev.copy_(self._smell_at(self.pos))
 
@@ -203,6 +225,14 @@ class FastSim:
             lifetime = lifetime + alive.float()
             esum = esum + torch.where(alive, torch.clamp(energy, min=0), zero)
             H = torch.clamp(H + opts.h_rate * (torch.clamp(1 - energy / opts.gut_cap, 0, 1) - H) - opts.meal_drop * atef, 0, 1)
+            full = (alive & (energy >= self.full_e)).float()
+            hung = (alive & (energy < self.hungry_e)).float()
+            self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
+                                     (speed_frac * hung).sum(1), hung.sum(1)], 1)
+            if self.recbuf is not None:
+                ri, t1 = self.rec_idx, self.ti.view(1)
+                for name, x in (('pos', pos), ('energy', energy), ('alive', alive), ('heading', heading)):
+                    self.recbuf[name].index_copy_(0, t1, x.index_select(0, ri)[None].to(self.recbuf[name].dtype))
             alive = alive & (energy > 0)
             # regrowth: up to nmax dead foods per world, as many as this tick's schedule says
             sc = self._rand(K, Fd) * (~falive) - falive.float()
@@ -215,6 +245,11 @@ class FastSim:
             old = food.gather(1, idx[..., None].expand(-1, -1, 2))
             food = food.scatter(1, idx[..., None].expand(-1, -1, 2), torch.where(ok[..., None], p, old))
             falive = falive.scatter(1, idx, falive.gather(1, idx) | ok)
+            if self.recbuf is not None:
+                t1 = self.ti.view(1)
+                self.recbuf['food'].index_copy_(0, t1, food.index_select(0, self.rec_idx)[None].half())
+                self.recbuf['falive'].index_copy_(0, t1, falive.index_select(0, self.rec_idx)[None])
+            self.ti.add_(1)
         # write back into the fixed buffers (needed for graph replay)
         for name, val in (('v', v), ('rbar', rbar), ('pos', pos), ('heading', heading), ('size', size),
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
@@ -246,13 +281,21 @@ class FastSim:
                 self._block()
         T, cfg = self.cfg.ticks_per_generation, self.cfg
         fit = self.esum / T / cfg.food_value if self.opts.fitness == 'energy' else self.eaten + self.lifetime / T
-        fit, eaten, esum, alive = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive))
+        fit, eaten, esum, alive, sat = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat))
+        with np.errstate(invalid='ignore', divide='ignore'):
+            sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
-                      fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T) for k in range(self.K)]
+                      fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
+                      speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k])) for k in range(self.K)]
         return fit.astype(np.float64), stats
 
+    def recording(self):
+        """The recorded worlds of the last generation as NumPy arrays (for the viewer)."""
+        return {k: v.cpu().numpy() for k, v in self.recbuf.items()} if self.recbuf is not None else None
 
-def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False):
+
+def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0):
+    """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer)."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -260,7 +303,10 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     gen = torch.Generator(device=dev)
     gen.manual_seed(int(np.random.default_rng(list(seeds)).integers(2**62)))
     P = cfg.worm_population
-    sim = FastSim(cfg, opts, conn, len(seeds), P, dev, graph, gen)
+    sim = FastSim(cfg, opts, conn, len(seeds), P, dev, graph, gen, record=range(min(watch, len(seeds))))
+    live = LIVE / cond if watch else None
+    if live:
+        live.mkdir(parents=True, exist_ok=True)
     pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
     n_elite = max(2, int(P * cfg.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * len(seeds)
@@ -282,6 +328,8 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
                 kids.append(w.mutate(elites[r.integers(n_elite)], conn, cfg, r, opts)[0])
             new[k] = np.array(kids)
         pop = new
+        if live:
+            write_live(live, sim, fit, stats, hist, seeds[:watch], g, cond, cfg)
         t2 = time.perf_counter()
         times.append((t1 - t0, t2 - t1))
         if not quiet:
@@ -296,6 +344,22 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
             (d / 'history.json').write_text(json.dumps(hist[k], indent=1))
         print(f'saved {out}  ({time.perf_counter() - t_all:.0f} s total)', flush=True)
     return hist, times
+
+
+LIVE = Path('runs/live')
+
+
+def write_live(folder, sim, fit, stats, hist, seeds, gen, cond, cfg):
+    """One file per generation for the viewer; written to a temp name, then renamed (never half-read)."""
+    rec = sim.recording()
+    R = len(seeds)
+    data = dict(gen=gen, cond=cond, seeds=np.array(seeds), width=cfg.width, height=cfg.height,
+                gut_cap=sim.opts.gut_cap, fitness=fit[:R].astype(np.float32),
+                history=np.array([[h['fitness'] for h in hist[k]] for k in range(len(hist))], np.float32),
+                **rec)
+    tmp = folder / 'latest_tmp.npz'
+    np.savez(tmp, **data)
+    tmp.replace(folder / 'latest.npz')
 
 
 def bench(device='cuda'):
@@ -313,14 +377,17 @@ if __name__ == '__main__':
     device = 'cpu' if '--cpu' in a else 'cuda'
     graph = '--nograph' not in a
     gens = int(a[a.index('--gens') + 1]) if '--gens' in a else None
+    watch = int(a[a.index('--watch') + 1]) if '--watch' in a else 0
+    out = Path(a[a.index('--out') + 1]) if '--out' in a else OUT
     if a[0] == 'confirm':
         for c in ('hunger_scarce', 'nohunger_scarce'):
-            evolve(c, list(range(1, 33)), gens or 60, device=device, graph=graph)
+            evolve(c, list(range(1, 33)), gens or 60, device=device, graph=graph, watch=watch)
     elif a[0] == 'scarce':
         for c in ('hunger_scarce', 'nohunger_scarce'):
-            evolve(c, [1, 2, 3, 4], gens or 60, device=device, graph=graph)
+            evolve(c, [1, 2, 3, 4], gens or 60, device=device, graph=graph, watch=watch)
     elif a[0] == 'bench':
         bench(device)
     elif a[0] == 'run':
-        rest = [x for i, x in enumerate(a[2:], 2) if a[i - 1] != '--gens']
-        evolve(a[1], [int(x) for x in rest if x.isdigit()], gens or GENERATIONS, device=device, graph=graph)
+        rest = [x for i, x in enumerate(a[2:], 2) if a[i - 1] not in ('--gens', '--watch', '--out')]
+        evolve(a[1], [int(x) for x in rest if x.isdigit()], gens or GENERATIONS, out=out, device=device, graph=graph,
+               watch=watch)
