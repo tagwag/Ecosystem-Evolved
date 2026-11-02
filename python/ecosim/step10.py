@@ -95,7 +95,39 @@ def analyze(seeds=SEEDS, gens=GENS):
     fig.tight_layout(); fig.savefig(RES / 'step10.png', dpi=130); plt.close(fig)
 
 
+def head_to_head(arm='A', early=30, late=150, seeds=SEEDS):
+    """Tragedy-of-the-commons check: early and late best brains share each test world, 30 copies each.
+    Late brains beating early ones head-to-head, while doing worse alone, = selection for competing."""
+    from .batch3_fast import FastSim
+    from .config import Config
+    from .connectome import Connectome
+    from .step3d_analyze import paired
+    from .worm2_gpu import pick_device
+    dev, conn = pick_device('cuda'), Connectome()
+    opts, cfg = CONDITIONS[COND], Config(**CFG_OVERRIDES[COND])
+    P, half = cfg.worm_population, cfg.worm_population // 2
+    pairs = [(s, wd) for s in seeds for wd in TEST_WORLDS]
+    G = np.stack([np.concatenate([np.repeat(np.load(OUT / arm / f'{COND}_s{s}' / f'ckpt_g{early}.npy')[None], half, 0),
+                                  np.repeat(np.load(OUT / arm / f'{COND}_s{s}' / f'ckpt_g{late}.npy')[None], P - half, 0)])
+                  for s, _ in pairs])
+    gen = torch.Generator(device=dev); gen.manual_seed(99)
+    fit, _ = FastSim(cfg, opts, conn, len(pairs), P, dev, False, gen).run(G, [np.random.default_rng(wd) for _, wd in pairs])
+    e = fit[:, :half].mean(1).reshape(len(seeds), -1).mean(1)
+    l = fit[:, half:].mean(1).reshape(len(seeds), -1).mean(1)
+    alone_e = test_brains([np.load(OUT / arm / f'{COND}_s{s}' / f'ckpt_g{early}.npy') for s in seeds], conn, dev)
+    alone_l = test_brains([np.load(OUT / arm / f'{COND}_s{s}' / f'ckpt_g{late}.npy') for s in seeds], conn, dev)
+    out = dict(arm=arm, early=early, late=late,
+               mixed_late_vs_early=paired(l, e), alone_late_vs_early=paired(alone_l, alone_e))
+    print(json.dumps(out, indent=1), flush=True)
+    return out
+
+
 if __name__ == '__main__':
+    if sys.argv[1] == 'h2h':
+        RES.mkdir(exist_ok=True)
+        r = {arm: head_to_head(arm) for arm in ARMS}
+        (RES / 'step10_h2h.json').write_text(json.dumps(r, indent=1))
+        sys.exit()
     if sys.argv[1] == 'quick':                  # smoke test on the GPU: 2 seeds, 20 generations, both arms
         OUT = Path('runs/step10_quick'); RES = Path('runs/step10_quick')
         run(20, [1, 2]); analyze([1, 2], 20)
