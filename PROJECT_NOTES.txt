@@ -64,6 +64,10 @@ Step 5 (running 2026-11-01): lifetime learning ladder in a TWO-ODOR world (food 
 4. Fruit fly connectome (FlyWire / MaleCNS) — PINNED; worm first because it's faster.
 5. Make resting worthwhile (higher movement cost or danger) if hunger is revisited.
 6. Hardware later: sensor-array PCB and/or small robot body (sim-to-real). Don't design until asked.
+7. Randomness test (user's hypothesis): evolve many populations with seeded PCG64 vs unseeded hardware entropy
+   (quantum source if ever reachable); compare spread of long-run outcomes (final food, pruning pattern, diversity).
+   Claude's prediction: indistinguishable. Quick check 2026-11-01 (worlds only, 10 vs 10, best Step 4 brain):
+   27.64 vs 28.05 food, p = 0.08 -> no difference.
 
 === RELATED WORK (for novelty checks; quick search only, not a full review) ===
 OpenWorm; BAAIWorm/MetaWorm (2024); Izquierdo & Beer 2013 (evolved klinotaxis circuits); Polyworld (Yaeger);
