@@ -20,6 +20,7 @@ echo RUNNING >> step9_log.txt
 .venv\Scripts\python.exe -u -m ecosim.step9_gpu test >> step9_log.txt 2>&1 || goto fail
 .venv\Scripts\python.exe -u -m ecosim.step9_gpu run >> step9_log.txt 2>&1 || goto fail
 .venv\Scripts\python.exe -u -m ecosim.step9_gpu analyze >> step9_log.txt 2>&1 || goto fail
+.venv\Scripts\python.exe -u -m ecosim.lineages scan >> step9_log.txt 2>&1
 echo STEP9_DONE >> step9_log.txt
 echo Finished. Tell Claude "step 9 done".
 pause
