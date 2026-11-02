@@ -30,10 +30,12 @@ CONDITIONS = {
 SEEDS = [1, 2, 3, 4]
 GENERATIONS = 60
 OUT, RES = Path('runs/step6'), Path('results')
+TAG = 'step6'
 WORLDS = range(6000, 6006)
 
 
-def evolve(cond, seed, generations=GENERATIONS):
+def evolve(cond, seed, generations=None):
+    generations = generations or GENERATIONS
     if (OUT / f'{cond}_s{seed}' / 'best_genome.npy').exists():      # resume: skip finished runs
         return str(OUT / f'{cond}_s{seed}')
     o, cfg, conn = CONDITIONS[cond], Config(seed=seed), Connectome()
@@ -112,7 +114,7 @@ def analyze(workers=2):
                                                                  get('puzzle_nomem', 'mean_puzzle') + get('puzzle_mem', 'mean_puzzle'))]),
     }
     out = dict(summary=summ, tests=tests, random=rw)
-    (RES / 'step6_results.json').write_text(json.dumps(out, indent=1))
+    (RES / f'{TAG}_results.json').write_text(json.dumps(out, indent=1))
     print(json.dumps(tests, indent=1), json.dumps(rw))
     charts(out)
 
@@ -128,7 +130,7 @@ def charts(out):
         v = np.array([np.mean([summ[cd][s][f'puzzle_{k}'] for s in summ[cd]]) for cd in conds])
         a1.bar(x, v, 0.6, bottom=bottom, color=c, label={'seqB': 'sequence'}.get(k, k)); bottom += v
     a1.axhline(out['random']['mean_puzzle'], color='k', ls='--', lw=1, label='random walk')
-    a1.set_xticks(x, [c.replace('_', '\n') for c in conds]); a1.set_ylabel('puzzle food per worm (mean of 4 seeds)')
+    a1.set_xticks(x, [c.replace('_', '\n') for c in conds]); a1.set_ylabel(f'puzzle food per worm (mean of {len(SEEDS)} seeds)')
     a1.set_title('Which puzzles each brain solves (6 unseen worlds)'); a1.legend(); a1.grid(axis='y', alpha=0.3)
     for cd, c in (('puzzle_mem', '#2a78d6'), ('curric_mem', '#d6762a')):
         H = np.array([[g['mem_size'] for g in json.loads((OUT / f'{cd}_s{s}' / 'history.json').read_text())] for s in SEEDS])
@@ -137,8 +139,17 @@ def charts(out):
     a2.axvline(20, color='#999', ls=':', lw=1); a2.text(21, a2.get_ylim()[1] * 0.95, 'puzzles start (curriculum)', fontsize=8, va='top')
     a2.set_xlabel('generation'); a2.set_ylabel('memory neurons per brain (population mean)')
     a2.set_title('How big evolution makes the memory pool'); a2.legend(); a2.grid(alpha=0.3)
-    fig.tight_layout(); fig.savefig(RES / 'step6_puzzles.png', dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(RES / f'{TAG}_puzzles.png', dpi=130); plt.close(fig)
+
+
+def use_big():
+    """Step 6b (2026-11-02): same experiment, 12 seeds x 100 generations (puzzle phase 80 gens for curriculum).
+    Same rules as Step 6, fixed before results: p < 0.05 (paired sign-flip, 24 pairs) or wins in all pairs."""
+    global SEEDS, GENERATIONS, OUT, TAG
+    SEEDS, GENERATIONS, OUT, TAG = list(range(1, 13)), 100, Path('runs/step6b'), 'step6b'
 
 
 if __name__ == '__main__':
+    if 'big' in sys.argv[2:]:
+        use_big()
     {'all': run_all, 'analyze': analyze}[sys.argv[1]]()
