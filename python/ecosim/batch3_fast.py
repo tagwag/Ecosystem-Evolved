@@ -77,6 +77,7 @@ class FastSim:
         Q = max(cfg.predators, 1)
         self.ppos, self.phead, self.pcool = z(K, Q, 2), z(K, Q), z(K, Q)
         self.touchF, self.touchB, self.bites = z(K, P), z(K, P), z(K, P)
+        self.stomach = z(K, P)                 # Step 8c digestion: food eaten but not yet usable energy
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
         T = cfg.ticks_per_generation
         acc, n = 0.0, []
@@ -124,7 +125,7 @@ class FastSim:
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_()
-        self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_()
+        self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         if self.Q:
             self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
             self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
@@ -159,6 +160,7 @@ class FastSim:
         size, energy, H, alive = self.size, self.energy, self.H, self.alive
         eaten, lifetime, esum, food, falive, prev = self.eaten, self.lifetime, self.esum, self.food, self.falive, self.prev
         ppos, phead, pcool, touchF, touchB, bites = self.ppos, self.phead, self.pcool, self.touchF, self.touchB, self.bites
+        stomach, DIG = self.stomach, cfg.digestion
         Q, half = self.Q, self.wh / 2
         inf = torch.full((), float('inf'), **self.f)
         self.smap.copy_(self._smell_map())
@@ -184,14 +186,21 @@ class FastSim:
             if Q:   # predators: chase nearest living prey in range, bite on contact, pause after a bite
                 delta = torch.remainder(pos[:, None] - ppos[:, :, None] + half, self.wh) - half     # (K,Q,P,2), wraps
                 dist2 = torch.where(alive[:, None, :], (delta ** 2).sum(-1), inf)
-                nd, ni = dist2.min(2)                                                            # nearest prey
+                if cfg.pred_sense_still >= 0:    # Step 8b: moving prey are noticed from farther away
+                    rng_p = cfg.pred_sense_still + (cfg.pred_sense - cfg.pred_sense_still) * torch.clamp(speed / cfg.speed_max, 0, 1)
+                    seen = dist2 < (rng_p ** 2)[:, None, :]                                         # (K,Q,P)
+                    dsee = torch.where(seen, dist2, inf)
+                else:
+                    dsee = torch.where(dist2 < cfg.pred_sense ** 2, dist2, inf)
+                nd, ni = dsee.min(2)                                                             # nearest noticed prey
+                bd, bi_ = dist2.min(2)                                                           # nearest prey at all
                 ready = pcool <= 0
                 tv = delta.gather(2, ni[..., None, None].expand(-1, -1, 1, 2)).squeeze(2)
-                hunt = ready & (nd < cfg.pred_sense ** 2)
+                hunt = ready & torch.isfinite(nd)
                 phead = torch.where(hunt, torch.atan2(tv[..., 1], tv[..., 0]),
                                     phead + (self._rand(K, Q) - 0.5) * 0.6)
-                bite = ready & (nd < cfg.pred_bite ** 2)
-                dmg = torch.zeros(K, P, **self.f).scatter_add(1, ni, bite.float() * cfg.pred_damage)
+                bite = ready & (bd < cfg.pred_bite ** 2)                                         # contact bites anyone
+                dmg = torch.zeros(K, P, **self.f).scatter_add(1, bi_, bite.float() * cfg.pred_damage)
                 energy = energy - dmg * alive
                 bites = bites + (dmg > 0).float()
                 pcool = torch.where(bite, torch.full_like(pcool, float(cfg.pred_cooldown)), torch.clamp(pcool - 1, min=0))
@@ -206,6 +215,8 @@ class FastSim:
                 touchF, touchB = tch * ahead, tch * ~ahead
             # eating: parallel rounds, random winner per contested food (branch-free)
             can = alive & (energy < self.gut_cap - cfg.food_value)
+            if DIG:                                  # gut must have room for a whole meal; satiety counts the gut too
+                can = alive & (stomach <= cfg.stomach_cap - cfg.food_value) & (energy + stomach < self.gut_cap - cfg.food_value)
             d2 = ((pos[:, :, None, :] - food[:, None, :, :]) ** 2).sum(-1)
             reach = (d2 <= r2) & falive[:, None, :] & can[:, :, None]
             ate = torch.zeros(K, P, dtype=torch.bool, device=dev)
@@ -222,12 +233,20 @@ class FastSim:
                 falive = falive & ~wf
                 reach = reach & ~win[:, :, None] & ~wf[:, None, :]
             atef = ate.float()
-            energy = energy + atef * cfg.food_value
+            if DIG:                                  # food -> gut; gut -> energy, fastest when still
+                stomach = stomach + atef * cfg.food_value
+                frac = torch.clamp(speed / cfg.speed_max, 0, 1)
+                dig = torch.minimum(stomach, cfg.dig_rate * (1 - (1 - cfg.dig_moving) * frac)) * alive
+                stomach = stomach - dig
+                energy = energy + dig
+            else:
+                energy = energy + atef * cfg.food_value
             size = size + atef * cfg.size_per_food
             eaten = eaten + atef
             lifetime = lifetime + alive.float()
             esum = esum + torch.where(alive, torch.clamp(energy, min=0), zero)
-            H = torch.clamp(H + self.h_rate * (torch.clamp(1 - energy / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
+            fullness = (energy + stomach) if DIG else energy
+            H = torch.clamp(H + self.h_rate * (torch.clamp(1 - fullness / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
@@ -259,7 +278,8 @@ class FastSim:
         for name, val in (('pos', pos), ('heading', heading), ('size', size),
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
                           ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
-                          ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites)):
+                          ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites),
+                          ('stomach', stomach)):
             getattr(self, name).copy_(val)
         self.bi.add_(1)
 

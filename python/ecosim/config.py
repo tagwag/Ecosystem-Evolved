@@ -57,9 +57,18 @@ class Config:
     # then a handling pause. Prey feel a predator by touch (front -> ALM/AVM, back -> PLM/PVM).
     predators: int = 0              # per world
     pred_speed: float = 2.5         # prey max speed is 5: fast prey can outrun, slow/resting prey can't
-    pred_sense: float = 150.0       # chase range
+    pred_sense: float = 150.0       # chase range (for prey at full speed when pred_sense_still >= 0)
+    pred_sense_still: float = -1.0  # Step 8b: range for motionless prey; range grows with prey speed up to
+                                    # pred_sense. -1 = off (every prey seen at pred_sense, as in Step 8)
     pred_bite: float = 12.0         # contact distance
     pred_damage: float = 150.0      # energy taken per bite (1.5 food)
     pred_cooldown: int = 60         # ticks a predator stops after a bite (handling time)
     touch_radius: float = 40.0      # prey touch range
     touch_gain: float = 3.0         # touch input strength; 0 = prey can't feel predators
+
+    # ---- digestion (Step 8c; off by default). GPU code only (batch3_fast). Eaten food goes into the gut first and
+    # becomes usable energy over time: fastest when still, slower when moving (real worms rest after meals).
+    digestion: bool = False
+    stomach_cap: float = 300.0      # gut holds 3 meals; a full gut blocks eating until digestion frees room
+    dig_rate: float = 1.5           # energy per tick moved from gut to body when still (a meal = ~67 ticks)
+    dig_moving: float = 0.25        # fraction of dig_rate left at full speed (4x slower)
