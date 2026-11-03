@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Step 11: clonal-group scoring + worm scent (2 arms x 32 seeds x 150 gens) | 2026-11-02 ~16:05 MT | run_step11.bat | step11_log.txt | ~17:30 MT |
+| RUNNING | OVERNIGHT: Step 11 rerun (fixed densities, 200 gens) then Step 12 (3d + 8c under clonal scoring) | 2026-11-03 ~00:30 MT | run_overnight.bat | overnight_log.txt, step11_log.txt, step12_log.txt | ~05:30 MT |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.

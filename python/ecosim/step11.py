@@ -5,14 +5,14 @@ worm faces the same scarcity), all groups of a seed in the same world each gener
 from rewarding stealing food from your own kind, and matches the clone-based fair test.
 
 Arms (Step 8 world without predators: peptide on, scarce food, fitness = energy left at end + survival;
-32 seeds, 150 generations, best brain saved every 10 generations):
+32 seeds, 200 generations, best brain saved every 10 generations):
     nopher   clonal scoring only           -> does the late decline from Step 10 go away?
     pher     clonal scoring + worm scent   -> does herding / clumping evolve (nearest-worm distance drops)?
              Scent = blurred density of living worms; level -> ASK, rising -> ADLL, falling -> ADLR
              (real C. elegans sense ascaroside pheromones mainly through ASK and ADL).
 
     python -m ecosim.step11 quick     (GPU smoke test, 2 seeds, 10 generations)
-    python -m ecosim.step11 run       (~1 hour on an RTX 3080)
+    python -m ecosim.step11 run       (~2 hours on an RTX 3080)
     python -m ecosim.step11 analyze   -> results/step11_*
 
 Clumping is measured as the average distance from each living worm to its nearest living neighbour
@@ -32,7 +32,7 @@ import torch
 from .step3 import CONDITIONS, CFG_OVERRIDES, SCARCE
 
 SEEDS = list(range(1, 33))
-GENS, EVERY, GROUP = 150, 10, 10
+GENS, EVERY, GROUP = 200, 10, 10
 OUT, RES = Path('runs/step11'), Path('results')
 TEST_WORLDS = list(range(2000, 2006))
 ARMS = {'nopher': False, 'pher': True}

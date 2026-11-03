@@ -367,8 +367,9 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
     checkpoint_every: also save each seed's best brain every N generations (ckpt_g<N>.npy), for re-testing.
-    clonal: G > 0 = clonal-group scoring (Step 11): each brain is scored by G copies of itself sharing a world,
-            with food scaled by G / population so each worm faces the same scarcity. All groups of a seed get the
+    clonal: G > 0 = clonal-group scoring (Step 11): each brain is scored by G copies of itself sharing a world
+            that is a G / population-sized copy of the normal one (area, food patches, regrowth scaled), so densities
+            match the normal world. All groups of a seed get the
             SAME world each generation. Stops evolution from rewarding stealing food from your own kind
             (the tragedy of the commons found in Step 10), and matches the clone-based fair test."""
     opts, conn = CONDITIONS[cond], Connectome()
@@ -440,9 +441,13 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     opts, conn = CONDITIONS[cond], Connectome()
     base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     P = base.worm_population
-    f = G / P                                            # each worm keeps the same share of food as before
-    cfg = Config(seed=seeds[0], **dict(CFG_OVERRIDES.get(cond, {}), food_per_patch=max(1, round(base.food_per_patch * f)),
-                                       food_regrow_per_tick=base.food_regrow_per_tick * f))
+    # A smaller copy of the normal world: area, food patches and regrowth all scaled by G / P, so worm density,
+    # food density, food per worm and patches per worm are the same as in the normal world (60 worms, 6 patches).
+    f = G / P
+    cfg = Config(seed=seeds[0], **dict(CFG_OVERRIDES.get(cond, {}), width=base.width * f ** 0.5,
+                                       height=base.height * f ** 0.5, food_patches=max(1, round(base.food_patches * f)),
+                                       food_regrow_per_tick=base.food_regrow_per_tick * f,
+                                       predators=max(1, round(base.predators * f)) if base.predators else 0))
     dev = pick_device(device)
     rngs = [np.random.default_rng(s) for s in seeds]
     gen = torch.Generator(device=dev)
@@ -453,7 +458,8 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     n_elite = max(2, int(P * base.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * K
     print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '
-          f'({K * P} worlds, {K * P * G} worms on {dev}); food per world {cfg.food_patches}x{cfg.food_per_patch}', flush=True)
+          f'({K * P} worlds of {cfg.width:.0f}x{cfg.height:.0f}, {K * P * G} worms on {dev}); '
+          f'food per world {cfg.food_patches}x{cfg.food_per_patch}', flush=True)
     t_all = time.perf_counter()
     for g in range(generations):
         t0 = time.perf_counter()
