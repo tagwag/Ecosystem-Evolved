@@ -1,0 +1,107 @@
+{
+ "motion": {
+  "fitness": {
+   "mean_hunger": 2.1035107038915157,
+   "mean_nohunger": 2.410366910509765,
+   "mean_diff": -0.30685620661824947,
+   "ci95": [
+    -0.4471460881410167,
+    -0.15865394364421584
+   ],
+   "hunger_wins": 7,
+   "p_value": 0.0002,
+   "n": 32
+  },
+  "food": {
+   "mean_hunger": 5.160590294748545,
+   "mean_nohunger": 5.821961799015602,
+   "mean_diff": -0.6613715042670568,
+   "ci95": [
+    -1.0168402369134129,
+    -0.2916644841122134
+   ],
+   "hunger_wins": 8,
+   "p_value": 0.00145,
+   "n": 32
+  },
+  "bites": {
+   "mean_hunger": 0.8245659729776283,
+   "mean_nohunger": 0.7979166667597989,
+   "mean_diff": 0.026649306217829388,
+   "ci95": [
+    -0.0186631951170663,
+    0.07179036804009209
+   ],
+   "hunger_wins": 19,
+   "p_value": 0.2617,
+   "n": 32
+  },
+  "full_over_hungry": {
+   "mean_hunger": 0.43868278514318354,
+   "mean_nohunger": 0.47755836350627506,
+   "mean_diff": -0.03887557836309153,
+   "ci95": [
+    -0.10426291396267083,
+    0.02395052084938925
+   ],
+   "hunger_wins": 11,
+   "p_value": 0.25545,
+   "n": 29
+  },
+  "frozen_seeds_first_arm": 0,
+  "frozen_seeds_second_arm": 0
+ },
+ "blind": {
+  "fitness": {
+   "mean_hunger": 1.4419317698727052,
+   "mean_nohunger": 1.6273210405682523,
+   "mean_diff": -0.18538927069554725,
+   "ci95": [
+    -0.33576255293640617,
+    -0.039638817446151206
+   ],
+   "hunger_wins": 13,
+   "p_value": 0.0217,
+   "n": 32
+  },
+  "food": {
+   "mean_hunger": 4.832725698128343,
+   "mean_nohunger": 5.273784730583429,
+   "mean_diff": -0.4410590324550867,
+   "ci95": [
+    -0.9420160649809985,
+    0.07013888604318105
+   ],
+   "hunger_wins": 11,
+   "p_value": 0.10015,
+   "n": 32
+  },
+  "bites": {
+   "mean_hunger": 1.2172743069628875,
+   "mean_nohunger": 1.214322915300727,
+   "mean_diff": 0.0029513916621605775,
+   "ci95": [
+    -0.047484809874246504,
+    0.05364800844496721
+   ],
+   "hunger_wins": 18,
+   "p_value": 0.90775,
+   "n": 32
+  },
+  "full_over_hungry": {
+   "mean_hunger": 0.501885285000056,
+   "mean_nohunger": 0.5306858643807191,
+   "mean_diff": -0.02880057938066322,
+   "ci95": [
+    -0.12992688065383165,
+    0.06606118355781093
+   ],
+   "hunger_wins": 6,
+   "p_value": 0.5927,
+   "n": 11
+  },
+  "frozen_seeds_first_arm": 0,
+  "frozen_seeds_second_arm": 0
+ },
+ "note": "paired(): \"hunger\" = first arm (peptide), \"nohunger\" = second arm (no peptide)"
+}

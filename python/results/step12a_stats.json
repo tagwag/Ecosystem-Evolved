@@ -1,0 +1,55 @@
+{
+ "peptide_vs_none": {
+  "fitness": {
+   "mean_hunger": 3.8788742423057556,
+   "mean_nohunger": 4.040245941529671,
+   "mean_diff": -0.16137169922391575,
+   "ci95": [
+    -0.3548072619674105,
+    0.03205555646369851
+   ],
+   "hunger_wins": 11,
+   "p_value": 0.11515,
+   "n": 32
+  },
+  "food": {
+   "mean_hunger": 6.337413193037113,
+   "mean_nohunger": 6.798697903752327,
+   "mean_diff": -0.4612847107152144,
+   "ci95": [
+    -0.8786523385594287,
+    -0.037578128650785206
+   ],
+   "hunger_wins": 13,
+   "p_value": 0.0438,
+   "n": 32
+  },
+  "bites": {
+   "mean_hunger": 0.0,
+   "mean_nohunger": 0.0,
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "hunger_wins": 0,
+   "p_value": 1.0,
+   "n": 32
+  },
+  "full_over_hungry": {
+   "mean_hunger": 1.0249066195542103,
+   "mean_nohunger": 0.6410955219499915,
+   "mean_diff": 0.3838110976042188,
+   "ci95": [
+    0.24404684117838388,
+    0.5318368498106701
+   ],
+   "hunger_wins": 27,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "frozen_seeds_first_arm": 0,
+  "frozen_seeds_second_arm": 0
+ },
+ "note": "paired(): \"hunger\" = first arm (peptide), \"nohunger\" = second arm (no peptide)"
+}
