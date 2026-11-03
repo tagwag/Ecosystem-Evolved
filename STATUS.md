@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: overnight Step 11 + Step 12, finished 2026-11-03 04:51 MT) | | | | |
+| RUNNING | Step 13: Steps 8, 3f, 4 redone under clonal scoring | 2026-11-03 ~08:05 MT | run_step13.bat | step13_log.txt, step13{a,b,c}_log.txt | ~12:00 MT |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.

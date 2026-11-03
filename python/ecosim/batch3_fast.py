@@ -454,7 +454,14 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     gen.manual_seed(int(np.random.default_rng(list(seeds) + [G]).integers(2**62)))
     K = len(seeds)
     sim = FastSim(cfg, opts, conn, K * P, G, dev, graph, gen)
-    pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
+    from .worm3 import Opts3
+    grow = isinstance(opts, Opts3)                       # Step 4 growing brains use worm3's genome + mutations
+    if grow:
+        from . import worm3 as g3
+        names = g3.all_names(conn, opts)
+        pop = np.stack([g3.random_genomes(conn, P, r, opts) for r in rngs]).astype(np.float32)
+    else:
+        pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
     n_elite = max(2, int(P * base.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * K
     print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '
@@ -465,7 +472,7 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
         t0 = time.perf_counter()
         wseed = [int(r.integers(2**63)) for r in rngs]               # one world layout per seed per generation
         world_rngs = [np.random.default_rng(wseed[k]) for k in range(K) for _ in range(P)]
-        genomes = pop.reshape(K * P, 1, -1).repeat(G, 1)
+        genomes = pop.astype(np.float32).reshape(K * P, 1, -1).repeat(G, 1)
         fitw, statw = sim.run(genomes, world_rngs)
         fit = fitw.mean(1).reshape(K, P)                             # a brain's score = its group's mean
         t1 = time.perf_counter()
@@ -484,7 +491,9 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
             elites = pop[k, order]
             kids = [elites[i] for i in range(n_elite)]
             while len(kids) < P:
-                kids.append(w.mutate(elites[r.integers(n_elite)], conn, base, r, opts)[0])
+                parent = elites[r.integers(n_elite)]
+                kids.append(g3.mutate(parent.astype(np.float64), conn, base, r, opts, names)[0] if grow
+                            else w.mutate(parent, conn, base, r, opts)[0])
             new[k] = np.array(kids)
         pop = new
         if not quiet:

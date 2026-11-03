@@ -75,21 +75,22 @@ def evolve(cond, seeds=SEEDS, generations=GENS, out=OUT, device='cuda'):
         (d / 'history.json').write_text(json.dumps(hist[k], indent=1))
 
 
-def fair(cond, seeds, conn, dev, chunk=8):
+def fair(cond, seeds, conn, dev, chunk=8, out=None):
     """Each seed's best brain on the same 6 unseen worlds, 60 copies. Chunked: growing brains are big."""
     o, cfg = CONDITIONS[cond], Config()
+    src = out or OUT
     P, out = cfg.worm_population, {}
     for i in range(0, len(seeds), chunk):
         ss = seeds[i:i + chunk]
         pairs = [(s, wd) for s in ss for wd in WORLDS]
-        G = np.stack([np.repeat(np.load(OUT / f'{cond}_s{s}' / 'best_genome.npy')[None], P, 0) for s, _ in pairs])
+        G = np.stack([np.repeat(np.load(src / f'{cond}_s{s}' / 'best_genome.npy')[None], P, 0) for s, _ in pairs])
         gen = torch.Generator(device=dev); gen.manual_seed(777)
         sim = FastSim(cfg, o, conn, len(pairs), P, dev, False, gen)
         _, st = sim.run(G, [np.random.default_rng(wd) for _, wd in pairs])
         for s in ss:
             v = [st[j]['mean_food'] for j, (x, _) in enumerate(pairs) if x == s]
             out[s] = dict(food=float(np.mean(v)), food_sd=float(np.std(v)),
-                          neurons=int(g3.n_grown(np.load(OUT / f'{cond}_s{s}' / 'best_genome.npy'), conn, o)[0]))
+                          neurons=int(g3.n_grown(np.load(src / f'{cond}_s{s}' / 'best_genome.npy'), conn, o)[0]))
         del sim; torch.cuda.empty_cache() if dev.type == 'cuda' else None
     return out
 
