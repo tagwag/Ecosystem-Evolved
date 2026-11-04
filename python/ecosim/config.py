@@ -14,6 +14,8 @@ class Config:
     food_per_patch: int = 60
     patch_spread: float = 60.0      # std-dev of a patch, in world units
     food_value: float = 100.0       # energy per food (Constants.foodValue)
+    season_every: int = 0           # Step 16: food patches jump to new random spots every N ticks (0 = never);
+                                    # old food stays, new food grows at the new spots. GPU code only.
     food_regrow_per_tick: float = 0.6  # foods respawned per tick (fractional ok)
     eat_radius: float = 8.0
 
@@ -85,3 +87,14 @@ class Config:
     pher_gain: float = 3.0          # input strength (like the food sensors' starting gain)
     pher_sigma_cells: float = 3.0   # how far the scent spreads (grid cells of smell_cell units)
     pher_full: float = 5.0          # this many worms in one spot = scent level 1 (field is capped at 1)
+
+    # ---- obstacles (Step 18; off by default). GPU code only. Pillars, walls and caves (C-shaped walls with an
+    # opening) block worms and predators; predators can't see prey through them. A worm that bumps into one feels
+    # it with its nose-touch neurons (FLP, OLQ). Counts are per 1,000,000 square units (the normal world is ~2.07M),
+    # at least 1 of each per world.
+    obstacles: bool = False
+    obs_cell: float = 8.0           # obstacle grid resolution
+    obs_pillars: float = 3.0        # per 1M sq units; radius 25-50
+    obs_walls: float = 2.0          # per 1M sq units; 12 thick, 150-300 long, any angle
+    obs_caves: float = 1.5          # per 1M sq units; ring radius 60-90, 12 thick, 80-degree opening
+    nose_gain: float = 3.0

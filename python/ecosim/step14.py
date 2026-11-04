@@ -71,11 +71,12 @@ def start_brains(cond, seeds, conn, src=SRC12):
 
 
 def test(cond, genomes, conn, dev, worlds=TEST_WORLDS):
-    """Each genome as 60 clones on the fixed test worlds. Returns arrays (n_genomes,): fitness, food, bites, nn."""
+    """Each genome as 60 clones on the fixed test worlds. Returns arrays (n_genomes,): fitness, food, bites, nn,
+    wall (fraction of time near an obstacle; nan without obstacles)."""
     from .batch3_fast import FastSim
     from .config import Config
     opts, cfg = CONDITIONS[cond], Config(**CFG_OVERRIDES[cond])
-    P, out = cfg.worm_population, {k: [] for k in ('fitness', 'food', 'bites', 'nn')}
+    P, out = cfg.worm_population, {k: [] for k in ('fitness', 'food', 'bites', 'nn', 'wall')}
     for i in range(0, len(genomes), 32):                     # chunks keep GPU memory small
         gs = genomes[i:i + 32]
         pairs = [(j, wd) for j in range(len(gs)) for wd in worlds]
@@ -84,7 +85,7 @@ def test(cond, genomes, conn, dev, worlds=TEST_WORLDS):
         fit, st = FastSim(cfg, opts, conn, len(pairs), P, dev, False, gen).run(G, [np.random.default_rng(w) for _, w in pairs])
         nw = len(worlds)
         out['fitness'] += fit.mean(1).reshape(len(gs), nw).mean(1).tolist()
-        for k, key in (('food', 'mean_food'), ('bites', 'bites'), ('nn', 'nn_dist')):
+        for k, key in (('food', 'mean_food'), ('bites', 'bites'), ('nn', 'nn_dist'), ('wall', 'near_wall')):
             out[k] += np.array([x.get(key, np.nan) for x in st]).reshape(len(gs), nw).mean(1).tolist()
     return {k: np.array(v) for k, v in out.items()}
 

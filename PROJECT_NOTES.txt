@@ -102,6 +102,12 @@ Step 15 lineage tournament (b14_knock, 12 founders x 5, 32 tournaments x 300 gen
   and level with their own founder (-0.11, p=0.26). Lesson: lineages fix almost at once; the world's skill ceiling
   (~3.2-3.5) caps everyone; one test per brain isn't enough to rank brains.
 
+Steps 16-18 (queued 2026-11-04): 16 = 16 best Step 14 brains (ranked on 18 worlds) evolved 150 gens in w_base /
+  w_seasons (patches jump every 300 ticks) / w_fastpred (predators 3.5 speed, 200 range) / w_digest (Step 8c rules),
+  re-tested in w_base to see if the plateau breaks. 17 = Step 15 champions, same worlds, 100 gens: recovery past
+  the best founder? 18 = herd predators + obstacles (pillars, walls, caves; block movement + predator sight; bumps
+  -> nose-touch FLP/OLQ) vs ordinary predators + obstacles vs no obstacles: does hiding evolve?
+
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
   start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a

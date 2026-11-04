@@ -43,6 +43,34 @@ from .world import World
 
 OUT = Path('runs/step3_fast')
 BLOCK = 10           # ticks per graph replay; must equal cfg.smell_update_every
+
+
+def make_obstacles(cfg, rng):
+    """Step 18: random pillars, walls and caves rasterised on an obs_cell grid. Returns bool (gw, gh), True = solid."""
+    c = cfg.obs_cell
+    gw, gh = int(np.ceil(cfg.width / c)), int(np.ceil(cfg.height / c))
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * c, (np.arange(gh) + 0.5) * c, indexing='ij')
+    solid = np.zeros((gw, gh), bool)
+    n = lambda d: max(1, int(round(d * cfg.width * cfg.height / 1e6)))
+
+    def dxy(cx, cy):                          # wrapped offsets (the world is a torus)
+        dx = (X - cx + cfg.width / 2) % cfg.width - cfg.width / 2
+        dy = (Y - cy + cfg.height / 2) % cfg.height - cfg.height / 2
+        return dx, dy
+    for _ in range(n(cfg.obs_pillars)):
+        dx, dy = dxy(rng.uniform(0, cfg.width), rng.uniform(0, cfg.height))
+        solid |= dx ** 2 + dy ** 2 < rng.uniform(25, 50) ** 2
+    for _ in range(n(cfg.obs_walls)):
+        dx, dy = dxy(rng.uniform(0, cfg.width), rng.uniform(0, cfg.height))
+        a, L = rng.uniform(0, np.pi), rng.uniform(150, 300)
+        along, across = dx * np.cos(a) + dy * np.sin(a), -dx * np.sin(a) + dy * np.cos(a)
+        solid |= (np.abs(along) < L / 2) & (np.abs(across) < 6)
+    for _ in range(n(cfg.obs_caves)):
+        dx, dy = dxy(rng.uniform(0, cfg.width), rng.uniform(0, cfg.height))
+        R, open_at = rng.uniform(60, 90), rng.uniform(-np.pi, np.pi)
+        ang = np.angle(np.exp(1j * (np.arctan2(dy, dx) - open_at)))      # angle from the opening's centre
+        solid |= (np.abs(np.hypot(dx, dy) - R) < 6) & (np.abs(ang) > np.radians(40))
+    return solid
 FULL, HUNGRY = 0.8, 0.4   # fractions of the gut cap, as in step3_analyze
 
 
@@ -50,6 +78,7 @@ class FastSim:
     def __init__(self, cfg, opts, conn, K, P, dev, use_graph, gen, record=()):
         """record: indices of worlds (0..K-1) to record every tick for the viewer (ecosim/viewer.py)."""
         assert cfg.smell_update_every == BLOCK and cfg.ticks_per_generation % BLOCK == 0
+        assert cfg.season_every % BLOCK == 0
         self.cfg, self.opts, self.conn, self.K, self.P, self.dev, self.gen = cfg, opts, conn, K, P, dev, gen
         self.use_graph = use_graph and dev.type == 'cuda'
         self.graph = None
@@ -84,6 +113,14 @@ class FastSim:
         self.ppos, self.phead, self.pcool = z(K, Q, 2), z(K, Q), z(K, Q)
         self.touchF, self.touchB, self.bites = z(K, P), z(K, P), z(K, P)
         self.stomach = z(K, P)                 # Step 8c digestion: food eaten but not yet usable energy
+        # Step 18 obstacles: solid grid, 'near a wall' grid (solid dilated by 2 cells), last tick's bumps
+        self.obs_on = cfg.obstacles
+        self.ogw, self.ogh = int(math.ceil(cfg.width / cfg.obs_cell)), int(math.ceil(cfg.height / cfg.obs_cell))
+        og = (K, self.ogw * self.ogh) if self.obs_on else (K, 1)
+        self.solid = torch.zeros(og, dtype=torch.bool, device=dev)
+        self.nearw = torch.zeros(og, dtype=torch.bool, device=dev)
+        self.bump = z(K, P)
+        self.wall = z(K, 2)                    # sum of living worms near a wall, count of living worms
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
         T = cfg.ticks_per_generation
         acc, n = 0.0, []
@@ -120,11 +157,32 @@ class FastSim:
         cfg, opts, f, K, P = self.cfg, self.opts, self.f, self.K, self.P
         self.brain.load(genomes.reshape(K * P, -1))
         ws = [World(cfg, r) for r in rngs]                      # same layouts as step3 for the same rng
+        if self.obs_on:
+            sol = np.stack([make_obstacles(cfg, np.random.default_rng(r.integers(2**62))) for r in rngs])
+            near = sol.copy()
+            for sx in (-2, -1, 0, 1, 2):
+                for sy in (-2, -1, 0, 1, 2):
+                    near |= np.roll(np.roll(sol, sx, 1), sy, 2)
+            self.solid.copy_(torch.as_tensor(sol.reshape(K, -1), device=self.dev))
+            self.nearw.copy_(torch.as_tensor(near.reshape(K, -1), device=self.dev))
+            cell = lambda p: (np.clip((p[..., 0] / cfg.obs_cell).astype(int), 0, self.ogw - 1),
+                              np.clip((p[..., 1] / cfg.obs_cell).astype(int), 0, self.ogh - 1))
+            for k, x in enumerate(ws):                          # no food inside rock
+                gx, gy = cell(x.food)
+                x.food_alive = x.food_alive & ~sol[k][gx, gy]
         self.centers.copy_(torch.as_tensor(np.stack([x.patch_centers for x in ws]), **f))
         self.food.copy_(torch.as_tensor(np.stack([x.food for x in ws]), **f))
         self.falive.copy_(torch.as_tensor(np.stack([x.food_alive for x in ws]), device=self.dev))
-        self.pos.copy_(torch.as_tensor(np.stack([np.column_stack([r.uniform(0, cfg.width, P), r.uniform(0, cfg.height, P)])
-                                                 for r in rngs]), **f))
+        pos0 = np.stack([np.column_stack([r.uniform(0, cfg.width, P), r.uniform(0, cfg.height, P)]) for r in rngs])
+        if self.obs_on:                                         # worms don't start inside rock
+            for k, r in enumerate(rngs):
+                for _ in range(50):
+                    gx, gy = cell(pos0[k])
+                    bad = sol[k][gx, gy]
+                    if not bad.any():
+                        break
+                    pos0[k][bad] = np.column_stack([r.uniform(0, cfg.width, bad.sum()), r.uniform(0, cfg.height, bad.sum())])
+        self.pos.copy_(torch.as_tensor(pos0, **f))
         self.heading.copy_(torch.as_tensor(np.stack([r.uniform(0, TAU, P) for r in rngs]), **f))
         self.size.fill_(cfg.start_size); self.energy.fill_(cfg.start_energy)
         self.H.copy_(torch.clamp(1 - self.energy / self.gut_cap, 0, 1))
@@ -132,6 +190,7 @@ class FastSim:
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
+        self.bump.zero_(); self.wall.zero_()
         if self.Q:
             self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
             self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
@@ -142,6 +201,14 @@ class FastSim:
             self.pprev.copy_(self._smell_at(self.pos, self.pmap))
 
     # ------------------------------------------------------------------ pieces
+    def _solid_at(self, p, grid=None):
+        """Obstacle lookup for points p (K, ..., 2) -> bool (K, ...)."""
+        cfg = self.cfg
+        gx = torch.clamp((p[..., 0] / cfg.obs_cell).long(), 0, self.ogw - 1)
+        gy = torch.clamp((p[..., 1] / cfg.obs_cell).long(), 0, self.ogh - 1)
+        idx = (gx * self.ogh + gy).reshape(self.K, -1)
+        return (self.solid if grid is None else grid).gather(1, idx).view(p.shape[:-1])
+
     def _rand(self, *s):
         return torch.rand(*s, generator=self.gen, **self.f)
 
@@ -178,6 +245,7 @@ class FastSim:
         size, energy, H, alive = self.size, self.energy, self.H, self.alive
         eaten, lifetime, esum, food, falive, prev = self.eaten, self.lifetime, self.esum, self.food, self.falive, self.prev
         ppos, phead, pcool, touchF, touchB, bites = self.ppos, self.phead, self.pcool, self.touchF, self.touchB, self.bites
+        bump, OBS = self.bump, self.obs_on
         stomach, DIG = self.stomach, cfg.digestion
         Q, half = self.Q, self.wh / 2
         inf = torch.full((), float('inf'), **self.f)
@@ -189,6 +257,9 @@ class FastSim:
         r2, BIG = cfg.eat_radius ** 2, K * Fd + 1
         zero = torch.zeros((), **self.f)
         HERD = cfg.pred_loner > 0 or cfg.pred_confuse > 0
+        if cfg.season_every > 0:                 # Step 16 seasons: patches move every season_every ticks
+            mv = ((self.bi * BLOCK) % cfg.season_every == 0) & (self.bi > 0)
+            self.centers.copy_(torch.where(mv, self._rand(K, self.C, 2) * self.wh, self.centers))
         for j in range(BLOCK):
             smell = self._smell_at(pos)
             d = torch.clamp((smell - prev) * 20.0, -1, 1)
@@ -202,13 +273,20 @@ class FastSim:
                 pl = self._smell_at(pos, self.pmap)
                 pher = (pl.view(-1), torch.clamp((pl - pprev) * 20.0, -1, 1).view(-1))
                 pprev = pl
-            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher)
+            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher,
+                                                               bump.view(-1) if OBS else None)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
             speed = speed_frac * torch.clamp(cfg.speed_slope * size + cfg.speed_max, cfg.speed_min, cfg.speed_max)
             step = torch.stack([torch.cos(heading), torch.sin(heading)], -1) * speed[..., None]
-            pos = torch.where(alive[..., None], torch.remainder(pos + step, self.wh), pos)
+            npos = torch.remainder(pos + step, self.wh)
+            if OBS:                                  # rock blocks the move; the worm feels the bump next tick
+                blk = self._solid_at(npos) & ~self._solid_at(pos)     # (a worm stuck inside rock may leave)
+                bump = (alive & blk).float()
+                pos = torch.where((alive & ~blk)[..., None], npos, pos)
+            else:
+                pos = torch.where(alive[..., None], npos, pos)
             energy = energy - torch.where(alive, cfg.base_cost + cfg.move_cost * speed, zero)
             # nearest-neighbour distances (clumping measure) and neighbour counts (Step 14b herd predators)
             dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
@@ -225,6 +303,10 @@ class FastSim:
                     dsee = torch.where(seen, dist2, inf)
                 else:
                     dsee = torch.where(dist2 < cfg.pred_sense ** 2, dist2, inf)
+                if OBS:                          # no seeing through rock: sample 6 points along each sight line
+                    fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **self.f)
+                    pts = torch.remainder(ppos[:, :, None, None, :] + delta[:, :, :, None, :] * fr[:, None], self.wh)
+                    dsee = torch.where(self._solid_at(pts).any(-1), inf, dsee)
                 if HERD and cfg.pred_loner > 0:  # crowded prey look farther away -> loners are chased first
                     dsee = dsee * ((1 + cfg.pred_loner * nbr) ** 2)[:, None, :]
                 nd, ni = dsee.min(2)                                                             # nearest noticed prey
@@ -244,7 +326,13 @@ class FastSim:
                 bites = bites + (dmg > 0).float()
                 pcool = torch.where(bite, torch.full_like(pcool, float(cfg.pred_cooldown)), torch.clamp(pcool - 1, min=0))
                 pspd = torch.where(pcool > 0, zero, torch.full_like(pcool, cfg.pred_speed))
-                ppos = torch.remainder(ppos + torch.stack([torch.cos(phead), torch.sin(phead)], -1) * pspd[..., None], self.wh)
+                npp = torch.remainder(ppos + torch.stack([torch.cos(phead), torch.sin(phead)], -1) * pspd[..., None], self.wh)
+                if OBS:                          # predators can't pass rock either: stop and turn somewhere new
+                    pb = self._solid_at(npp) & ~self._solid_at(ppos)
+                    ppos = torch.where(pb[..., None], ppos, npp)
+                    phead = torch.where(pb, phead + (self._rand(K, Q) + 0.5) * math.pi, phead)
+                else:
+                    ppos = npp
                 # touch felt by prey next tick: closest predator, front or back of the body
                 md, mq = dist2.min(1)                                                            # (K,P)
                 dist = torch.sqrt(torch.clamp(md, max=1e12))
@@ -290,6 +378,9 @@ class FastSim:
             nnd = torch.sqrt(torch.where(both, nd2, inf).min(2).values)
             okn = torch.isfinite(nnd)
             self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
+            if OBS:
+                nw = self._solid_at(pos, self.nearw) & alive
+                self.wall += torch.stack([nw.float().sum(1), alive.float().sum(1)], 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
@@ -307,6 +398,8 @@ class FastSim:
             cen = self.centers.gather(1, ci[..., None].expand(-1, -1, 2))
             p = cen + torch.randn(K, self.nmax, 2, generator=self.gen, **self.f) * cfg.patch_spread
             p = torch.minimum(torch.clamp(p, min=0), self.wh - 1)
+            if OBS:                                  # food that would grow inside rock doesn't
+                ok = ok & ~self._solid_at(p)
             old = food.gather(1, idx[..., None].expand(-1, -1, 2))
             food = food.scatter(1, idx[..., None].expand(-1, -1, 2), torch.where(ok[..., None], p, old))
             falive = falive.scatter(1, idx, falive.gather(1, idx) | ok)
@@ -322,7 +415,7 @@ class FastSim:
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
                           ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
                           ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites),
-                          ('stomach', stomach), ('pprev', pprev)):
+                          ('stomach', stomach), ('pprev', pprev), ('bump', bump)):
             getattr(self, name).copy_(val)
         self.bi.add_(1)
 
@@ -355,15 +448,17 @@ class FastSim:
             fit = torch.where(self.alive, self.energy, torch.zeros_like(self.energy)) / cfg.food_value + self.lifetime / T
         else:                                      # 'food': food eaten + time survived (Steps 1-2, 4)
             fit = self.eaten + self.lifetime / T
-        fit, eaten, esum, alive, sat, bites, nn = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive, self.sat,
-                                                                            self.bites, self.nn))
+        fit, eaten, esum, alive, sat, bites, nn, wall = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive,
+                                                                                  self.sat, self.bites, self.nn, self.wall))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
                       fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
                       speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
                       bites=float(bites[k].mean()),
-                      nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0))) for k in range(self.K)]
+                      nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
+                      near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'))
+                 for k in range(self.K)]
         return fit.astype(np.float64), stats
 
     def recording(self):

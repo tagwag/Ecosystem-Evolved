@@ -5,7 +5,8 @@
                  neurons ("slots") + up to 150 added synapses. Every brain has the same size (empty slots
                  are zeros), which is what lets the GPU run them all in one batch.
 
-Shared extras (any brain): starvation alarm into ASH, touch into ALM/AVM (front) and PLM/PVM (back).
+Shared extras (any brain): starvation alarm into ASH, touch into ALM/AVM (front) and PLM/PVM (back),
+worm scent into ASK/ADL, obstacle bumps into the nose-touch neurons FLP/OLQ (Step 18).
 step() takes and returns the brain's state as a dict of tensors, so the engine can record it in a CUDA graph.
 """
 import numpy as np
@@ -33,8 +34,10 @@ class _Base:
         self.pher_gain = cfg.pher_gain if cfg.pheromone else 0.0          # Step 11 worm scent
         self.p_lvl = torch.as_tensor(conn.ids(['ASKL', 'ASKR']), device=dev)
         self.p_up, self.p_down = (torch.as_tensor(conn.ids([n]), device=dev) for n in ('ADLL', 'ADLR'))
+        self.nose_gain = cfg.nose_gain if cfg.obstacles else 0.0      # Step 18 obstacles: nose-touch neurons
+        self.nose = torch.as_tensor(conn.ids(['FLPL', 'FLPR', 'OLQDL', 'OLQDR', 'OLQVL', 'OLQVR']), device=dev)
 
-    def _extras(self, I, alarm, touch, pher=None):
+    def _extras(self, I, alarm, touch, pher=None, nose=None):
         if alarm is not None and self.ash is not None:
             I[:, self.ash] += (self.ash_gain * alarm)[:, None]
         if touch is not None and self.touch_gain > 0:
@@ -45,6 +48,8 @@ class _Base:
             I[:, self.p_lvl] += (g * pher[0])[:, None]
             I[:, self.p_up] += (g * torch.clamp(pher[1], min=0))[:, None]
             I[:, self.p_down] += (g * torch.clamp(-pher[1], min=0))[:, None]
+        if nose is not None and self.nose_gain > 0:          # Step 18: bumped into an obstacle -> nose touch
+            I[:, self.nose] += (self.nose_gain * nose)[:, None]
         return I
 
     @staticmethod
@@ -87,7 +92,7 @@ class Worm2Brain(_Base):
             self.rec.copy_(g[:, L.rec] * opts.receptor_scale)
         self.v.zero_(); self.rbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None):
         v, rbar = s['v'], s['rbar']
         r = torch.tanh(torch.clamp(v, min=0))
         I = (r[:, self.pre] * self.vals) @ self.M                       # chemical synapses (sparse as a matmul)
@@ -98,7 +103,7 @@ class Worm2Brain(_Base):
         I[:, self.s_lvl] += (self.g3[:, 2] * smell)[:, None]
         if self.rec is not None:
             I = I + H[:, None] * self.rec
-        I = self._extras(I, alarm, touch, pher)
+        I = self._extras(I, alarm, touch, pher, nose)
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
@@ -169,7 +174,7 @@ class GrowBrain(_Base):
                                                 np.isin(src, self.s_lvl_np)], 1), **f))
         self.v.zero_(); self.rbar.zero_(); self.sbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None):
         v, rbar, sbar, N = s['v'], s['rbar'], s['sbar'], self.N
         r = torch.tanh(torch.clamp(v, min=0))
         I = torch.bmm(r.unsqueeze(1), self.W).squeeze(1)
@@ -182,7 +187,7 @@ class GrowBrain(_Base):
         I[:, self.s_off] += off[:, None]
         I[:, self.s_lvl] += lvl[:, None]
         I[:, N:] += self.m3[:, 0] * on[:, None] + self.m3[:, 1] * off[:, None] + self.m3[:, 2] * lvl[:, None]
-        I = self._extras(I, alarm, touch, pher)
+        I = self._extras(I, alarm, touch, pher, nose)
         v = v + self.k_dt * (-v + I)
         r = torch.tanh(torch.clamp(v, min=0))
         x, xs = r[:, self.rd], r[:, N:]
