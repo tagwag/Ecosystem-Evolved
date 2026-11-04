@@ -83,6 +83,12 @@ Step 13 (2026-11-03, GPU, clonal-group scoring, 60 clones x 6 fixed worlds; resu
     alarm (4.07). Fits "hunger overrides aversion" (peptide blunts the alarm), but one test with 4 comparisons.
   13c (Step 4, 16 seeds x 60 gens): growth food 19.00 vs 18.91 (+0.09, p=0.23); grown 1-8 neurons. Still neutral.
 
+Step 14 (queued 2026-11-03, ecosim/step14.py): 14a peptide baggage (Step 12a brains moved to scarce food +
+  predators; peptide kept / receptors frozen / peptide knocked out / never had it). 14b selfish-herd predators
+  (config pred_loner: chase loners first; pred_confuse: bites in a crowd miss) with/without worm scent.
+Step 15 (queued, ecosim/step15.py): lineage tournament. Top 12 seeds of the Step 14 arm with the biggest evolution
+  gain, 5 brains each in one population, 300 gens x 32 tournaments, lineage tags tracked: who takes over, skill or luck?
+
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
   start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a

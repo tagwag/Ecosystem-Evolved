@@ -50,6 +50,7 @@ class Opts:
     receptor_scale: float = 2.0
     ash_alarm: float = 0.0        # starvation alarm into ASH (nociceptor) neurons; 0 = off. GPU code only (batch3_fast)
     ash_start: float = 0.2        # alarm starts below this fraction of gut_cap and rises linearly to 1 at zero energy
+    rec_mutate: bool = True       # Step 14a: False = hunger-receptor genes never mutate (frozen at their start values)
 
 
 def readout_names(conn: Connectome, opts: Opts):
@@ -222,7 +223,7 @@ def mutate(parent, conn, cfg, rng, opts: Opts):
     m = rng.random(len(head)) < min(0.1, 8 / len(head))
     if m.any():
         child[head[m]] += rng.normal(0, cfg.mutation_sigma, m.sum()); ev.append(('gain', int(m.sum())))
-    if opts.hunger:
+    if opts.hunger and getattr(opts, 'rec_mutate', True):
         rec = np.arange(L.rec.start, L.rec.stop)
         m = rng.random(len(rec)) < 8 / len(rec)
         if m.any():

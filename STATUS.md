@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: Step 13, finished 2026-11-03 21:25 MT) | | | | |
+| RUNNING | Step 14a peptide baggage, 14b selfish-herd predators, then Step 15 lineage tournament | 2026-11-03 ~23:45 MT | run_step14_15.bat | step14_log.txt, step14{a,b}_log.txt, step15_log.txt | ~06:00 MT Nov 4 |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.

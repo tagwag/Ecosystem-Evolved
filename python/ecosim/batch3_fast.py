@@ -188,6 +188,7 @@ class FastSim:
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
         r2, BIG = cfg.eat_radius ** 2, K * Fd + 1
         zero = torch.zeros((), **self.f)
+        HERD = cfg.pred_loner > 0 or cfg.pred_confuse > 0
         for j in range(BLOCK):
             smell = self._smell_at(pos)
             d = torch.clamp((smell - prev) * 20.0, -1, 1)
@@ -209,7 +210,13 @@ class FastSim:
             step = torch.stack([torch.cos(heading), torch.sin(heading)], -1) * speed[..., None]
             pos = torch.where(alive[..., None], torch.remainder(pos + step, self.wh), pos)
             energy = energy - torch.where(alive, cfg.base_cost + cfg.move_cost * speed, zero)
+            # nearest-neighbour distances (clumping measure) and neighbour counts (Step 14b herd predators)
+            dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
+            nd2 = (dd ** 2).sum(-1)
+            both = alive[:, :, None] & alive[:, None, :] & ~torch.eye(P, dtype=torch.bool, device=dev)[None]
             if Q:   # predators: chase nearest living prey in range, bite on contact, pause after a bite
+                if HERD:
+                    nbr = (both & (nd2 < cfg.herd_radius ** 2)).float().sum(2)                    # (K,P)
                 delta = torch.remainder(pos[:, None] - ppos[:, :, None] + half, self.wh) - half     # (K,Q,P,2), wraps
                 dist2 = torch.where(alive[:, None, :], (delta ** 2).sum(-1), inf)
                 if cfg.pred_sense_still >= 0:    # Step 8b: moving prey are noticed from farther away
@@ -218,6 +225,8 @@ class FastSim:
                     dsee = torch.where(seen, dist2, inf)
                 else:
                     dsee = torch.where(dist2 < cfg.pred_sense ** 2, dist2, inf)
+                if HERD and cfg.pred_loner > 0:  # crowded prey look farther away -> loners are chased first
+                    dsee = dsee * ((1 + cfg.pred_loner * nbr) ** 2)[:, None, :]
                 nd, ni = dsee.min(2)                                                             # nearest noticed prey
                 bd, bi_ = dist2.min(2)                                                           # nearest prey at all
                 ready = pcool <= 0
@@ -226,7 +235,11 @@ class FastSim:
                 phead = torch.where(hunt, torch.atan2(tv[..., 1], tv[..., 0]),
                                     phead + (self._rand(K, Q) - 0.5) * 0.6)
                 bite = ready & (bd < cfg.pred_bite ** 2)                                         # contact bites anyone
-                dmg = torch.zeros(K, P, **self.f).scatter_add(1, bi_, bite.float() * cfg.pred_damage)
+                land = bite
+                if HERD and cfg.pred_confuse > 0:  # confusion effect: bites on prey in a crowd often miss
+                    pn = nbr.gather(1, bi_)                                                          # (K,Q)
+                    land = bite & (self._rand(K, Q) * (1 + cfg.pred_confuse * pn) < 1)
+                dmg = torch.zeros(K, P, **self.f).scatter_add(1, bi_, land.float() * cfg.pred_damage)
                 energy = energy - dmg * alive
                 bites = bites + (dmg > 0).float()
                 pcool = torch.where(bite, torch.full_like(pcool, float(cfg.pred_cooldown)), torch.clamp(pcool - 1, min=0))
@@ -274,9 +287,6 @@ class FastSim:
             fullness = (energy + stomach) if DIG else energy
             H = torch.clamp(H + self.h_rate * (torch.clamp(1 - fullness / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
             # clumping: distance from each living worm to its nearest living neighbour (wraps at edges)
-            dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
-            nd2 = (dd ** 2).sum(-1)
-            both = alive[:, :, None] & alive[:, None, :] & ~torch.eye(P, dtype=torch.bool, device=dev)[None]
             nnd = torch.sqrt(torch.where(both, nd2, inf).min(2).values)
             okn = torch.isfinite(nnd)
             self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
@@ -362,7 +372,7 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0, clonal=0):
+           eval_worlds=1, checkpoint_every=0, clonal=0, init=None):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -371,7 +381,9 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
             that is a G / population-sized copy of the normal one (area, food patches, regrowth scaled), so densities
             match the normal world. All groups of a seed get the
             SAME world each generation. Stops evolution from rewarding stealing food from your own kind
-            (the tragedy of the commons found in Step 10), and matches the clone-based fair test."""
+            (the tragedy of the commons found in Step 10), and matches the clone-based fair test.
+    init: {seed: genome} = start each seed's population from that brain (it + mutants of it) instead of random
+          brains (clonal mode only; Step 14a)."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -380,7 +392,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     gen.manual_seed(int(np.random.default_rng(list(seeds)).integers(2**62)))
     P = cfg.worm_population
     if clonal:
-        return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal)
+        return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -437,7 +449,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     return hist, times
 
 
-def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G):
+def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None):
     opts, conn = CONDITIONS[cond], Connectome()
     base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     P = base.worm_population
@@ -462,6 +474,10 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
         pop = np.stack([g3.random_genomes(conn, P, r, opts) for r in rngs]).astype(np.float32)
     else:
         pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
+    if init is not None:                                 # start from given brains: the brain itself + P-1 mutants
+        assert not grow
+        pop = np.stack([np.stack([init[s]] + [w.mutate(init[s], conn, base, r, opts)[0] for _ in range(P - 1)])
+                        for s, r in zip(seeds, rngs)])
     n_elite = max(2, int(P * base.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * K
     print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '

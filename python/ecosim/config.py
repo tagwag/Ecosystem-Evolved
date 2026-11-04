@@ -65,6 +65,11 @@ class Config:
     pred_cooldown: int = 60         # ticks a predator stops after a bite (handling time)
     touch_radius: float = 40.0      # prey touch range
     touch_gain: float = 3.0         # touch input strength; 0 = prey can't feel predators
+    # Step 14b selfish-herd predators (0 = off, as before). nbr = living worms within herd_radius of a prey.
+    herd_radius: float = 40.0
+    pred_loner: float = 0.0         # targeting: prey counts as (1 + pred_loner * nbr) x farther away -> loners chased first
+    pred_confuse: float = 0.0       # confusion effect: a bite lands with chance 1 / (1 + pred_confuse * nbr);
+                                    # a missed bite still costs the predator its handling pause
 
     # ---- digestion (Step 8c; off by default). GPU code only (batch3_fast). Eaten food goes into the gut first and
     # becomes usable energy over time: fastest when still, slower when moving (real worms rest after meals).
