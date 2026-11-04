@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Step 14a peptide baggage, 14b selfish-herd predators, then Step 15 lineage tournament | 2026-11-03 ~23:45 MT | run_step14_15.bat | step14_log.txt, step14{a,b}_log.txt, step15_log.txt | ~06:00 MT Nov 4 |
+| idle | (last: Steps 14-15, finished 2026-11-04 05:08 MT) | | | | |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
@@ -22,6 +22,9 @@ Before launching anything on the GPU, check this section. If a run is listed as 
   full without it. Use clonal scoring for new experiments.
 - Step 13: old nulls redone under clonal scoring, still null: touch +0.14 (p=0.12), growth neutral (p=0.23).
   Alarm hint only without the peptide (+0.20, p=0.068); peptide hurts when the alarm is on (-0.25, p=0.0085).
+- Step 14a: peptide is entrenched (knockout -0.70) but not baggage: knocked-out brains recover in 10 gens.
+- Step 14b: selfish-herd predators -> weak clumping (-3.5 vs plain, p=0.051). Step 15: lineage takeover in ~7 gens;
+  champions plateau ~3.2, below best founder.
 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat
