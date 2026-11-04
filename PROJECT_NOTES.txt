@@ -74,6 +74,14 @@ Step 6b (12 seeds x 100 gens): curriculum hint GONE (p=0.98) = was noise. Memory
 Step 7 randomness check (seeded PCG64 x6 vs OS entropy x6, 40 gens): NO difference (all p >= 0.15). No RNG bug.
 BIG PATTERN Steps 3-6: every added brain feature is null because the world doesn't demand it. Make the WORLD
   harder next (costly decoy, bigger puzzle payoff, predator) before adding more brain features.
+Step 13 (2026-11-03, GPU, clonal-group scoring, 60 clones x 6 fixed worlds; results/step13{a,b,c}_stats.json):
+  old nulls redone. Clonal scoring did NOT rescue them.
+  13a (Step 8, 32 seeds x 100 gens): touch vs no touch fitness 2.73 vs 2.59 (+0.14, p=0.12, 21/32), bites 1.10 vs
+    1.19 (p=0.11) -> leans helpful, not significant. Predators still cost -1.15 (p<0.0001, 0/32).
+  13b (Step 3f, 32 seeds x 60 gens, 2x2): alarm with peptide 0.00 (p=0.99); alarm without peptide +0.20 (p=0.068,
+    hint). Peptide without alarm -0.05 (p=0.63); peptide WITH alarm -0.25 (p=0.0085, 10/32). Best arm: no peptide +
+    alarm (4.07). Fits "hunger overrides aversion" (peptide blunts the alarm), but one test with 4 comparisons.
+  13c (Step 4, 16 seeds x 60 gens): growth food 19.00 vs 18.91 (+0.09, p=0.23); grown 1-8 neurons. Still neutral.
 
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,

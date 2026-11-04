@@ -1,0 +1,1 @@
+{"food": {"mean_hunger": 19.00243055820465, "mean_nohunger": 18.914409736792248, "mean_diff": 0.0880208214124043, "ci95": [-0.04340267330407987, 0.2223957583308227], "hunger_wins": 10, "p_value": 0.2289, "n": 16}, "grown_neurons_best": [1, 2, 2, 2, 2, 2, 3, 4, 4, 4, 5, 6, 6, 6, 7, 8], "note": "paired(): \"hunger\" = first argument, \"nohunger\" = second (field names reused)"}

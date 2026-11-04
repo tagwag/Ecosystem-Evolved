@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Step 13: Steps 8, 3f, 4 redone under clonal scoring | 2026-11-03 ~08:05 MT | run_step13.bat | step13_log.txt, step13{a,b,c}_log.txt | ~12:00 MT |
+| idle | (last: Step 13, finished 2026-11-03 21:25 MT) | | | | |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
@@ -20,6 +20,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 - Step 11: under clonal scoring skill rises to gen ~150 and holds; worm scent gave no herding.
 - Step 12: under clonal scoring the 8c freeze trap disappears; the peptide stays neutral-to-harmful; brains slow when
   full without it. Use clonal scoring for new experiments.
+- Step 13: old nulls redone under clonal scoring, still null: touch +0.14 (p=0.12), growth neutral (p=0.23).
+  Alarm hint only without the peptide (+0.20, p=0.068); peptide hurts when the alarm is on (-0.25, p=0.0085).
 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat
