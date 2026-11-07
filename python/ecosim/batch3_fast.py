@@ -121,6 +121,8 @@ class FastSim:
         self.nearw = torch.zeros(og, dtype=torch.bool, device=dev)
         self.bump = z(K, P)
         self.wall = z(K, 2)                    # sum of living worms near a wall, count of living worms
+        self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
+                                                                            # no CPU->GPU copies inside a CUDA graph)
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
         T = cfg.ticks_per_generation
         acc, n = 0.0, []
@@ -304,7 +306,7 @@ class FastSim:
                 else:
                     dsee = torch.where(dist2 < cfg.pred_sense ** 2, dist2, inf)
                 if OBS:                          # no seeing through rock: sample 6 points along each sight line
-                    fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **self.f)
+                    fr = self.los_fr
                     pts = torch.remainder(ppos[:, :, None, None, :] + delta[:, :, :, None, :] * fr[:, None], self.wh)
                     dsee = torch.where(self._solid_at(pts).any(-1), inf, dsee)
                 if HERD and cfg.pred_loner > 0:  # crowded prey look farther away -> loners are chased first
