@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Steps 16 (peaks in new worlds), 17 (champions in new worlds), 18 (herd + obstacles) | 2026-11-07 ~07:10 MT | run_step16_18.bat | step16_log.txt, step16_run_log.txt, step17_log.txt, step18_log.txt | ~15:30 MT |
+| RUNNING | Steps 16 (peaks in new worlds), 17 (champions in new worlds), 18 (herd + obstacles) | 2026-11-07 ~14:33 MT | run_step16_18.bat | step16_log.txt, step16_run_log.txt, step17_log.txt, step18_log.txt | ~22:30 MT |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
