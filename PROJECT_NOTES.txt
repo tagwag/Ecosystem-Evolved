@@ -138,6 +138,14 @@ Sweeps (built 2026-11-08, not run yet): config-file factor screening = stage 1 o
   Step 20 (evolvable mutation rates, repair cost, mutation logging) planned 2026-11-08 but only the FastSim
   wcost hook exists (per-world extra energy/tick, 0 by default). Not built further yet.
 
+GOAL (user, 2026-11-08): a mix of the earlier aim (pin down, reproducibly, how adding senses/neurons changes
+  behaviour) and the newer one (a method that makes evolution keep going): build the simplest measurable setup to
+  find formulas for how the environment drives the evolution of specific traits (senses, intelligence, escape...),
+  i.e. a pre-generated world the scientist controls -> how the top brains respond, and brain interventions ->
+  how behaviour changes. Tool: the test bench (python/ecosim/bench, python/experiments/README.md): formula worlds,
+  world + brain dials, evolve/behave modes, factorial + quadratic fits, traits with breeder's equation R = h^2 S,
+  intelligence = skill on unseen kinds of world, and screen -> zoom -> Gaussian-process campaigns.
+
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
   start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a

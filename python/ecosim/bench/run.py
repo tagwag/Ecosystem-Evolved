@@ -25,6 +25,7 @@ from . import dials as D
 from .formula import feature_specs, FIELDS
 from .layers import LAYERS, layer_of, resolve
 from .surface import fit_all
+from .traits import Tracker, battery_worlds, sense_groups
 
 RES = Path('results')
 TEST_WORLDS0 = 4000
@@ -42,7 +43,9 @@ def load(path, quick=False):
         bh = S.setdefault('behave', {})
         bh['worlds'] = 2; bh['clones'] = 10; bh['max_brains'] = 2
         for f in S['factor']:
-            f['levels'] = f['levels'][:2]
+            if 'levels' in f:
+                f['levels'] = f['levels'][:2]
+        S.setdefault('campaign', {}).update(zoom_rounds=1, ml_runs=2)
         S['name'] += '_quick'
     return S
 
@@ -67,6 +70,13 @@ def build(S, combo, conn):
     for path, v in combo.items():
         kind, a, b = D.split(path)
         if kind == 'cfg':
+            d0 = getattr(Config(), a)
+            if isinstance(d0, bool):
+                v = bool(round(v))
+            elif isinstance(d0, int):
+                v = int(round(v))
+                if a in ('season_every', 'ticks_per_generation'):       # must be a multiple of the 10-tick block
+                    v = int(round(v / 10)) * 10
             base[a] = v
         elif kind == 'world':
             if a not in vals:
@@ -144,47 +154,79 @@ def brain_change(g, conn, opts, lay):
     return {L: float(np.abs(g[:E][post == L]).mean()) for L in LAYERS if (post == L).any()}
 
 
-def run_evolve(S, out, conn, dev):
+def measure_traits(S, conn, dev, opts, over, specs, vals, bset, start, best, tw, tr, per_seed):
+    """Adds S/R/h2 per every-generation trait, intelligence (unseen-world battery) and sense importance,
+    at the start and end, to each seed's metrics."""
+    n = len(tw)
+    fit_of = lambda st: [float(np.mean([x['fitness'] for x in st[j * n:(j + 1) * n]])) for j in range(len(best))]
+    for j in range(len(best)):
+        per_seed[j].update(tr.per_seed(j))
+    bw = battery_worlds(over, specs, vals, S.get('battery'))
+    groups = sense_groups(S.get('base', {}), specs)
+    for which, G in (('start', start), ('end', best)):
+        own = fit_of(lifetime(conn, dev, opts, over, specs, [(vals, bset)], G, tw, 60))
+        intel = np.mean([fit_of(lifetime(conn, dev, opts, bo, bsp, [(bvv, bset)], G, tw, 60))
+                         for _, bo, bsp, bvv in bw], 0) if bw else np.full(len(G), np.nan)
+        imps = {name: np.array(own) - fit_of(lifetime(conn, dev, opts, over, specs,
+                                                      [(vals, {**bset, ('knockout', tuple(ids)): 1})], G, tw, 60))
+                for name, ids in groups.items()}
+        for j in range(len(G)):
+            per_seed[j][f'intelligence_{which}'] = float(intel[j])
+            for name, v in imps.items():
+                per_seed[j][f'sense_{name}_{which}'] = float(v[j])
+    for p in per_seed:
+        p['intelligence_gain'] = p['intelligence_end'] - p['intelligence_start']
+        for name in groups:
+            p[f'sense_{name}_gain'] = p[f'sense_{name}_end'] - p[f'sense_{name}_start']
+
+
+def eval_combo(S, combo, ci, out, conn, dev, label=None):
+    """Evolve under one combination of settings and measure everything. Used by run_evolve and the campaign."""
     from ..batch3_fast import evolve
     from ..step3 import CFG_OVERRIDES
     ev, te = S.get('evolve', {}), S.get('test', {})
     seeds = list(range(1, ev.get('seeds', 8) + 1))
-    names, C = combos(S)
     tw = list(range(TEST_WORLDS0, TEST_WORLDS0 + te.get('worlds', 12)))
     lay = layer_of(conn)
-    results = []
-    for ci, combo in enumerate(C):
-        t0 = time.time()
-        opts, over, specs, vals, bset = build(S, combo, conn)
-        cond = f'bench_{S["name"]}_{ci}'
-        CONDITIONS[cond] = opts; CFG_OVERRIDES[cond] = over
-        fz = D.freeze_mask(conn, opts, (S.get('brain') or {}).get('freeze'))
-        init = None
-        if ev.get('start', 'random') != 'random':
-            src = Path(ev['start'])
-            init = {s: np.load(sorted(src.glob(f'*_s{s}'))[0] / 'best_genome.npy') for s in seeds}
-        print(f'[{ci + 1}/{len(C)}] {combo}', flush=True)
-        hist, _ = evolve(cond, seeds, ev.get('generations', 100), out=out / 'brains', quiet=True,
-                         checkpoint_every=ev.get('checkpoint_every', 0), clonal=60, brains=ev.get('brains', 16),
-                         eval_worlds=ev.get('worlds_per_generation', 2), init=init, setup=setup_fn(conn, S, specs, [(vals, bset)]),
-                         freeze=fz if fz.any() else None)
-        best = [np.load(out / 'brains' / f'{cond}_s{s}' / 'best_genome.npy') for s in seeds]
-        st = lifetime(conn, dev, opts, over, specs, [(vals, bset)], best, tw, 60)
-        per_seed = [summarize(st[j * len(tw):(j + 1) * len(tw)], specs) for j in range(len(seeds))]
-        # layer importance: skill lost when a whole layer is silenced (same brains, same test worlds)
-        imp = {}
-        if ev.get('layer_knockouts', True):
-            for L in ('sensory', 'inter1', 'inter2', 'command'):
-                stk = lifetime(conn, dev, opts, over, specs, [(vals, {**bset, ('knockout', L): 1})], best, tw, 60)
-                imp[L] = float(np.mean([x['fitness'] for x in st]) - np.mean([x['fitness'] for x in stk]))
-        bc = [brain_change(g, conn, opts, lay) for g in best]
-        results.append(dict(combo=combo, metrics_per_seed=per_seed,
-                            metrics={k: float(np.mean([p[k] for p in per_seed])) for k in per_seed[0]},
-                            training_curve=np.mean([[h['fitness'] for h in hs] for hs in hist], 0).round(4).tolist(),
-                            brain_change={L: float(np.mean([b[L] for b in bc])) for L in bc[0]},
-                            layer_importance=imp, seconds=round(time.time() - t0)))
-        print(f'   skill {results[-1]["metrics"]["fitness"]:.3f}  ({results[-1]["seconds"]} s)', flush=True)
-    return names, results
+    t0 = time.time()
+    opts, over, specs, vals, bset = build(S, combo, conn)
+    cond = f'bench_{S["name"]}_{ci}'
+    CONDITIONS[cond] = opts; CFG_OVERRIDES[cond] = over
+    fz = D.freeze_mask(conn, opts, (S.get('brain') or {}).get('freeze'))
+    init = None
+    if ev.get('start', 'random') != 'random':
+        src = Path(ev['start'])
+        init = {s: np.load(sorted(src.glob(f'*_s{s}'))[0] / 'best_genome.npy') for s in seeds}
+    print(f'[{label or ci + 1}] {combo}', flush=True)
+    tr = Tracker(specs)
+    hist, _ = evolve(cond, seeds, ev.get('generations', 100), out=out / 'brains', quiet=True,
+                     checkpoint_every=ev.get('checkpoint_every', 0), clonal=60, brains=ev.get('brains', 16),
+                     eval_worlds=ev.get('worlds_per_generation', 2), init=init, setup=setup_fn(conn, S, specs, [(vals, bset)]),
+                     freeze=fz if fz.any() else None, on_gen=tr)
+    best = [np.load(out / 'brains' / f'{cond}_s{s}' / 'best_genome.npy') for s in seeds]
+    st = lifetime(conn, dev, opts, over, specs, [(vals, bset)], best, tw, 60)
+    per_seed = [summarize(st[j * len(tw):(j + 1) * len(tw)], specs) for j in range(len(seeds))]
+    imp = {}                      # layer importance: skill lost when a whole layer is silenced
+    if ev.get('layer_knockouts', True):
+        for L in ('sensory', 'inter1', 'inter2', 'command'):
+            stk = lifetime(conn, dev, opts, over, specs, [(vals, {**bset, ('knockout', L): 1})], best, tw, 60)
+            imp[L] = float(np.mean([x['fitness'] for x in st]) - np.mean([x['fitness'] for x in stk]))
+    if ev.get('traits', True):
+        start = [init[s] for s in seeds] if init else [tr.first_best[k] for k in range(len(seeds))]
+        measure_traits(S, conn, dev, opts, over, specs, vals, bset, start, best, tw, tr, per_seed)
+    bc = [brain_change(g, conn, opts, lay) for g in best]
+    r = dict(combo=combo, metrics_per_seed=per_seed,
+             metrics={k: float(np.nanmean([p[k] for p in per_seed])) for k in per_seed[0]},
+             training_curve=np.mean([[h['fitness'] for h in hs] for hs in hist], 0).round(4).tolist(),
+             brain_change={L: float(np.mean([b[L] for b in bc])) for L in bc[0]},
+             layer_importance=imp, trait_curves=tr.curves(), seconds=round(time.time() - t0))
+    print(f'   skill {r["metrics"]["fitness"]:.3f}  ({r["seconds"]} s)', flush=True)
+    return r
+
+
+def run_evolve(S, out, conn, dev):
+    names, C = combos(S)
+    return names, [eval_combo(S, combo, ci, out, conn, dev, f'{ci + 1}/{len(C)}') for ci, combo in enumerate(C)]
 
 
 def run_behave(S, out, conn, dev):
@@ -227,7 +269,11 @@ def main(path, quick=False):
     conn, dev = Connectome(), pick_device('cuda')
     t0 = time.time()
     mode = S.get('mode', 'evolve')
-    print(f'experiment {S["name"]}: mode={mode}, {len(combos(S)[1])} combinations', flush=True)
+    print(f'experiment {S["name"]}: mode={mode}' + ('' if mode == 'campaign' else f', {len(combos(S)[1])} combinations'), flush=True)
+    if mode == 'campaign':
+        from .campaign import run_campaign
+        run_campaign(S, out, conn, dev)
+        return
     if mode == 'evolve':
         names, results = run_evolve(S, out, conn, dev); brains = None
     else:

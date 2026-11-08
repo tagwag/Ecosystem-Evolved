@@ -168,6 +168,7 @@ class FastSim:
         # --- satiety check (as in step3_analyze): brain's speed command when full vs hungry, per world
         self.full_e, self.hungry_e = FULL * self.gut_cap, HUNGRY * self.gut_cap
         self.sat = z(K, 4)                     # sum speed_frac full, count full, sum hungry, count hungry
+        self.spd = z(K, 2)                     # sum speed_frac over living worms, count (mean speed, trait tracking)
         # --- recording for the viewer: positions, energy, food of the chosen worlds, every tick
         self.rec_idx = torch.as_tensor(list(record), dtype=torch.long, device=dev)
         R, T = len(record), cfg.ticks_per_generation
@@ -219,7 +220,7 @@ class FastSim:
         self.H.copy_(torch.clamp(1 - self.energy / self.gut_cap, 0, 1))
         self.alive.fill_(True)
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
-        self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
+        self.sat.zero_(); self.ti.zero_(); self.nn.zero_(); self.spd.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
         if self.form is not None:
@@ -524,6 +525,7 @@ class FastSim:
                                                (bump * af).sum(1), af.sum(1)], 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
+            self.spd += torch.stack([(speed_frac * alive).sum(1), alive.float().sum(1)], 1)
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
                                      (speed_frac * hung).sum(1), hung.sum(1)], 1)
             if self.recbuf is not None:
@@ -592,6 +594,7 @@ class FastSim:
         fit, eaten, esum, alive, sat, bites, nn, wall, odiag = (x.cpu().numpy() for x in (
             fit, self.eaten, self.esum, self.alive, self.sat, self.bites, self.nn, self.wall, self.odiag))
         scost = self.sense_cost.cpu().numpy()
+        spd = self.spd.cpu().numpy()
         fexp = self.form['exp'].cpu().numpy() if self.form is not None else None
         fpaid = self.form['paid'].cpu().numpy() if self.form is not None else None
         with np.errstate(invalid='ignore', divide='ignore'):
@@ -599,6 +602,7 @@ class FastSim:
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
                       fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
                       speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
+                      mean_speed=float(spd[k, 0] / max(spd[k, 1], 1.0)),
                       bites=float(bites[k].mean()),
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
@@ -615,7 +619,7 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None):
+           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None, on_gen=None):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -639,7 +643,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     P = cfg.worm_population
     if clonal:
         return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init,
-                              brains, eval_worlds, setup, freeze)
+                              brains, eval_worlds, setup, freeze, on_gen)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -697,9 +701,11 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
 
 
 def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1,
-                   setup=None, freeze=None):
+                   setup=None, freeze=None, on_gen=None):
     """setup(sim, cfg): test-bench hook called once after the simulator is built (formula world, brain dials).
-    freeze: bool gene mask; those genes never mutate (test bench)."""
+    freeze: bool gene mask; those genes never mutate (test bench).
+    on_gen(g, k, fit (P,), per-brain stats list (P), elite indices, population (P, genes)): called every generation
+    (test bench trait tracking: selection differential S and response R)."""
     opts, conn = CONDITIONS[cond], Connectome()
     base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     PW = base.worm_population
@@ -752,6 +758,13 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
             st['fitness'] = float(fit[k].mean()); st['best_fitness'] = float(fit[k].max()); st['gen'] = g
             hist[k].append(st)
             order = np.argsort(fit[k])[::-1][:n_elite]
+            if on_gen is not None:
+                per = [{key: float(np.nanmean([x[key] for x in sk[b * W:(b + 1) * W]])) for key in sk[0]
+                        if isinstance(sk[0][key], (int, float)) and not isinstance(sk[0][key], bool)} for b in range(P)]
+                if sk[0].get('feature_exposure') is not None:
+                    for b in range(P):
+                        per[b]['feature_exposure'] = np.mean([x['feature_exposure'] for x in sk[b * W:(b + 1) * W]], 0).tolist()
+                on_gen(g, k, fit[k], per, order, pop[k])
             best[k] = pop[k, order[0]].copy()
             if checkpoint_every and (g + 1) % checkpoint_every == 0 and out is not None:
                 d = out / f'{cond}_s{seeds[k]}'

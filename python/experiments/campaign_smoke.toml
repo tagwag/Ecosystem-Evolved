@@ -1,0 +1,33 @@
+# Tiny campaign to check the machinery (minutes; numbers mean nothing).
+name = "campaign_smoke"
+mode = "campaign"
+[campaign]
+target = "R_skill"
+top = 2
+zoom_rounds = 1
+ml_runs = 2
+[base]
+predators = 6
+touch_gain = 3.0
+ticks_per_generation = 100
+[world.features.toxin]
+[evolve]
+seeds = 2
+brains = 3
+worlds_per_generation = 1
+generations = 3
+layer_knockouts = false
+[test]
+worlds = 2
+[[factor]]
+name = "world.toxin.a"
+low = 0.0
+high = 2.0
+[[factor]]
+name = "cfg.food_regrow_per_tick"
+low = 0.1
+high = 0.5
+[[factor]]
+name = "brain.gain.command"
+low = 0.5
+high = 1.5
