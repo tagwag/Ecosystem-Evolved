@@ -1,6 +1,6 @@
 ECOSYSTEM-EVOLVED — CONDENSED PROJECT NOTES
 (Read this first in a new session instead of re-reading old chats. Keep it short; update at the end of each session.)
-Last updated: 2026-11-02
+Last updated: 2026-11-08
 
 === WHO / HOW TO WORK ===
 - Owner: tagwag. Programmer, weak with GitHub, very visual (wants charts/pictures).
@@ -126,6 +126,17 @@ Step 18b (2026-11-08, re-test of Step 18 brains, all worms incl. dead): rock = n
 Step 19 (queued 2026-11-08): matched scoring (full-size clone worlds, 2 worlds/brain/gen, 16 seeds x 16 brains,
   300 gens) in the Step 14 world vs an all-senses world (temperature/AFD, light/ASJ, toxic/PHA-PHB, predator
   scent/ASH, CO2/BAG, O2/URX-AQR-PQR, on-food/CEP-ADE-PDE, + worm scent, obstacles). Does skill keep climbing?
+
+Sweeps (built 2026-11-08, not run yet): config-file factor screening = stage 1 of the pinned experiment app.
+  python/sweeps/screen1.toml: 8 factors (predators, scarce food, worm scent, obstacles, all senses, seasons,
+  digestion, mutation rate 0.01 vs 0.04), 2^(8-4) resolution IV = 16 arms x 8 seeds x 100 gens, clonal 60, 1 world/gen.
+  Yardstick "general skill" = fitness on a fixed 4-world-type battery (plain, danger, complex, shifting) minus
+  random-brain fitness there; same battery for every arm. Also own-world skill. Main effects per seed, sign-flip
+  test, Holm-corrected over the 8 factors. Rule set before results: a factor 'matters' if Holm p < 0.05 on general
+  skill; the top 3 by |effect| go to the zoom-in (python -m ecosim.sweep zoom screen1 -> full factorial, 16 seeds,
+  200 gens). Caveats: 8 seeds = only large effects show; two-factor interactions are aliased (AB=CE=DH=FG etc.).
+  Step 20 (evolvable mutation rates, repair cost, mutation logging) planned 2026-11-08 but only the FastSim
+  wcost hook exists (per-world extra energy/tick, 0 by default). Not built further yet.
 
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,

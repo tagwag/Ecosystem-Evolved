@@ -10,6 +10,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
 | RUNNING | Step 19: matched scoring, base vs all-senses world, 300 gens | 2026-11-08 ~00:50 MT | run_step19.bat | step19_log.txt, step19_base_log.txt, step19_rich_log.txt | ~08:00 MT |
+| QUEUED (user starts it) | Sweep screen1: 8-factor fractional factorial, 16 arms x 8 seeds x 100 gens | - | run_sweep.bat screen1 (waits for STEP19_DONE) | sweep_screen1_log.txt | ~6-10 h after start (estimate, check timing.txt) |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
@@ -31,4 +32,5 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat
 - Results land in python/results/; long runs log to python/*_log.txt (ignored by git)
-- Pinned (not started): IDE-like experiment app (config-file runner, then GUI). See PROJECT_NOTES.
+- Config-file factor sweeps (= stage 1 of the pinned experiment app): python/sweeps/*.toml + ecosim/sweep.py.
+  plan / quick / run / test / analyze / zoom. Resumes: finished arms are skipped. GUI (stage 2) still pinned.

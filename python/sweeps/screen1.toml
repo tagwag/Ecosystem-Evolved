@@ -1,0 +1,69 @@
+# Screen 1: which world/worm factors change how skilled evolved worm brains become?
+# 8 factors, 16 arms (2^(8-4) fractional factorial, resolution IV): every main effect is measured cleanly;
+# two-factor interactions are mixed together (sort those out in the zoom-in).
+# Edit freely: add/remove factors (keep 'low' and 'high'), change seeds or generations.
+# Factors are lettered A, B, C... in the order they appear below. Generators use those letters.
+
+name = "screen1"
+
+[base]
+condition = "hunger"          # brain type (genome layout); same for every arm
+fitness = "end"               # energy left at the end + survival (Step 3e2 onward)
+config = {}                   # settings shared by every arm
+
+[design]
+type = "fractional"           # "full" = every combination
+generators = ["E=ABC", "F=BCD", "G=ACD", "H=ABD"]   # standard 2^(8-4) resolution IV
+
+[factors.predators]           # A
+low = {}
+high = { predators = 6, touch_gain = 3.0 }
+
+[factors.scarce_food]         # B: food regrows 3x slower
+low = {}
+high = { food_regrow_per_tick = 0.2 }
+
+[factors.worm_scent]          # C: worms smell each other (Step 11)
+low = {}
+high = { pheromone = true }
+
+[factors.obstacles]           # D: rocks/walls/caves, nose touch (Step 18)
+low = {}
+high = { obstacles = true }
+
+[factors.all_senses]          # E: temperature, light, toxic, predator scent, CO2, O2, on-food (Step 19)
+low = {}
+high = { senses = true }
+
+[factors.seasons]             # F: food patches jump every 300 ticks (Step 16)
+low = {}
+high = { season_every = 300 }
+
+[factors.digestion]           # G: food digests fastest when still (Step 8c)
+low = {}
+high = { digestion = true }
+
+[factors.mutation_rate]       # H: chance per synapse per child of a strength tweak (default 0.02)
+low = { worm_mutation_rate = 0.01 }
+high = { worm_mutation_rate = 0.04 }
+
+[run]
+seeds = [1, 2, 3, 4, 5, 6, 7, 8]   # the SAME seeds in every arm (paired comparison)
+generations = 100
+brains = 16                   # brains per seed
+worlds_per_gen = 1            # worlds each brain is scored on per generation
+clonal = 60                   # full-size clone worlds (matched to the test, Step 19)
+checkpoint_every = 0
+
+[measure]
+own_worlds = [4000, 4001, 4002, 4003, 4004, 4005]   # each arm's brains in their own world type
+battery_worlds = [5000, 5001, 5002]                  # fixed worlds for every battery world type
+random_brains = 16                                   # baseline: unevolved brains on the battery
+
+# General-skill battery ("intelligence" yardstick): the same 4 world types for every arm.
+# Score = fitness minus random-brain fitness, averaged over the 4 types.
+[measure.battery]
+plain = {}
+danger = { predators = 6, touch_gain = 3.0, food_regrow_per_tick = 0.2 }
+complex = { predators = 6, touch_gain = 3.0, obstacles = true, senses = true, pheromone = true }
+shifting = { season_every = 300, digestion = true }
