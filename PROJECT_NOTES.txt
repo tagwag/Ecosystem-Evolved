@@ -123,9 +123,17 @@ Step 18b (2026-11-08, re-test of Step 18 brains, all worms incl. dead): rock = n
   Bite rate near rock = open (1.48 vs 1.48 per 1000 worm-ticks, p=0.99). Deaths 25-45% higher near rock
   (p=0.008 herd, 0.0007 plain) -> probably weak/starving worms ending up stuck there (no food grows in rock).
   Hidden (in range, sight blocked) ~4%, stuck ~2%, unchanged by evolution.
-Step 19 (queued 2026-11-08): matched scoring (full-size clone worlds, 2 worlds/brain/gen, 16 seeds x 16 brains,
-  300 gens) in the Step 14 world vs an all-senses world (temperature/AFD, light/ASJ, toxic/PHA-PHB, predator
-  scent/ASH, CO2/BAG, O2/URX-AQR-PQR, on-food/CEP-ADE-PDE, + worm scent, obstacles). Does skill keep climbing?
+Step 19 (2026-11-08, matched scoring: 60 clones in full-size worlds, 2 worlds/brain/gen, 16 seeds x 16 brains,
+  300 gens; yardstick = 12 fixed unseen worlds): skill KEEPS CLIMBING, slowly, in both arms (no flat plateau yet).
+  base: 2.54 (g20) -> 3.33 (g300), peak at the last checkpoint; g200 vs g100 +0.21 (p=0.002), g300 vs g200 +0.10
+    (p=0.11); slope over the last 100 gens +0.13 per 100 gens, 11/16 seeds rising. From random brains it reached the
+    old 'plateau' level (~3.3) and is still going -> matched scoring removed the decline seen in Step 16.
+  rich (all senses): 1.76 -> 2.18 (lower: harder world with costs), +0.12 per 100 gens, 12/16 rising, g300 vs g200
+    +0.08 (p=0.13). Did NOT climb faster or longer than base within 300 gens; both are decelerating.
+Test bench brain_dials (16 Step 19 base brains, toxin world they never trained in, 18 combos x 12 worlds, 277 s on GPU):
+  command-layer gain and the serotonin-like modulator both scale the command layer, so they interact strongly;
+  best skill at ~half the normal command input (gain 0.8 x serotonin level 1); full gain 1.5 or modulator 2 is worst.
+  ASH knockout: no clear effect. Fits explain 39-70% of variation.
 
 Sweeps (built 2026-11-08, not run yet): config-file factor screening = stage 1 of the pinned experiment app.
   python/sweeps/screen1.toml: 8 factors (predators, scarce food, worm scent, obstacles, all senses, seasons,
