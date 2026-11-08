@@ -121,6 +121,10 @@ class FastSim:
         self.nearw = torch.zeros(og, dtype=torch.bool, device=dev)
         self.bump = z(K, P)
         self.wall = z(K, 2)                    # sum of living worms near a wall, count of living worms
+        # Step 18b diagnostics (worm-ticks / events, all worms incl. ones that later die): near-rock ticks, open
+        # ticks, bites near rock, bites in the open, deaths near rock, deaths in the open, hidden ticks (in a
+        # predator's range but every sight line blocked), exposed ticks (seen by >=1 predator), bump ticks, alive ticks
+        self.odiag = z(K, 10)
         self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
                                                                             # no CPU->GPU copies inside a CUDA graph)
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
@@ -192,7 +196,7 @@ class FastSim:
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
-        self.bump.zero_(); self.wall.zero_()
+        self.bump.zero_(); self.wall.zero_(); self.odiag.zero_()
         if self.Q:
             self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
             self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
@@ -308,7 +312,12 @@ class FastSim:
                 if OBS:                          # no seeing through rock: sample 6 points along each sight line
                     fr = self.los_fr
                     pts = torch.remainder(ppos[:, :, None, None, :] + delta[:, :, :, None, :] * fr[:, None], self.wh)
-                    dsee = torch.where(self._solid_at(pts).any(-1), inf, dsee)
+                    los_blk = self._solid_at(pts).any(-1)
+                    dsee = torch.where(los_blk, inf, dsee)
+                    inr = dist2 < cfg.pred_sense ** 2
+                    seen_any = (inr & ~los_blk).any(1)
+                    hid_now = ((inr & los_blk).any(1) & ~seen_any & alive).float()
+                    exp_now = (seen_any & alive).float()
                 if HERD and cfg.pred_loner > 0:  # crowded prey look farther away -> loners are chased first
                     dsee = dsee * ((1 + cfg.pred_loner * nbr) ** 2)[:, None, :]
                 nd, ni = dsee.min(2)                                                             # nearest noticed prey
@@ -326,6 +335,8 @@ class FastSim:
                 dmg = torch.zeros(K, P, **self.f).scatter_add(1, bi_, land.float() * cfg.pred_damage)
                 energy = energy - dmg * alive
                 bites = bites + (dmg > 0).float()
+                if OBS:
+                    bit_now = ((dmg > 0) & alive).float()
                 pcool = torch.where(bite, torch.full_like(pcool, float(cfg.pred_cooldown)), torch.clamp(pcool - 1, min=0))
                 pspd = torch.where(pcool > 0, zero, torch.full_like(pcool, cfg.pred_speed))
                 npp = torch.remainder(ppos + torch.stack([torch.cos(phead), torch.sin(phead)], -1) * pspd[..., None], self.wh)
@@ -381,8 +392,16 @@ class FastSim:
             okn = torch.isfinite(nnd)
             self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
             if OBS:
-                nw = self._solid_at(pos, self.nearw) & alive
+                nearpos = self._solid_at(pos, self.nearw)
+                nw = nearpos & alive
                 self.wall += torch.stack([nw.float().sum(1), alive.float().sum(1)], 1)
+                if Q:
+                    af, nwf, npf = alive.float(), nw.float(), nearpos.float()
+                    died = (alive & (energy <= 0)).float()
+                    self.odiag += torch.stack([nwf.sum(1), (af - nwf).sum(1), (bit_now * nwf).sum(1),
+                                               (bit_now * (af - nwf)).sum(1), (died * npf).sum(1),
+                                               (died * (1 - npf)).sum(1), hid_now.sum(1), exp_now.sum(1),
+                                               (bump * af).sum(1), af.sum(1)], 1)
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
@@ -450,8 +469,8 @@ class FastSim:
             fit = torch.where(self.alive, self.energy, torch.zeros_like(self.energy)) / cfg.food_value + self.lifetime / T
         else:                                      # 'food': food eaten + time survived (Steps 1-2, 4)
             fit = self.eaten + self.lifetime / T
-        fit, eaten, esum, alive, sat, bites, nn, wall = (x.cpu().numpy() for x in (fit, self.eaten, self.esum, self.alive,
-                                                                                  self.sat, self.bites, self.nn, self.wall))
+        fit, eaten, esum, alive, sat, bites, nn, wall, odiag = (x.cpu().numpy() for x in (
+            fit, self.eaten, self.esum, self.alive, self.sat, self.bites, self.nn, self.wall, self.odiag))
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
@@ -459,7 +478,8 @@ class FastSim:
                       speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
                       bites=float(bites[k].mean()),
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
-                      near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'))
+                      near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
+                      odiag=odiag[k].tolist() if self.obs_on else None)
                  for k in range(self.K)]
         return fit.astype(np.float64), stats
 
