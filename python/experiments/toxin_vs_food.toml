@@ -1,0 +1,35 @@
+# Environment -> brain: how do poison strength and food supply shape what evolves?
+name = "toxin_vs_food"
+mode = "evolve"
+description = "Toxic patches (felt by PHA/PHB) at 3 strengths x food regrowth at 3 rates. 9 combinations, ~2.5 h on an RTX 3080."
+
+[base]                          # the starting world: any setting from ecosim/config.py, plus hunger/fitness
+predators = 6
+touch_gain = 3.0
+food_regrow_per_tick = 0.2
+hunger = true
+fitness = "end"
+
+[world.features.toxin]          # formula-world features (built-in: temperature, light, toxin, oxygen)
+scale = 150                     # patch size in world units
+cost = 1.5                      # energy lost per tick at full strength
+
+[world.features.temperature]
+period = 3000                   # the hot/cold pattern drifts (one cycle per 3000 ticks)
+
+[evolve]
+seeds = 8
+brains = 16
+worlds_per_generation = 2
+generations = 60
+
+[test]
+worlds = 12
+
+[[factor]]
+name = "world.toxin.a"
+levels = [0.0, 1.0, 2.0]
+
+[[factor]]
+name = "cfg.food_regrow_per_tick"
+levels = [0.1, 0.2, 0.4]

@@ -148,6 +148,7 @@ class FastSim:
         ng = self.gw * self.gh if self.sense_on else 1
         self.sfield, self.dmap, self.onfood = z(K, 3, ng), z(K, 2, ng), z(K, P)
         self.sense_cost = z(K, 4)              # energy lost to temperature, light, toxic, CO2 (per worm, summed)
+        self.form = None                       # test-bench formula world (ecosim/bench), set by set_formula()
         self.wcost = z(K, 1)                   # Step 20: extra energy per tick per world (copy-fidelity cost); 0 = as before
         self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
                                                                             # no CPU->GPU copies inside a CUDA graph)
@@ -221,6 +222,8 @@ class FastSim:
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
+        if self.form is not None:
+            self._load_formula(rngs)
         if self.sense_on:
             self.sfield.copy_(torch.as_tensor(np.stack([make_sense_fields(cfg, np.random.default_rng(r.integers(2**62)),
                                                                           self.gw, self.gh) for r in rngs]),
@@ -235,6 +238,49 @@ class FastSim:
             self.pprev.copy_(self._smell_at(self.pos, self.pmap))
         if self.sense_on:
             self.dmap.copy_(self._sense_maps(self.pos, self.alive, self.ppos))
+
+    def set_formula(self, specs, per_world):
+        """Test bench: add formula-world features. specs = list of feature specs (bench.formula.feature_specs);
+        per_world = {field: array (K, F)} for a, b, scale, period, cost, gain (world dials may differ per world).
+        Call before the first run (CUDA graph capture)."""
+        from .bench.layers import resolve
+        K, F, N, f = self.K, len(specs), self.conn.N, self.f
+        from .bench.formula import N_WAVES
+        SM = torch.zeros(K, F, N, **f)
+        for i, sp in enumerate(specs):
+            ids = resolve(self.conn, sp['neurons'])
+            SM[:, i, ids] = torch.as_tensor(per_world['gain'][:, i], **f)[:, None]
+        z = lambda *sh: torch.zeros(*sh, **f)
+        self.form = dict(specs=specs, pw={k: np.asarray(v, float) for k, v in per_world.items()},
+                         SM=SM, signed=torch.as_tensor([sp['signed'] for sp in specs], device=self.dev),
+                         a=z(K, F), b=z(K, F), cost=z(K, F), n=z(K, F, N_WAVES), m=z(K, F, N_WAVES),
+                         phi=z(K, F, N_WAVES), c=z(K, F, N_WAVES), om=z(K, F, N_WAVES),
+                         exp=z(K, F), paid=z(K, F))
+
+    def _load_formula(self, rngs):
+        from .bench.formula import draw_waves
+        fm, cfg = self.form, self.cfg
+        pw, F = fm['pw'], len(fm['specs'])
+        W = {k: [] for k in ('n', 'm', 'phi', 'c', 'om')}
+        for k, r in enumerate(rngs):
+            fr = np.random.default_rng(r.integers(2**62))
+            rows = [draw_waves(fr, cfg.width, cfg.height, pw['scale'][k, i], pw['period'][k, i]) for i in range(F)]
+            for j, key in enumerate(('n', 'm', 'phi', 'c', 'om')):
+                W[key].append(np.stack([row[j] for row in rows]))
+        for key in W:
+            fm[key].copy_(torch.as_tensor(np.stack(W[key]), **self.f))
+        for key in ('a', 'b', 'cost'):
+            fm[key].copy_(torch.as_tensor(pw[key], **self.f))
+        fm['exp'].zero_(); fm['paid'].zero_()
+
+    def _formula_at(self, pos):
+        """Feature values (K, P, F) at worm positions, this tick."""
+        fm, cfg = self.form, self.cfg
+        t = self.ti.float()
+        x = pos[..., 0, None, None] / cfg.width; y = pos[..., 1, None, None] / cfg.height       # (K,P,1,1)
+        arg = 2 * math.pi * (fm['n'][:, None] * x + fm['m'][:, None] * y) + fm['om'][:, None] * t + fm['phi'][:, None]
+        v = fm['b'][:, None] + fm['a'][:, None] * (fm['c'][:, None] * torch.cos(arg)).sum(-1)
+        return torch.where(fm['signed'], torch.clamp(v, -1, 1), torch.clamp(v, 0, 1))
 
     # ------------------------------------------------------------------ pieces
     def _solid_at(self, p, grid=None):
@@ -305,6 +351,7 @@ class FastSim:
         if self.pher_on:
             self.pmap.copy_(self._pher_map(pos, alive))
         SENSE, onfood = self.sense_on, self.onfood
+        FORM = self.form is not None
         if SENSE:
             self.dmap.copy_(self._sense_maps(self.pos, self.alive, self.ppos))
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
@@ -335,8 +382,13 @@ class FastSim:
                 dm = self.dmap.gather(2, gi[:, None, :].expand(-1, 2, -1))                        # (K,2,P)
                 tmp, lit, tox, prd, co2 = 2 * sf[:, 0] - 1, sf[:, 1], sf[:, 2], dm[:, 0], dm[:, 1]
                 extra = torch.stack([tmp, lit, tox, prd, co2, 1 - smell, onfood], -1).view(K * P, -1)
+            inject = None
+            if FORM:                                 # test bench: formula features -> chosen sensory neurons
+                fv = self._formula_at(pos)                                                         # (K,P,F)
+                inject = torch.einsum('kpf,kfn->kpn', fv, self.form['SM']).reshape(K * P, -1)
             bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher,
-                                                               bump.view(-1) if OBS else None, extra)
+                                                               bump.view(-1) if OBS else None, extra,
+                                                               inject=inject, tick=self.ti)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
@@ -350,6 +402,11 @@ class FastSim:
             else:
                 pos = torch.where(alive[..., None], npos, pos)
             energy = energy - torch.where(alive, cfg.base_cost + self.wcost + cfg.move_cost * speed, zero)
+            if FORM:                                 # test bench feature costs (signed features: |value|)
+                fa = fv.abs() * alive[..., None].float()
+                fpaid = fa * self.form['cost'][:, None, :]
+                energy = energy - fpaid.sum(-1)
+                self.form['exp'] += fa.sum(1); self.form['paid'] += fpaid.sum(1)
             if SENSE:                                # Step 19 world costs: discomfort, UV, poison, stale air
                 cs = torch.stack([cfg.temp_cost * tmp.abs(), cfg.light_cost * lit, cfg.toxic_cost * tox,
                                   cfg.co2_cost * torch.clamp(2 * co2 - 1, min=0)], 1) * alive[:, None].float()  # (K,4,P)
@@ -535,6 +592,8 @@ class FastSim:
         fit, eaten, esum, alive, sat, bites, nn, wall, odiag = (x.cpu().numpy() for x in (
             fit, self.eaten, self.esum, self.alive, self.sat, self.bites, self.nn, self.wall, self.odiag))
         scost = self.sense_cost.cpu().numpy()
+        fexp = self.form['exp'].cpu().numpy() if self.form is not None else None
+        fpaid = self.form['paid'].cpu().numpy() if self.form is not None else None
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
@@ -544,7 +603,9 @@ class FastSim:
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
                       odiag=odiag[k].tolist() if self.obs_on else None,
-                      sense_cost=(scost[k] / self.P).tolist() if self.sense_on else None)
+                      sense_cost=(scost[k] / self.P).tolist() if self.sense_on else None,
+                      feature_exposure=(fexp[k] / (self.P * T)).tolist() if fexp is not None else None,
+                      feature_cost=(fpaid[k] / self.P).tolist() if fexp is not None else None)
                  for k in range(self.K)]
         return fit.astype(np.float64), stats
 
@@ -554,7 +615,7 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0):
+           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -578,7 +639,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     P = cfg.worm_population
     if clonal:
         return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init,
-                              brains, eval_worlds)
+                              brains, eval_worlds, setup, freeze)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -635,7 +696,10 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     return hist, times
 
 
-def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1):
+def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1,
+                   setup=None, freeze=None):
+    """setup(sim, cfg): test-bench hook called once after the simulator is built (formula world, brain dials).
+    freeze: bool gene mask; those genes never mutate (test bench)."""
     opts, conn = CONDITIONS[cond], Connectome()
     base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     PW = base.worm_population
@@ -653,6 +717,8 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     gen.manual_seed(int(np.random.default_rng(list(seeds) + [G]).integers(2**62)))
     K = len(seeds)
     sim = FastSim(cfg, opts, conn, K * P * W, G, dev, graph, gen)
+    if setup is not None:
+        setup(sim, cfg)
     from .worm3 import Opts3
     grow = isinstance(opts, Opts3)                       # Step 4 growing brains use worm3's genome + mutations
     if grow:
@@ -695,8 +761,11 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
             kids = [elites[i] for i in range(n_elite)]
             while len(kids) < P:
                 parent = elites[r.integers(n_elite)]
-                kids.append(g3.mutate(parent.astype(np.float64), conn, base, r, opts, names)[0] if grow
-                            else w.mutate(parent, conn, base, r, opts)[0])
+                kid = (g3.mutate(parent.astype(np.float64), conn, base, r, opts, names)[0] if grow
+                       else w.mutate(parent, conn, base, r, opts)[0])
+                if freeze is not None:
+                    kid = np.where(freeze, parent, kid)
+                kids.append(kid)
             new[k] = np.array(kids)
         pop = new
         if not quiet:

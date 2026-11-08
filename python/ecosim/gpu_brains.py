@@ -35,6 +35,7 @@ class _Base:
 
     def _common(self, conn, opts, cfg, dev):
         self.dev, self.f = dev, dict(dtype=torch.float32, device=dev)
+        self.dials = None
         self.k_dt = self.dt / self.tau
         self.s_on, self.s_off, self.s_lvl = (torch.as_tensor(conn.ids(SENSORS[k]), device=dev)
                                              for k in ('on', 'off', 'level'))
@@ -71,6 +72,23 @@ class _Base:
         if extra is not None and self.sense_gain > 0:         # Step 19: (B, channels) sense levels
             I = I + self.sense_gain * (extra @ self.Xmap)
         return I
+
+    def enable_dials(self, B, N):
+        """Test bench brain dials, one row per brain (so different dial settings can run side by side):
+        gain  (B,N) input multiplier: layer gains and neuromodulator levels
+        keep / set (B,N): v -> v*keep + set every tick. Knockout: keep 0, set 0. Clamp on: keep 0, set 2.
+        keep_w / set_w + window (2,) [t0, t1): the same, but only during ticks t0..t1 (a timed clamp)."""
+        o = lambda: torch.ones(B, N, **self.f)
+        z = lambda: torch.zeros(B, N, **self.f)
+        self.dials = dict(gain=o(), keep=o(), set=z(), keep_w=o(), set_w=z(),
+                          window=torch.zeros(2, dtype=torch.long, device=self.dev))
+
+    def _apply_dials(self, v, tick):
+        d = self.dials
+        on = (tick >= d['window'][0]) & (tick < d['window'][1])
+        keep = torch.where(on, d['keep'] * d['keep_w'], d['keep'])
+        st = torch.where(on, d['set'] * d['keep_w'] + d['set_w'], d['set'])
+        return v * keep + st
 
     @staticmethod
     def _outputs(o):
@@ -112,7 +130,7 @@ class Worm2Brain(_Base):
             self.rec.copy_(g[:, L.rec] * opts.receptor_scale)
         self.v.zero_(); self.rbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None, extra=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None, extra=None, inject=None, tick=None):
         v, rbar = s['v'], s['rbar']
         r = torch.tanh(torch.clamp(v, min=0))
         I = (r[:, self.pre] * self.vals) @ self.M                       # chemical synapses (sparse as a matmul)
@@ -124,7 +142,13 @@ class Worm2Brain(_Base):
         if self.rec is not None:
             I = I + H[:, None] * self.rec
         I = self._extras(I, alarm, touch, pher, nose, extra)
+        if inject is not None:                                           # test bench: formula-world senses
+            I = I + inject
+        if self.dials is not None:                                       # test bench brain dials
+            I = I * self.dials['gain']
         v = v + self.k_dt * (-v + I)
+        if self.dials is not None:
+            v = self._apply_dials(v, tick)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
         dev = x - rbar
@@ -194,7 +218,7 @@ class GrowBrain(_Base):
                                                 np.isin(src, self.s_lvl_np)], 1), **f))
         self.v.zero_(); self.rbar.zero_(); self.sbar.zero_()
 
-    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None, extra=None):
+    def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None, extra=None, inject=None, tick=None):
         v, rbar, sbar, N = s['v'], s['rbar'], s['sbar'], self.N
         r = torch.tanh(torch.clamp(v, min=0))
         I = torch.bmm(r.unsqueeze(1), self.W).squeeze(1)

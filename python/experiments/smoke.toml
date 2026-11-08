@@ -1,0 +1,40 @@
+# Tiny test that everything runs (a few minutes). Short lifetimes, so the numbers mean nothing.
+name = "smoke"
+mode = "evolve"
+description = "Smoke test."
+
+[base]
+predators = 6
+touch_gain = 3.0
+ticks_per_generation = 100
+hunger = true
+
+[world.features.toxin]
+[world.features.temperature]
+
+[brain]
+freeze = ["sensory"]
+
+[brain.timed_clamp]
+targets = ["AVA"]
+state = "on"
+from_tick = 20
+to_tick = 40
+
+[evolve]
+seeds = 2
+brains = 3
+worlds_per_generation = 1
+generations = 2
+layer_knockouts = true
+
+[test]
+worlds = 2
+
+[[factor]]
+name = "world.toxin.a"
+levels = [0.0, 1.0, 2.0]
+
+[[factor]]
+name = "brain.gain.command"
+levels = [0.5, 1.5]

@@ -1,0 +1,37 @@
+# Brain -> behaviour: take evolved brains and turn brain dials, same worlds every time.
+name = "brain_dials"
+mode = "behave"
+description = "Step 19 base-world brains; command-layer gain x serotonin-like modulator x ASH (nociceptor) knockout."
+
+[base]
+predators = 6
+touch_gain = 3.0
+food_regrow_per_tick = 0.2
+hunger = true
+fitness = "end"
+
+[world.features.toxin]
+a = 1.0
+
+[brain.modulators.serotonin]    # rough stand-in: on-food serotonin slows movement -> turn the command layer down
+targets = ["command"]
+effect = 0.6                    # at level 1 the targets' input is x0.6
+level = 0.0                     # default level when not a factor
+
+[behave]
+brains = "runs/step19"          # folder searched for best_genome.npy files (or a list of .npy paths)
+max_brains = 16
+worlds = 12
+clones = 60
+
+[[factor]]
+name = "brain.gain.command"
+levels = [0.5, 1.0, 1.5]
+
+[[factor]]
+name = "brain.mod.serotonin"
+levels = [0.0, 1.0, 2.0]
+
+[[factor]]
+name = "brain.knockout.ASH"
+levels = [0, 1]
