@@ -108,6 +108,47 @@ levels = [0.1, 0.2, 0.4]
 `inter2` (RIA/RIB/RIM/RIS...: steering, speed, arousal), `command` (AVA/AVB/AVD/AVE/PVC: go or reverse),
 `motor`, `pharynx`, `muscle`.
 
+## Traits (every evolve run measures these)
+
+Biology's **breeder's equation**: **R = h^2 x S**
+- **S** (selection) = how much better the brains chosen to breed were than average, per generation
+- **R** (response) = how much the population average actually changed per generation
+- **h^2** (heritability) = R / S: how much of the selection got passed on (noise and mutation make it < 1)
+
+| trait | measured as |
+|---|---|
+| skill | energy left/100 + survival |
+| foraging | food eaten |
+| survival | worms alive at the end |
+| escape | minus predator bites |
+| speed | average speed |
+| rest_when_full | speed when hungry minus speed when full |
+| clumping | minus distance to the nearest worm |
+| avoid_<feature> | minus exposure to each formula-world feature (e.g. avoid_toxin) |
+| **intelligence** | skill on 5 kinds of world it never trained in (scarcer / richer / moving food, faster predators, new poison), start vs end |
+| **sense_<name>** | importance of each sense = skill lost when its neurons are silenced, start vs end (rising = evolution is using it) |
+
+Each shows up in the report as `R_<trait>`, `S_<trait>`, `h2_<trait>`, `change_<trait>`, `intelligence_gain`,
+`sense_<name>_gain`, and every one gets its own quadratic fit: a formula for which settings make that trait evolve
+fastest. Optional `[[battery]]` tables replace the default intelligence worlds (see ecosim/bench/traits.py).
+
+## Campaigns: screen -> zoom -> machine learning (`mode = "campaign"`)
+
+For "which settings make trait X evolve fastest?" with the fewest runs. Factors take a range (`low`, `high`,
+optional `integer = true`) instead of levels. Set `[campaign] target = "intelligence_gain"` (or any result name).
+
+1. **Screen:** every factor at low/high in a fractional factorial (about N+1 runs for N factors, not 2^N). Ranks
+   the factors; the unimportant ones get fixed at their better value.
+2. **Zoom:** the top factors (`top = 3`) in a central composite design, quadratic fit, then shrink the box around
+   the predicted best and repeat (`zoom_rounds`).
+3. **Learn (machine learning):** a **Gaussian process** (a model that predicts the target *and how unsure it is*)
+   fitted to every run so far picks the next settings by **expected improvement** (Bayesian optimisation), for
+   `ml_runs` more runs.
+
+Report: `summary.md` (factor ranking, each zoom's formula, the ML trace, best measured and model's best guess) and
+`campaign.png`. Always confirm the winner with a bigger run before trusting it. Examples:
+`campaign_intelligence.toml` (~6-7 h) and `campaign_smoke.toml` (minutes).
+
 ## Honest limits
 
 - Brain-dial effects are facts about this simplified model, not proof about real worms.

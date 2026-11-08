@@ -1,0 +1,61 @@
+# Find the world settings that make intelligence (skill on never-seen kinds of world) evolve fastest.
+# Screen 6 dials -> zoom on the top 3 -> machine learning. ~30 runs; with these sizes ~12 min each -> ~6-7 h.
+name = "campaign_intelligence"
+mode = "campaign"
+description = "Which world settings drive the evolution of general skill (intelligence) fastest?"
+
+[campaign]
+target = "intelligence_gain"    # any per-seed result: intelligence_gain, R_skill, R_escape, R_foraging,
+                                # R_avoid_toxin, sense_<name>_gain, fitness, ...
+screen = true
+top = 3                         # factors kept after the screen
+zoom_rounds = 2
+ml_runs = 8
+
+[base]
+predators = 6
+touch_gain = 3.0
+food_regrow_per_tick = 0.2
+hunger = true
+fitness = "end"
+
+[world.features.toxin]
+[world.features.temperature]
+
+[evolve]
+seeds = 6
+brains = 16
+worlds_per_generation = 2
+generations = 60
+
+[test]
+worlds = 8
+
+# campaign factors use a range (low, high) instead of levels
+[[factor]]
+name = "cfg.food_regrow_per_tick"
+low = 0.1
+high = 0.5
+[[factor]]
+name = "cfg.predators"
+low = 0
+high = 10
+integer = true
+[[factor]]
+name = "world.toxin.a"
+low = 0.0
+high = 2.0
+[[factor]]
+name = "world.temperature.period"
+low = 0
+high = 3000
+[[factor]]
+name = "cfg.season_every"
+low = 0
+high = 600
+integer = true
+[[factor]]
+name = "cfg.food_patches"
+low = 2
+high = 10
+integer = true

@@ -13,6 +13,14 @@ MAIN = ('fitness', 'mean_food', 'bites', 'survivors')
 
 
 def nice(m):
+    for pre, txt in (('R_', 'evolution speed of {} (change per generation, R)'), ('S_', 'selection on {} (S)'),
+                     ('h2_', 'heritability of {} (h^2 = R/S)'), ('change_', 'total change of {}')):
+        if m.startswith(pre):
+            return txt.format(m[len(pre):])
+    if m.startswith('sense_') and m.endswith('_gain'):
+        return f'gain in importance of sense {m[6:-5]}'
+    if m == 'intelligence_gain':
+        return 'gain in intelligence (skill on unseen kinds of world)'
     if m.startswith('exposure_'):
         return f'exposure to {m[9:]} (avg strength felt per tick)'
     if m.startswith('energy_lost_to_'):
@@ -57,7 +65,26 @@ def report(R, out):
     if R['surface']:
         L += ['', '## What the quadratic fit says', '', '"Clear" = bigger than twice its uncertainty. Values in the units of each result.', '']
         for m in metrics:
-            L += [f'**{nice(m)}**', '```'] + sentences(m, R['surface'].get(m)) + ['```']
+            if m in MAIN or m.startswith('R_') or m.endswith('_gain'):
+                L += [f'**{nice(m)}**', '```'] + sentences(m, R['surface'].get(m)) + ['```']
+    if R['mode'] == 'evolve' and any(k.startswith('R_') for k in metrics):
+        tr = [k[2:] for k in metrics if k.startswith('R_')]
+        L += ['', '## Traits: how fast each evolved (breeder\'s equation R = h^2 x S)', '',
+              'R = change per generation, S = how much better the breeders were than average, h^2 = R/S '
+              '(how much of that selection was passed on). Intelligence = skill on kinds of world never trained in.', '']
+        L += ['| combination | ' + ' | '.join(f'R {t}' for t in tr) + ' | intelligence start -> end |',
+              '|' + '---|' * (len(tr) + 2)]
+        for r in res:
+            m = r['metrics']
+            L.append(f'| {r["combo"]} | ' + ' | '.join(f'{m[f"R_{t}"]:+.4f}' for t in tr)
+                     + f' | {m.get("intelligence_start", float("nan")):.3f} -> {m.get("intelligence_end", float("nan")):.3f} |')
+        sg = [k[6:-6] for k in metrics if k.startswith('sense_') and k.endswith('_start')]
+        if sg:
+            L += ['', 'Sense importance (skill lost when silenced), start -> end:', '',
+                  '| combination | ' + ' | '.join(sg) + ' |', '|' + '---|' * (len(sg) + 1)]
+            for r in res:
+                m = r['metrics']
+                L.append(f'| {r["combo"]} | ' + ' | '.join(f'{m[f"sense_{g}_start"]:+.2f} -> {m[f"sense_{g}_end"]:+.2f}' for g in sg) + ' |')
     if R['mode'] == 'evolve':
         lay = list(res[0]['brain_change'])
         L += ['', '## What changed in the brain', '',
