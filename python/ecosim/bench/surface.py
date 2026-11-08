@@ -38,6 +38,8 @@ def fit(names, factors, results, metric):
             if metric in p and np.isfinite(p[metric]):
                 X.append([_code(r['combo'][n], l) for n, l in zip(names, lv)]); y.append(p[metric])
     X, y = np.array(X), np.array(y)
+    if len(y) == 0:
+        return None
     A, terms = design(X, nlev, names)
     if len(y) <= A.shape[1]:
         return None

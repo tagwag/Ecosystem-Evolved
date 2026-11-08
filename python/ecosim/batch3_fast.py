@@ -760,7 +760,7 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
             order = np.argsort(fit[k])[::-1][:n_elite]
             if on_gen is not None:
                 per = [{key: float(np.nanmean([x[key] for x in sk[b * W:(b + 1) * W]])) for key in sk[0]
-                        if isinstance(sk[0][key], float)} for b in range(P)]
+                        if isinstance(sk[0][key], (int, float)) and not isinstance(sk[0][key], bool)} for b in range(P)]
                 if sk[0].get('feature_exposure') is not None:
                     for b in range(P):
                         per[b]['feature_exposure'] = np.mean([x['feature_exposure'] for x in sk[b * W:(b + 1) * W]], 0).tolist()
