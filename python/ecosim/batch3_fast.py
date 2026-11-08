@@ -148,6 +148,7 @@ class FastSim:
         ng = self.gw * self.gh if self.sense_on else 1
         self.sfield, self.dmap, self.onfood = z(K, 3, ng), z(K, 2, ng), z(K, P)
         self.sense_cost = z(K, 4)              # energy lost to temperature, light, toxic, CO2 (per worm, summed)
+        self.wcost = z(K, 1)                   # Step 20: extra energy per tick per world (copy-fidelity cost); 0 = as before
         self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
                                                                             # no CPU->GPU copies inside a CUDA graph)
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
@@ -348,7 +349,7 @@ class FastSim:
                 pos = torch.where((alive & ~blk)[..., None], npos, pos)
             else:
                 pos = torch.where(alive[..., None], npos, pos)
-            energy = energy - torch.where(alive, cfg.base_cost + cfg.move_cost * speed, zero)
+            energy = energy - torch.where(alive, cfg.base_cost + self.wcost + cfg.move_cost * speed, zero)
             if SENSE:                                # Step 19 world costs: discomfort, UV, poison, stale air
                 cs = torch.stack([cfg.temp_cost * tmp.abs(), cfg.light_cost * lit, cfg.toxic_cost * tox,
                                   cfg.co2_cost * torch.clamp(2 * co2 - 1, min=0)], 1) * alive[:, None].float()  # (K,4,P)
