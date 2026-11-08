@@ -46,6 +46,7 @@ def load(path, quick=False):
             if 'levels' in f:
                 f['levels'] = f['levels'][:2]
         S.setdefault('campaign', {}).update(zoom_rounds=1, ml_runs=2)
+        S.setdefault('teacher', {}).update(generations=4, block=2, test_every=4)
         S['name'] += '_quick'
     return S
 
@@ -269,7 +270,11 @@ def main(path, quick=False):
     conn, dev = Connectome(), pick_device('cuda')
     t0 = time.time()
     mode = S.get('mode', 'evolve')
-    print(f'experiment {S["name"]}: mode={mode}' + ('' if mode == 'campaign' else f', {len(combos(S)[1])} combinations'), flush=True)
+    print(f'experiment {S["name"]}: mode={mode}' + ('' if mode in ('campaign', 'teacher') else f', {len(combos(S)[1])} combinations'), flush=True)
+    if mode == 'teacher':
+        from .teacher import run_teacher
+        run_teacher(S, out, conn, dev)
+        return
     if mode == 'campaign':
         from .campaign import run_campaign
         run_campaign(S, out, conn, dev)

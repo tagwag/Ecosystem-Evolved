@@ -154,6 +154,10 @@ GOAL (user, 2026-11-08): a mix of the earlier aim (pin down, reproducibly, how a
   world + brain dials, evolve/behave modes, factorial + quadratic fits, traits with breeder's equation R = h^2 S,
   intelligence = skill on unseen kinds of world, and screen -> zoom -> Gaussian-process campaigns.
 
+Progress-chasing teacher (built 2026-11-08, python/ecosim/bench/teacher.py, experiments/teacher.toml, not run yet):
+  pool of 6 worlds, blocks of 10 gens, UCB bandit on learning progress; arms teacher / random / fixed; yardstick =
+  pool skill + intelligence on 4 holdout worlds. ~5-6 h on the RTX 3080.
+
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
   start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a

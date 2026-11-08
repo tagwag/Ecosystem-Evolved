@@ -149,6 +149,22 @@ Report: `summary.md` (factor ranking, each zoom's formula, the ML trace, best me
 `campaign.png`. Always confirm the winner with a bigger run before trusting it. Examples:
 `campaign_intelligence.toml` (~6-7 h) and `campaign_smoke.toml` (minutes).
 
+## Teacher: keep evolution climbing (`mode = "teacher"`)
+
+An **automatic curriculum**. A pool of world types (`[[world_option]]`); evolution runs in blocks of `block`
+generations; after each block the teacher measures that world's **learning progress** (how much the score rose during
+the block) and picks the next world with a **multi-armed bandit** (UCB: recent progress + a bonus for worlds not
+tried lately + a little randomness). Mastered worlds and hopeless worlds both show little progress, so the teacher
+drifts to whatever is learnable right now. The whole population carries over between worlds.
+
+Arms (same seeds, same generations): `teacher`, `random` (random world each block: is it the choosing or just the
+variety?), `fixed` (always the first world: the Step 19 baseline).
+
+Yardstick every `test_every` generations: the best brain per seed on fixed test worlds of every pool world
+(**pool skill**) and of `[[holdout]]` worlds never trained in (**intelligence**). The report compares the teacher
+with the other arms at the end (paired by seed) and shows where the teacher sent the worms.
+Example: `teacher.toml` (~5-6 h). Tiny test: `teacher_smoke.toml`.
+
 ## Honest limits
 
 - Brain-dial effects are facts about this simplified model, not proof about real worms.

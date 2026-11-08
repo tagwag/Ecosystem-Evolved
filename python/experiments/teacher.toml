@@ -1,0 +1,60 @@
+# Progress-chasing teacher vs random world rotation vs one fixed world. ~5-6 h on an RTX 3080.
+name = "teacher"
+mode = "teacher"
+description = "Does chasing learning progress across a pool of worlds keep evolution climbing, and make worms better on worlds they never trained in?"
+
+[teacher]
+generations = 300               # per arm
+block = 10                      # generations per teacher decision
+test_every = 50                 # yardstick interval
+arms = ["teacher", "random", "fixed"]
+explore = 0.5                   # bonus for worlds not tried lately
+random_pick = 0.1               # chance of a random world each block
+
+[base]                          # shared by every world (the Step 14/19 world)
+predators = 6
+touch_gain = 3.0
+food_regrow_per_tick = 0.2
+hunger = true
+fitness = "end"
+
+[evolve]
+seeds = 8
+brains = 16
+worlds_per_generation = 2
+
+[test]
+worlds = 8
+
+# The training pool (first one = the "fixed" arm's world). Omit all [[world_option]] to use the built-in pool.
+[[world_option]]
+name = "base"
+[[world_option]]
+name = "scarce"
+cfg = { food_regrow_per_tick = 0.1 }
+[[world_option]]
+name = "moving_food"
+cfg = { season_every = 300 }
+[[world_option]]
+name = "fast_predators"
+cfg = { pred_speed = 3.5, pred_sense = 200.0 }
+[[world_option]]
+name = "toxin"
+features = { toxin = { a = 1.5 } }
+[[world_option]]
+name = "temperature"
+features = { temperature = { a = 1.0, period = 3000 } }
+
+# Holdout worlds: never trained in; skill here = intelligence.
+[[holdout]]
+name = "rich_food"
+cfg = { food_regrow_per_tick = 0.4 }
+[[holdout]]
+name = "many_predators"
+cfg = { predators = 10 }
+[[holdout]]
+name = "few_big_patches"
+cfg = { food_patches = 3 }
+[[holdout]]
+name = "light_zones"
+features = { light = { a = 1.0 } }

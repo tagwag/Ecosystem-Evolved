@@ -735,8 +735,9 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
         pop = np.stack([w.random_genomes(conn, P, r, opts) for r in rngs])
     if init is not None:                                 # start from given brains: the brain itself + P-1 mutants
         assert not grow
-        pop = np.stack([np.stack([init[s]] + [w.mutate(init[s], conn, base, r, opts)[0] for _ in range(P - 1)])
-                        for s, r in zip(seeds, rngs)])
+        pop = np.stack([init[s] if np.ndim(init[s]) == 2 else              # a whole population (teacher) ...
+                        np.stack([init[s]] + [w.mutate(init[s], conn, base, r, opts)[0] for _ in range(P - 1)])
+                        for s, r in zip(seeds, rngs)])                    # ... or one brain + mutants of it
     n_elite = max(2, int(P * base.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * K
     print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '
