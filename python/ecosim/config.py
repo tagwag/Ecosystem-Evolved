@@ -98,3 +98,22 @@ class Config:
     obs_walls: float = 2.0          # per 1M sq units; 12 thick, 150-300 long, any angle
     obs_caves: float = 1.5          # per 1M sq units; ring radius 60-90, 12 thick, 80-degree opening
     nose_gain: float = 3.0
+
+    # ---- Step 19: all worm senses (off by default). GPU code only. Each sense needs something in the world:
+    #   temperature  smooth hot/cold field; comfortable in the middle, cost per tick grows with distance from it
+    #   light        a few bright zones (UV): cost while in them
+    #   toxic        a few toxic patches: strong cost while in them
+    #   predator     scent spreading from each predator (needs predators)
+    #   co2          from crowds of worms and from food (bacteria); cost when very high
+    #   o2           lower where food (bacteria) is: a second food cue, no cost
+    #   on_food      food within 20 units (touch/texture of the lawn)
+    # Zones per 1,000,000 square units (normal world ~2.07M), at least 1 of each.
+    senses: bool = False
+    sense_gain: float = 3.0
+    temp_cost: float = 0.4          # per tick at the hottest/coldest spot (base_cost is 0.6)
+    light_cost: float = 0.3
+    toxic_cost: float = 1.5
+    co2_cost: float = 0.3           # per tick at maximum CO2, starts above half
+    temp_bumps: float = 2.0
+    light_zones: float = 1.5
+    toxic_zones: float = 1.5

@@ -45,6 +45,23 @@ OUT = Path('runs/step3_fast')
 BLOCK = 10           # ticks per graph replay; must equal cfg.smell_update_every
 
 
+def make_sense_fields(cfg, rng, gw, gh):
+    """Step 19 static fields on the smell grid: temperature [0,1] (0.5 = comfortable), light [0,1], toxic [0,1]."""
+    c = cfg.smell_cell
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * c, (np.arange(gh) + 0.5) * c, indexing='ij')
+    n = lambda d: max(1, int(round(d * cfg.width * cfg.height / 1e6)))
+
+    def bump(sig):
+        dx = (X - rng.uniform(0, cfg.width) + cfg.width / 2) % cfg.width - cfg.width / 2
+        dy = (Y - rng.uniform(0, cfg.height) + cfg.height / 2) % cfg.height - cfg.height / 2
+        return np.exp(-(dx ** 2 + dy ** 2) / (2 * sig ** 2))
+    T = sum(rng.choice([-1.0, 1.0]) * bump(rng.uniform(150, 350)) for _ in range(n(cfg.temp_bumps) + 1))
+    T = 0.5 + 0.5 * T / max(np.abs(T).max(), 1e-9)                       # hottest/coldest spot = 1 / 0
+    L = np.clip(sum(bump(rng.uniform(60, 140)) * 1.3 for _ in range(n(cfg.light_zones))), 0, 1)
+    X_ = np.clip(sum(bump(rng.uniform(30, 70)) * 1.5 for _ in range(n(cfg.toxic_zones))), 0, 1)
+    return np.stack([T, L, X_]).astype(np.float32)
+
+
 def make_obstacles(cfg, rng):
     """Step 18: random pillars, walls and caves rasterised on an obs_cell grid. Returns bool (gw, gh), True = solid."""
     c = cfg.obs_cell
@@ -125,6 +142,11 @@ class FastSim:
         # ticks, bites near rock, bites in the open, deaths near rock, deaths in the open, hidden ticks (in a
         # predator's range but every sight line blocked), exposed ticks (seen by >=1 predator), bump ticks, alive ticks
         self.odiag = z(K, 10)
+        # Step 19 senses: static fields (temperature, light, toxic) and per-block maps (predator scent, CO2)
+        self.sense_on = cfg.senses
+        ng = self.gw * self.gh if self.sense_on else 1
+        self.sfield, self.dmap, self.onfood = z(K, 3, ng), z(K, 2, ng), z(K, P)
+        self.sense_cost = z(K, 4)              # energy lost to temperature, light, toxic, CO2 (per worm, summed)
         self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
                                                                             # no CPU->GPU copies inside a CUDA graph)
         # --- food regrowth schedule (same running-total rule as World.regrow), per block
@@ -196,7 +218,11 @@ class FastSim:
         self.eaten.zero_(); self.lifetime.zero_(); self.esum.zero_(); self.bi.zero_()
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
-        self.bump.zero_(); self.wall.zero_(); self.odiag.zero_()
+        self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
+        if self.sense_on:
+            self.sfield.copy_(torch.as_tensor(np.stack([make_sense_fields(cfg, np.random.default_rng(r.integers(2**62)),
+                                                                          self.gw, self.gh) for r in rngs]),
+                                              **f).view(K, 3, -1))
         if self.Q:
             self.ppos.copy_(torch.rand(K, self.Q, 2, generator=self.gen, **f) * self.wh)
             self.phead.copy_(torch.rand(K, self.Q, generator=self.gen, **f) * TAU)
@@ -205,6 +231,8 @@ class FastSim:
         if self.pher_on:
             self.pmap.copy_(self._pher_map(self.pos, self.alive))
             self.pprev.copy_(self._smell_at(self.pos, self.pmap))
+        if self.sense_on:
+            self.dmap.copy_(self._sense_maps(self.pos, self.alive, self.ppos))
 
     # ------------------------------------------------------------------ pieces
     def _solid_at(self, p, grid=None):
@@ -214,6 +242,21 @@ class FastSim:
         gy = torch.clamp((p[..., 1] / cfg.obs_cell).long(), 0, self.ogh - 1)
         idx = (gx * self.ogh + gy).reshape(self.K, -1)
         return (self.solid if grid is None else grid).gather(1, idx).view(p.shape[:-1])
+
+    def _sense_maps(self, pos, alive, ppos):
+        """Step 19: predator scent (1 = right next to a predator, capped) and CO2 (crowds + food), (K, 2, cells)."""
+        cfg, K, gw, gh = self.cfg, self.K, self.gw, self.gh
+        cnt = lambda p, w: torch.zeros(K, gw * gh, **self.f).scatter_add_(
+            1, torch.clamp((p[..., 0] / cfg.smell_cell).long(), 0, gw - 1) * gh
+            + torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1), w)
+        if self.Q:
+            pk = blur_wrap(cnt(ppos, torch.ones(K, self.Q, **self.f)).view(K, gw, gh), self.pkern, self.pkr)
+            pred = torch.clamp(pk / float(self.pkern[self.pkr] ** 2), 0, 1).view(K, -1)
+        else:
+            pred = torch.zeros(K, gw * gh, **self.f)
+        crowd = blur_wrap(cnt(pos, alive.float()).view(K, gw, gh), self.pkern, self.pkr) / self.pnorm
+        co2 = torch.clamp(0.7 * crowd + 0.3 * self.smap, 0, 1).view(K, -1)
+        return torch.stack([pred, co2], 1)
 
     def _rand(self, *s):
         return torch.rand(*s, generator=self.gen, **self.f)
@@ -259,6 +302,9 @@ class FastSim:
         pprev = self.pprev
         if self.pher_on:
             self.pmap.copy_(self._pher_map(pos, alive))
+        SENSE, onfood = self.sense_on, self.onfood
+        if SENSE:
+            self.dmap.copy_(self._sense_maps(self.pos, self.alive, self.ppos))
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
         r2, BIG = cfg.eat_radius ** 2, K * Fd + 1
         zero = torch.zeros((), **self.f)
@@ -279,8 +325,16 @@ class FastSim:
                 pl = self._smell_at(pos, self.pmap)
                 pher = (pl.view(-1), torch.clamp((pl - pprev) * 20.0, -1, 1).view(-1))
                 pprev = pl
+            extra = None
+            if SENSE:                                # Step 19: sample every sense at the worm's position
+                gi = (torch.clamp((pos[..., 0] / cfg.smell_cell).long(), 0, self.gw - 1) * self.gh
+                      + torch.clamp((pos[..., 1] / cfg.smell_cell).long(), 0, self.gh - 1))          # (K,P)
+                sf = self.sfield.gather(2, gi[:, None, :].expand(-1, 3, -1))                      # (K,3,P)
+                dm = self.dmap.gather(2, gi[:, None, :].expand(-1, 2, -1))                        # (K,2,P)
+                tmp, lit, tox, prd, co2 = 2 * sf[:, 0] - 1, sf[:, 1], sf[:, 2], dm[:, 0], dm[:, 1]
+                extra = torch.stack([tmp, lit, tox, prd, co2, 1 - smell, onfood], -1).view(K * P, -1)
             bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher,
-                                                               bump.view(-1) if OBS else None)
+                                                               bump.view(-1) if OBS else None, extra)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
@@ -294,6 +348,11 @@ class FastSim:
             else:
                 pos = torch.where(alive[..., None], npos, pos)
             energy = energy - torch.where(alive, cfg.base_cost + cfg.move_cost * speed, zero)
+            if SENSE:                                # Step 19 world costs: discomfort, UV, poison, stale air
+                cs = torch.stack([cfg.temp_cost * tmp.abs(), cfg.light_cost * lit, cfg.toxic_cost * tox,
+                                  cfg.co2_cost * torch.clamp(2 * co2 - 1, min=0)], 1) * alive[:, None].float()  # (K,4,P)
+                energy = energy - cs.sum(1)
+                self.sense_cost += cs.sum(2)
             # nearest-neighbour distances (clumping measure) and neighbour counts (Step 14b herd predators)
             dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
             nd2 = (dd ** 2).sum(-1)
@@ -358,6 +417,8 @@ class FastSim:
             if DIG:                                  # gut must have room for a whole meal; satiety counts the gut too
                 can = alive & (stomach <= cfg.stomach_cap - cfg.food_value) & (energy + stomach < self.gut_cap - cfg.food_value)
             d2 = ((pos[:, :, None, :] - food[:, None, :, :]) ** 2).sum(-1)
+            if SENSE:                                # on a food lawn: any food within 20 units (felt next tick)
+                onfood = (((d2 < 400.0) & falive[:, None, :]).any(2) & alive).float()
             reach = (d2 <= r2) & falive[:, None, :] & can[:, :, None]
             ate = torch.zeros(K, P, dtype=torch.bool, device=dev)
             for _ in range(3):
@@ -436,7 +497,7 @@ class FastSim:
                           ('energy', energy), ('H', H), ('alive', alive), ('eaten', eaten), ('lifetime', lifetime),
                           ('esum', esum), ('food', food), ('falive', falive), ('prev', prev), ('ppos', ppos),
                           ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites),
-                          ('stomach', stomach), ('pprev', pprev), ('bump', bump)):
+                          ('stomach', stomach), ('pprev', pprev), ('bump', bump), ('onfood', onfood)):
             getattr(self, name).copy_(val)
         self.bi.add_(1)
 
@@ -471,6 +532,7 @@ class FastSim:
             fit = self.eaten + self.lifetime / T
         fit, eaten, esum, alive, sat, bites, nn, wall, odiag = (x.cpu().numpy() for x in (
             fit, self.eaten, self.esum, self.alive, self.sat, self.bites, self.nn, self.wall, self.odiag))
+        scost = self.sense_cost.cpu().numpy()
         with np.errstate(invalid='ignore', divide='ignore'):
             sf_full, sf_hungry = sat[:, 0] / sat[:, 1], sat[:, 2] / sat[:, 3]
         stats = [dict(mean_food=float(eaten[k].mean()), mean_energy=float((esum[k] / T).mean()),
@@ -479,7 +541,8 @@ class FastSim:
                       bites=float(bites[k].mean()),
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
-                      odiag=odiag[k].tolist() if self.obs_on else None)
+                      odiag=odiag[k].tolist() if self.obs_on else None,
+                      sense_cost=(scost[k] / P).tolist() if self.sense_on else None)
                  for k in range(self.K)]
         return fit.astype(np.float64), stats
 
@@ -489,7 +552,7 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0, clonal=0, init=None):
+           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -499,6 +562,9 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
             match the normal world. All groups of a seed get the
             SAME world each generation. Stops evolution from rewarding stealing food from your own kind
             (the tragedy of the commons found in Step 10), and matches the clone-based fair test.
+          clonal=60 (= worm_population) gives full-size worlds, exactly like the fair test (Step 19).
+    brains: brains per seed in clonal mode (default worm_population). eval_worlds: clonal mode scores every brain
+          on this many different worlds per generation and averages (Step 19).
     init: {seed: genome} = start each seed's population from that brain (it + mutants of it) instead of random
           brains (clonal mode only; Step 14a)."""
     opts, conn = CONDITIONS[cond], Connectome()
@@ -509,7 +575,8 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     gen.manual_seed(int(np.random.default_rng(list(seeds)).integers(2**62)))
     P = cfg.worm_population
     if clonal:
-        return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init)
+        return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init,
+                              brains, eval_worlds)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -566,13 +633,14 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     return hist, times
 
 
-def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None):
+def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1):
     opts, conn = CONDITIONS[cond], Connectome()
     base = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
-    P = base.worm_population
+    PW = base.worm_population
+    P = brains or PW                                     # brains per seed
     # A smaller copy of the normal world: area, food patches and regrowth all scaled by G / P, so worm density,
     # food density, food per worm and patches per worm are the same as in the normal world (60 worms, 6 patches).
-    f = G / P
+    f = G / PW
     cfg = Config(seed=seeds[0], **dict(CFG_OVERRIDES.get(cond, {}), width=base.width * f ** 0.5,
                                        height=base.height * f ** 0.5, food_patches=max(1, round(base.food_patches * f)),
                                        food_regrow_per_tick=base.food_regrow_per_tick * f,
@@ -582,7 +650,7 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     gen = torch.Generator(device=dev)
     gen.manual_seed(int(np.random.default_rng(list(seeds) + [G]).integers(2**62)))
     K = len(seeds)
-    sim = FastSim(cfg, opts, conn, K * P, G, dev, graph, gen)
+    sim = FastSim(cfg, opts, conn, K * P * W, G, dev, graph, gen)
     from .worm3 import Opts3
     grow = isinstance(opts, Opts3)                       # Step 4 growing brains use worm3's genome + mutations
     if grow:
@@ -598,21 +666,21 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
     n_elite = max(2, int(P * base.elite_fraction))
     hist, best = [[] for _ in seeds], [None] * K
     print(f'{cond}: {K} seeds x {P} brains, each scored as a group of {G} clones '
-          f'({K * P} worlds of {cfg.width:.0f}x{cfg.height:.0f}, {K * P * G} worms on {dev}); '
+          f'on {W} world(s) each ({K * P * W} worlds of {cfg.width:.0f}x{cfg.height:.0f}, {K * P * W * G} worms on {dev}); '
           f'food per world {cfg.food_patches}x{cfg.food_per_patch}', flush=True)
     t_all = time.perf_counter()
     for g in range(generations):
         t0 = time.perf_counter()
-        wseed = [int(r.integers(2**63)) for r in rngs]               # one world layout per seed per generation
-        world_rngs = [np.random.default_rng(wseed[k]) for k in range(K) for _ in range(P)]
-        genomes = pop.astype(np.float32).reshape(K * P, 1, -1).repeat(G, 1)
+        wseed = [[int(r.integers(2**63)) for _ in range(W)] for r in rngs]   # W world layouts per seed per generation
+        world_rngs = [np.random.default_rng(wseed[k][v]) for k in range(K) for _ in range(P) for v in range(W)]
+        genomes = pop.astype(np.float32).reshape(K * P, 1, 1, -1).repeat(W, 1).repeat(G, 2).reshape(K * P * W, G, -1)
         fitw, statw = sim.run(genomes, world_rngs)
-        fit = fitw.mean(1).reshape(K, P)                             # a brain's score = its group's mean
+        fit = fitw.mean(1).reshape(K, P, W).mean(2)                  # a brain's score = its groups' mean
         t1 = time.perf_counter()
         new = np.empty_like(pop)
         for k, r in enumerate(rngs):
-            sk = statw[k * P:(k + 1) * P]
-            st = {key: float(np.nanmean([x[key] for x in sk])) for key in sk[0]}
+            sk = statw[k * P * W:(k + 1) * P * W]
+            st = {key: float(np.nanmean([x[key] for x in sk])) for key in sk[0] if not isinstance(sk[0][key], (list, type(None)))}
             st['fitness'] = float(fit[k].mean()); st['best_fitness'] = float(fit[k].max()); st['gen'] = g
             hist[k].append(st)
             order = np.argsort(fit[k])[::-1][:n_elite]

@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: Steps 16-18, finished 2026-11-07 21:57 MT) | | | | |
+| RUNNING | Step 19: matched scoring, base vs all-senses world, 300 gens | 2026-11-08 ~00:50 MT | run_step19.bat | step19_log.txt, step19_base_log.txt, step19_rich_log.txt | ~08:00 MT |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.

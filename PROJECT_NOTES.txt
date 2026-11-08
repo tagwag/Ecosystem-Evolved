@@ -119,6 +119,14 @@ Step 18 (herd predators + obstacles, 32 seeds x 150 gens): NO hiding. Time near 
   predators with rock: no differences. Likely limits: the only rock sense is bumping (nose touch), worms can't
   sense predators before contact, and noisy small-world scoring.
 
+Step 18b (2026-11-08, re-test of Step 18 brains, all worms incl. dead): rock = neither shelter nor predator trap.
+  Bite rate near rock = open (1.48 vs 1.48 per 1000 worm-ticks, p=0.99). Deaths 25-45% higher near rock
+  (p=0.008 herd, 0.0007 plain) -> probably weak/starving worms ending up stuck there (no food grows in rock).
+  Hidden (in range, sight blocked) ~4%, stuck ~2%, unchanged by evolution.
+Step 19 (queued 2026-11-08): matched scoring (full-size clone worlds, 2 worlds/brain/gen, 16 seeds x 16 brains,
+  300 gens) in the Step 14 world vs an all-senses world (temperature/AFD, light/ASJ, toxic/PHA-PHB, predator
+  scent/ASH, CO2/BAG, O2/URX-AQR-PQR, on-food/CEP-ADE-PDE, + worm scent, obstacles). Does skill keep climbing?
+
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
   start_population(name, P, rng, mutate[, to=brain]) to start ANY step from a lineage, convert(g, brain) to move a
