@@ -121,6 +121,7 @@ class FastSim:
         self.pmap, self.pprev = z(K, self.gw, self.gh), z(K, P)
         self.pkern, self.pkr = gauss_kernel(cfg.pher_sigma_cells, dev)
         self.pnorm = float(self.pkern[self.pkr] ** 2) * cfg.pher_full
+        self.ppeak = float(self.pkern[self.pkr] ** 2)       # one predator's scent peak (Step 19)
         self.nn = z(K, 2)                      # sum of nearest-neighbour distances, count (clumping measure)
         self.pos, self.heading = z(K, P, 2), z(K, P)
         self.size, self.energy, self.H = z(K, P), z(K, P), z(K, P)
@@ -251,7 +252,7 @@ class FastSim:
             + torch.clamp((p[..., 1] / cfg.smell_cell).long(), 0, gh - 1), w)
         if self.Q:
             pk = blur_wrap(cnt(ppos, torch.ones(K, self.Q, **self.f)).view(K, gw, gh), self.pkern, self.pkr)
-            pred = torch.clamp(pk / float(self.pkern[self.pkr] ** 2), 0, 1).view(K, -1)
+            pred = torch.clamp(pk / self.ppeak, 0, 1).view(K, -1)
         else:
             pred = torch.zeros(K, gw * gh, **self.f)
         crowd = blur_wrap(cnt(pos, alive.float()).view(K, gw, gh), self.pkern, self.pkr) / self.pnorm
