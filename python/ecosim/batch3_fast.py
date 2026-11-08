@@ -543,7 +543,7 @@ class FastSim:
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
                       odiag=odiag[k].tolist() if self.obs_on else None,
-                      sense_cost=(scost[k] / P).tolist() if self.sense_on else None)
+                      sense_cost=(scost[k] / self.P).tolist() if self.sense_on else None)
                  for k in range(self.K)]
         return fit.astype(np.float64), stats
 
