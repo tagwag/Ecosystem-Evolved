@@ -1,0 +1,282 @@
+{
+ "checkpoints": [
+  0,
+  25,
+  50,
+  75,
+  100
+ ],
+ "start_base_skill": 3.2291507229499983,
+ "w_base": {
+  "own_skill": [
+   3.2292,
+   3.1918,
+   3.1876,
+   3.2588,
+   3.2305
+  ],
+  "base_skill": [
+   3.2292,
+   3.1918,
+   3.1876,
+   3.2588,
+   3.2305
+  ],
+  "own_gain": {
+   "mean_hunger": 3.2305370222363208,
+   "mean_nohunger": 3.2291507229499983,
+   "mean_diff": 0.001386299286322265,
+   "ci95": [
+    -0.12147333128498265,
+    0.1374623134083474
+   ],
+   "hunger_wins": 15,
+   "p_value": 0.9842,
+   "n": 32
+  },
+  "base_end_vs_start": {
+   "mean_hunger": 3.2305370222363208,
+   "mean_nohunger": 3.2291507229499983,
+   "mean_diff": 0.001386299286322265,
+   "ci95": [
+    -0.12147333128498265,
+    0.1374623134083474
+   ],
+   "hunger_wins": 15,
+   "p_value": 0.9842,
+   "n": 32
+  },
+  "base_peak_checkpoint": 75,
+  "best_single_brain_base": 3.803211287822988,
+  "base_end_vs_best_founder": {
+   "mean_hunger": 3.2305370222363208,
+   "mean_nohunger": 3.440586968832131,
+   "mean_diff": -0.21004994659581044,
+   "ci95": [
+    -0.30006958458045446,
+    -0.12070329756763731
+   ],
+   "hunger_wins": 8,
+   "p_value": 0.0001,
+   "n": 32
+  },
+  "runs_above_best_founder": 8
+ },
+ "w_seasons": {
+  "own_skill": [
+   2.4553,
+   2.4466,
+   2.3915,
+   2.4041,
+   2.4041
+  ],
+  "base_skill": [
+   3.2292,
+   3.1827,
+   3.0921,
+   3.071,
+   3.1238
+  ],
+  "own_gain": {
+   "mean_hunger": 2.4040843724087204,
+   "mean_nohunger": 2.455330944101539,
+   "mean_diff": -0.05124657169281901,
+   "ci95": [
+    -0.13668467261301767,
+    0.036431586200916515
+   ],
+   "hunger_wins": 16,
+   "p_value": 0.2724,
+   "n": 32
+  },
+  "base_end_vs_start": {
+   "mean_hunger": 3.1237813601522553,
+   "mean_nohunger": 3.2291507229499983,
+   "mean_diff": -0.10536936279774331,
+   "ci95": [
+    -0.24070780544129464,
+    0.03613186963920365
+   ],
+   "hunger_wins": 13,
+   "p_value": 0.14865,
+   "n": 32
+  },
+  "base_peak_checkpoint": 0,
+  "best_single_brain_base": 3.7505508060774044,
+  "base_end_vs_control": {
+   "mean_hunger": 3.1237813601522553,
+   "mean_nohunger": 3.2305370222363208,
+   "mean_diff": -0.10675566208406558,
+   "ci95": [
+    -0.20704645498428567,
+    -0.002334089185581669
+   ],
+   "hunger_wins": 10,
+   "p_value": 0.0529,
+   "n": 32
+  },
+  "base_end_vs_best_founder": {
+   "mean_hunger": 3.1237813601522553,
+   "mean_nohunger": 3.440586968832131,
+   "mean_diff": -0.316805608679876,
+   "ci95": [
+    -0.429274930436553,
+    -0.20171469037246365
+   ],
+   "hunger_wins": 5,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "runs_above_best_founder": 5
+ },
+ "w_fastpred": {
+  "own_skill": [
+   2.6315,
+   2.6701,
+   2.7388,
+   2.8108,
+   2.8704
+  ],
+  "base_skill": [
+   3.2292,
+   3.1034,
+   3.0894,
+   3.1243,
+   3.0639
+  ],
+  "own_gain": {
+   "mean_hunger": 2.8703551571101547,
+   "mean_nohunger": 2.6315096924899586,
+   "mean_diff": 0.2388454646201959,
+   "ci95": [
+    0.11014567163931746,
+    0.37078176779366917
+   ],
+   "hunger_wins": 24,
+   "p_value": 0.001,
+   "n": 32
+  },
+  "base_end_vs_start": {
+   "mean_hunger": 3.063859791856602,
+   "mean_nohunger": 3.2291507229499983,
+   "mean_diff": -0.16529093109339643,
+   "ci95": [
+    -0.3250892982913097,
+    -0.018024410058702936
+   ],
+   "hunger_wins": 11,
+   "p_value": 0.04135,
+   "n": 32
+  },
+  "base_peak_checkpoint": 0,
+  "best_single_brain_base": 3.7707537163876825,
+  "base_end_vs_control": {
+   "mean_hunger": 3.063859791856602,
+   "mean_nohunger": 3.2305370222363208,
+   "mean_diff": -0.1666772303797187,
+   "ci95": [
+    -0.33241790277345384,
+    -0.00818505401737226
+   ],
+   "hunger_wins": 11,
+   "p_value": 0.05485,
+   "n": 32
+  },
+  "base_end_vs_best_founder": {
+   "mean_hunger": 3.063859791856602,
+   "mean_nohunger": 3.440586968832131,
+   "mean_diff": -0.37672717697552915,
+   "ci95": [
+    -0.5222726071794095,
+    -0.24114145644173554
+   ],
+   "hunger_wins": 5,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "runs_above_best_founder": 5
+ },
+ "w_digest": {
+  "own_skill": [
+   1.2138,
+   2.1458,
+   2.3202,
+   2.4376,
+   2.4646
+  ],
+  "base_skill": [
+   3.2292,
+   2.9656,
+   2.9268,
+   3.0704,
+   2.9527
+  ],
+  "own_gain": {
+   "mean_hunger": 2.4646031774580477,
+   "mean_nohunger": 1.2138409146469915,
+   "mean_diff": 1.2507622628110562,
+   "ci95": [
+    1.1068254203567227,
+    1.3892078556747098
+   ],
+   "hunger_wins": 32,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "base_end_vs_start": {
+   "mean_hunger": 2.952660379425894,
+   "mean_nohunger": 3.2291507229499983,
+   "mean_diff": -0.2764903435241043,
+   "ci95": [
+    -0.43711204108337465,
+    -0.10380061157227226
+   ],
+   "hunger_wins": 8,
+   "p_value": 0.00375,
+   "n": 32
+  },
+  "base_peak_checkpoint": 0,
+  "best_single_brain_base": 3.6416150784326926,
+  "base_end_vs_control": {
+   "mean_hunger": 2.952660379425894,
+   "mean_nohunger": 3.2305370222363208,
+   "mean_diff": -0.2778766428104265,
+   "ci95": [
+    -0.4318424889395343,
+    -0.12254778188983982
+   ],
+   "hunger_wins": 7,
+   "p_value": 0.00155,
+   "n": 32
+  },
+  "base_end_vs_best_founder": {
+   "mean_hunger": 2.952660379425894,
+   "mean_nohunger": 3.440586968832131,
+   "mean_diff": -0.487926589406237,
+   "ci95": [
+    -0.6158940575227211,
+    -0.36107379200745354
+   ],
+   "hunger_wins": 3,
+   "p_value": 0.0,
+   "n": 32
+  },
+  "runs_above_best_founder": 3
+ },
+ "founders_base_skill": {
+  "6": 3.4406,
+  "16": 3.2917,
+  "17": 3.1388,
+  "27": 3.1843,
+  "25": 3.1245,
+  "5": 3.0872,
+  "21": 2.9919,
+  "30": 2.7717,
+  "26": 3.0876,
+  "19": 3.0357,
+  "28": 2.9609,
+  "8": 2.8942
+ },
+ "best_founder_base": 3.440586968832131,
+ "note": "paired(): \"hunger\" = first argument, \"nohunger\" = second. checkpoint 0 = start brains. own = skill in the world it evolved in; base = skill in w_base (the plateau world)"
+}

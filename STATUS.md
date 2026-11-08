@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Steps 16 (peaks in new worlds), 17 (champions in new worlds), 18 (herd + obstacles) | 2026-11-07 ~14:33 MT | run_step16_18.bat | step16_log.txt, step16_run_log.txt, step17_log.txt, step18_log.txt | ~22:30 MT |
+| idle | (last: Steps 16-18, finished 2026-11-07 21:57 MT) | | | | |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
@@ -25,6 +25,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 - Step 14a: peptide is entrenched (knockout -0.70) but not baggage: knocked-out brains recover in 10 gens.
 - Step 14b: selfish-herd predators -> weak clumping (-3.5 vs plain, p=0.051). Step 15: lineage takeover in ~7 gens;
   champions plateau ~3.2, below best founder.
+- Steps 16-18: new worlds did NOT break the plateau (all arms fell, even the control: small-world training vs
+  full-world test mismatch suspected); champions didn't recover; obstacles -> no hiding (near-rock time flat ~8%).
 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat

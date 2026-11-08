@@ -102,11 +102,22 @@ Step 15 lineage tournament (b14_knock, 12 founders x 5, 32 tournaments x 300 gen
   and level with their own founder (-0.11, p=0.26). Lesson: lineages fix almost at once; the world's skill ceiling
   (~3.2-3.5) caps everyone; one test per brain isn't enough to rank brains.
 
-Steps 16-18 (queued 2026-11-04): 16 = 16 best Step 14 brains (ranked on 18 worlds) evolved 150 gens in w_base /
-  w_seasons (patches jump every 300 ticks) / w_fastpred (predators 3.5 speed, 200 range) / w_digest (Step 8c rules),
-  re-tested in w_base to see if the plateau breaks. 17 = Step 15 champions, same worlds, 100 gens: recovery past
-  the best founder? 18 = herd predators + obstacles (pillars, walls, caves; block movement + predator sight; bumps
-  -> nose-touch FLP/OLQ) vs ordinary predators + obstacles vs no obstacles: does hiding evolve?
+Step 16 (2026-11-07, 16 peaks re-ranked on 18 worlds, each evolved twice, 150 gens, tested on 12 fresh worlds):
+  NO world broke the plateau. Base-world skill FELL in every arm, control included: w_base 3.35 -> 3.10 (p<0.001),
+  w_seasons 2.90, w_fastpred 3.00, w_digest 2.82 (all vs start p<0.001). New worlds were also worse than the
+  control (seasons -0.20 p=0.006, digest -0.28 p=0.001, fastpred -0.10 p=0.23). Own-world skill also fell in
+  seasons (-0.15) and fastpred (-0.24); only digest rose (1.20 -> 2.55: they started unadapted).
+  Likely cause: TRAINING/TEST MISMATCH. Evolution scores brains in 1/6-size clonal worlds (10 worms, 1 patch,
+  1 predator, 1 world per generation = noisy); the plateau peaks were picked in full-size worlds, so evolution
+  re-fits them to the small world and they lose full-world skill. The plateau may partly be this mismatch.
+Step 17 (Step 15 champions, same 4 worlds, 100 gens): no recovery. w_base flat (3.23 -> 3.23); new worlds lower
+  it (seasons -0.11, fastpred -0.17 p=0.04, digest -0.28 p=0.004). All arms below the best founder (3.44,
+  p<0.001); 3-8 of 32 runs beat it. fastpred own-world skill +0.24 (p=0.001) but it didn't carry over.
+Step 18 (herd predators + obstacles, 32 seeds x 150 gens): NO hiding. Time near rock flat at ~8% (= random
+  start, p=0.73); bites slightly UP over evolution (+0.06, p=0.056); time near rock doesn't predict bites
+  (rho=-0.15, p=0.41). Rock made life worse: fitness -0.55, food -1.36 vs no rock (both p<0.001). Herd vs plain
+  predators with rock: no differences. Likely limits: the only rock sense is bumping (nose touch), worms can't
+  sense predators before contact, and noisy small-world scoring.
 
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,
