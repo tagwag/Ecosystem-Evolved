@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: Step 19 + bench test, finished 2026-11-08 07:00 MT) | | | | |
+| RUNNING | Teacher experiment (teacher / random / fixed, 300 gens each) | 2026-11-09 ~07:00 MT | run_teacher.bat | teacher_log.txt, teacher_run_log.txt | ~13:00 MT |
 | QUEUED (user starts it) | Sweep screen1: 8-factor fractional factorial, 16 arms x 8 seeds x 100 gens | - | run_sweep.bat screen1 (waits for STEP19_DONE) | sweep_screen1_log.txt | ~6-10 h after start (estimate, check timing.txt) |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
