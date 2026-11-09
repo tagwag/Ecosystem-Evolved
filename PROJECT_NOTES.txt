@@ -154,9 +154,15 @@ GOAL (user, 2026-11-08): a mix of the earlier aim (pin down, reproducibly, how a
   world + brain dials, evolve/behave modes, factorial + quadratic fits, traits with breeder's equation R = h^2 S,
   intelligence = skill on unseen kinds of world, and screen -> zoom -> Gaussian-process campaigns.
 
-Progress-chasing teacher (built 2026-11-08, python/ecosim/bench/teacher.py, experiments/teacher.toml, not run yet):
-  pool of 6 worlds, blocks of 10 gens, UCB bandit on learning progress; arms teacher / random / fixed; yardstick =
-  pool skill + intelligence on 4 holdout worlds. ~5-6 h on the RTX 3080.
+Progress-chasing teacher (2026-11-09, 8 seeds x 16 brains x 300 gens per arm, 4.3 h): the teacher LOST.
+  Fixed (base world only) beat it on intelligence (holdout worlds) 2.94 vs 2.46 (p=0.008, 0/8 seeds) and on pool
+  skill 2.20 vs 1.85 (p=0.015). Teacher vs random rotation: no difference (p=0.6). Teacher and random both DECLINED
+  over time (teacher 2.55 -> 2.46, random 2.76 -> 2.39 intelligence); fixed stayed ~2.9-3.0 (flat).
+  Teacher's picks: toxin 10 blocks, fast predators 9, base 5, temperature 3, moving food 2, scarce 1.
+  Likely flaw: its 'progress' signal mostly measured recovery from its own world switches (score drops on arrival,
+  rebounds within the block), so it chased the worlds that hurt most. Switching every 10 gens also caused
+  forgetting. Fixes to try: measure progress on a fixed check (not within-block rebound), longer blocks, or train
+  on a mix of worlds every generation instead of switching.
 
 === LUCKY-LINEAGE LIBRARY (user wants every lucky lineage documented + reusable from any step) ===
 - python/lineages/: genomes + registry.json + LINEAGES.md. Code: ecosim/lineages.py: load(name), info, names,

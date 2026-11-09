@@ -9,7 +9,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING | Teacher experiment (teacher / random / fixed, 300 gens each) | 2026-11-09 ~07:00 MT | run_teacher.bat | teacher_log.txt, teacher_run_log.txt | ~13:00 MT |
+| idle | (last: teacher experiment, finished 2026-11-09 11:16 MT) | | | | |
 | QUEUED (user starts it) | Sweep screen1: 8-factor fractional factorial, 16 arms x 8 seeds x 100 gens | - | run_sweep.bat screen1 (waits for STEP19_DONE) | sweep_screen1_log.txt | ~6-10 h after start (estimate, check timing.txt) |
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
@@ -29,6 +29,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 - Steps 16-18: new worlds did NOT break the plateau (all arms fell, even the control: small-world training vs
   full-world test mismatch suspected); champions didn't recover; obstacles -> no hiding (near-rock time flat ~8%).
 - Step 19: with matched scoring skill keeps climbing slowly (base 2.54 -> 3.33, still rising); all-senses world no faster.
+- Teacher (curriculum): lost to a single fixed world (intelligence -0.49, p=0.008); = random rotation. Switching hurt.
 
 ## How to run things
 - GPU code: python/ecosim/batch3_fast.py (worm2 + growing brains, predators, digestion, alarm), launchers python/*.bat
