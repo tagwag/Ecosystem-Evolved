@@ -75,10 +75,36 @@ def run(G, c, patches, gen):
 def arenas(n, npatch, gen):
     return 10 + 80 * torch.rand(n, npatch, 2, generator=gen, device=DEV)
 
+FAIR = False        # set by --fair: scale init by fan-in and mutation by genome size (see below)
+REF = dict(smell=1, H=8, plastic=0)   # the 8-neuron brain is the reference size
+
+
+def init_scale(c):
+    """Per-gene standard deviation of the starting genome. Original: 0.5 everywhere.
+    Fair: recurrent weights scaled so every brain size starts with the same total recurrent input as the 8-neuron
+    brain (0.5 * sqrt(8 / H)); plastic 'alpha' weights the same way. Everything else keeps 0.5."""
+    L = glen(c)
+    if not FAIR:
+        return torch.full((L,), 0.5, device=DEV)
+    sc, i = [], 0
+    for n, sh in shapes(c):
+        k = int(np.prod(sh))
+        v = 0.5 * (REF["H"] / c["H"]) ** 0.5 if n in ("Wrec", "alpha") else 0.5
+        sc.append(torch.full((k,), v, device=DEV)); i += k
+    return torch.cat(sc)
+
+
+def mut_sigma(c):
+    """Per-gene mutation size. Original: 0.1 for every brain. Fair: 0.1 * sqrt(L_ref / L), so the TOTAL change per
+    child (length of the mutation vector) is the same for every brain size."""
+    return 0.1 * (glen(REF) / glen(c)) ** 0.5 if FAIR else 0.1
+
+
 def evolve(c, S, gens, gen, pop=48, elite=8, reps=3):
     """All S seeds at once. Returns best genome per seed (S, L) and the mean-fitness curve per seed (S, gens)."""
     L = glen(c)
-    G = 0.5 * torch.randn(S, pop, L, generator=gen, device=DEV)
+    G = init_scale(c) * torch.randn(S, pop, L, generator=gen, device=DEV)
+    sig = mut_sigma(c)
     curve = torch.zeros(S, gens)
     for g in range(gens):
         pt = arenas(S * reps, NPATCH, gen)                           # one arena per seed per rep, shared by its pop
@@ -89,7 +115,7 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3):
         idx = torch.argsort(-f, 1)[:, :elite]
         E = torch.gather(G, 1, idx[:, :, None].expand(S, elite, L))
         par = torch.randint(0, elite, (S, pop - elite), generator=gen, device=DEV)
-        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L)) + 0.1 * torch.randn(S, pop - elite, L, generator=gen, device=DEV)
+        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L)) + sig * torch.randn(S, pop - elite, L, generator=gen, device=DEV)
         G = torch.cat([E, kids], 1)
         if g % 25 == 0 or g == gens - 1:
             log(f"  gen {g:3d}  mean food {curve[:, g].mean():6.1f}  (seed range {curve[:, g].min():.1f}-{curve[:, g].max():.1f})")
@@ -107,12 +133,14 @@ def test(best, c, npatch, gen, n=30):
     return run(best[:, None].expand(S, n, L).reshape(-1, L), c, pt, gen).view(S, n).mean(1)
 
 if __name__ == "__main__":
-    S = int(sys.argv[1]) if len(sys.argv) > 1 else 30
-    gens = int(sys.argv[2]) if len(sys.argv) > 2 else 300
-    names = list(CONDS) if len(sys.argv) <= 3 or sys.argv[3] == "all" else sys.argv[3].split(",")
-    out = Path(f"results_gpu_{gens}g_{S}s.json")
+    argv = [a for a in sys.argv[1:] if a != "--fair"]
+    FAIR = "--fair" in sys.argv
+    S = int(argv[0]) if len(argv) > 0 else 30
+    gens = int(argv[1]) if len(argv) > 1 else 300
+    names = list(CONDS) if len(argv) <= 2 or argv[2] == "all" else argv[2].split(",")
+    out = Path(f"results_gpu_{gens}g_{S}s{'_fair' if FAIR else ''}.json")
     res = json.loads(out.read_text()) if out.exists() else {}
-    log(f"start on {DEV} ({torch.cuda.get_device_name(0) if DEV.type == 'cuda' else 'cpu'}): {S} seeds x {gens} gens")
+    log(f"{'FAIR mode (mutation scaled by genome size, init by brain size). ' if FAIR else ''}start on {DEV} ({torch.cuda.get_device_name(0) if DEV.type == 'cuda' else 'cpu'}): {S} seeds x {gens} gens")
     gen = torch.Generator(device=DEV); gen.manual_seed(12345)
     if "random_walk" not in res:
         c = dict(smell=1, H=8, plastic=0); z = torch.zeros(S, glen(c), device=DEV)

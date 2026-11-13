@@ -1,0 +1,318 @@
+# FACTOR CATALOG: every environmental (and population/genetic) factor known to affect C. elegans fitness or evolution,
+# with all its forms, as the master list for config-file experiments.
+#
+# status   implemented = available in the factor engine (python/engine) as off / auto / custom (2026-11-13: all 37).
+#          Every implementation is a SIMPLIFIED model of the effect (see python/engine/FACTOR_GUIDE.md).
+#          sim_keys = the matching settings in the OLD ecosim (python/ecosim/config.py), kept for reference.
+# evidence EVO = shown to drive evolution (experiments or wild populations)   EFFECT = changes fitness/traits/behaviour
+#          CONTESTED = disputed in the literature                              UNTESTED = no C. elegans study found
+# Sources: see sources.md (numbers in [brackets]). Built 2026-11-13 from a broad literature pass, NOT a systematic review.
+# Config files may set any factor here; one that is not implemented must raise "not implemented", never be ignored.
+
+# ======================================================================= PHYSICAL
+[temperature]
+category = "physical"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["senses", "temp_bumps", "temp_cost"]      # today: hot/cold spots that cost energy; no effect on development speed
+forms = ["constant level", "spatial gradient (thermotaxis)", "daily cycle", "seasonal cycle", "heat shock (short spike)",
+         "cold shock", "extreme heat (>25 C sterility in real worms)", "random fluctuation"]
+real_range = "lab 15-25 C; fertility collapses above ~25-26 C; dauers survive wider"
+notes = "Changes development rate, fertility, lifespan and competition with C. briggsae (warmer favours briggsae)."
+sources = [1, 2, 3]
+
+[oxygen]
+category = "physical"
+evidence = "EVO"
+status = "implemented"
+forms = ["level (0-21 %)", "gradient", "hypoxia (low)", "anoxia (zero)", "hyperoxia (lab air 21 % vs preferred 5-10 %)",
+         "regular normoxia/anoxia cycles", "irregular cycles"]
+notes = "npr-1 / glb-5 variants change O2 preference and clumping; regular anoxia cycles evolved maternal glycogen."
+sources = [4, 5]
+
+[carbon_dioxide]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["level", "gradient (rotting fruit / crowded worms make CO2)"]
+sources = [4]
+
+[humidity]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["wet / film of water", "drying out (desiccation)", "full drought (dauer anhydrobiosis)"]
+sources = [6]
+
+[osmolarity]
+category = "physical"
+evidence = "EVO"
+status = "implemented"
+forms = ["salt level", "sugar/glycerol (non-salt osmolytes)", "gradient", "sudden shock", "slow ramp"]
+sources = [7]
+
+[ph]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["acidic", "alkaline", "gradient"]
+sources = []
+
+[substrate]
+category = "physical"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["obstacles", "obs_pillars", "obs_walls", "obs_caves"]   # today: 2D obstacles only
+forms = ["2D surface (agar)", "3D soil / granular", "rotting fruit", "rotting stems", "liquid", "obstacles / walls / caves",
+         "patch size and patch spacing"]
+notes = "Real worms boom in rotting fruit and stems, are rare in soil, absent on fresh fruit."
+sources = [2, 8]
+
+[light]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+sim_keys = ["senses", "light_zones", "light_cost"]   # today: generic light zones that cost energy
+forms = ["visible: red", "visible: green", "visible: blue", "violet", "darkness", "day/night cycle", "intensity gradient"]
+notes = "No eyes; LITE-1 / GUR-3 sense short-wavelength light; avoidance is strongest for UV/blue."
+sources = [9]
+
+[mechanical]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+sim_keys = ["touch_gain", "touch_radius", "nose_gain"]   # today: touch of predators and obstacles
+forms = ["gentle touch", "harsh touch", "plate tap / vibration", "ultrasound (sonogenetics, needs added channel)",
+         "water flow / shear", "pressure"]
+sources = [10]
+
+[electric_field]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["DC field (electrotaxis)", "AC field", "static charge (jumping onto carriers)"]
+sources = [11]
+
+[magnetic_field]
+category = "physical"
+evidence = "CONTESTED"
+status = "implemented"
+forms = ["geomagnetic direction", "field strength", "artificial gradient"]
+notes = "Reported magnetotaxis via AFD did not replicate; keep as an 'evolvable novel sense' option, not as biology."
+sources = [12]
+
+[gravity]
+category = "physical"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["normal 1 g", "microgravity (spaceflight)", "hypergravity (centrifuge)"]
+sources = [13]
+
+[radiofrequency]
+category = "physical"
+evidence = "UNTESTED"
+status = "implemented"
+forms = ["radio", "microwave", "mobile-phone bands"]
+notes = "Old reports of heat-shock-like effects were mostly heating artefacts; treat as heat unless shown otherwise."
+sources = [14]
+
+# ======================================================================= RADIATION (mainly a MUTATION SOURCE)
+[radiation]
+category = "radiation"
+evidence = "EVO"
+status = "implemented"
+forms = [
+  "UV-A (320-400 nm)", "UV-B (280-320 nm)", "UV-C (100-280 nm)",
+  "X-ray", "gamma (e.g. Cs-137, Co-60)",
+  "alpha particles", "beta particles", "neutrons", "protons",
+  "heavy ions / cosmic rays (space)", "radon (alpha emitter, soil gas)",
+  "chronic low dose over many generations", "acute high dose", "spatial hotspot (contaminated patch)",
+  "solar events (bursts of UV / particles)",
+]
+model_as = "dose -> extra mutations per genome (gamma ~1 base change per 3 Gy in real worms) + fertility loss at high dose"
+notes = "Chornobyl nematodes showed no genome damage signature; DNA-repair genes set sensitivity (2x in repair mutants)."
+sources = [15, 16, 17, 18, 19]
+
+[chemical_mutagens]
+category = "radiation"
+evidence = "EVO"
+status = "implemented"
+forms = ["EMS (alkylating)", "ENU", "UV-like crosslinkers", "oxidative (reactive oxygen)"]
+sources = [20]
+
+# ======================================================================= FOOD
+[food_amount]
+category = "food"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["food_patches", "food_per_patch", "food_regrow_per_tick", "food_value"]
+forms = ["plenty (lab)", "scarce", "starvation periods", "feast/famine cycles", "carrying capacity (regrowth = use)"]
+sources = [20, 21]
+
+[food_layout]
+category = "food"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["food_patches", "patch_spread", "season_every"]
+forms = ["uniform", "patchy", "moving patches", "seasonal relocation", "hidden (puzzle) food"]
+notes = "Chemoreceptor alleles flip from helpful to harmful between constant and patchy food."
+sources = [21]
+
+[food_quality]
+category = "food"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["bacteria species", "vitamin B12 (Comamonas)", "yeast/fungi", "low-quality food", "toxic food",
+         "indigestible food until a digestion trait evolves (key innovation)"]
+sources = [22]
+
+[digestion]
+category = "food"
+evidence = "EFFECT"
+status = "implemented"
+sim_keys = ["digestion", "stomach_cap", "dig_rate", "dig_moving"]
+forms = ["instant", "gut capacity + digestion time", "digest only while still"]
+sources = []
+
+[microbiome]
+category = "food"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["gut bacteria", "skin (cuticle) bacteria", "protective strains", "harmful strains"]
+sources = [23]
+
+# ======================================================================= ENEMIES AND NEIGHBOURS
+[pathogen_bacteria]
+category = "biological"
+evidence = "EVO"
+status = "implemented"
+forms = ["fixed pathogen", "coevolving pathogen (Red Queen)", "avoidable vs unavoidable", "lethal vs sub-lethal"]
+notes = "Coevolving Serratia kept outcrossing; without it populations went back to selfing."
+sources = [24]
+
+[virus]
+category = "biological"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["Orsay-like gut virus (fitness cost)", "horizontal gene transfer carrier", "transmission rate", "virulence"]
+sources = [2, 25]
+
+[microsporidia]
+category = "biological"
+evidence = "EVO"
+status = "implemented"
+forms = ["Nematocida gut parasite", "horizontal (environment) vs vertical (parent) spread"]
+sources = [25]
+
+[fungal_parasites]
+category = "biological"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["Drechmeria spores", "Harposporium"]
+sources = [2]
+
+[predatory_fungi]
+category = "biological"
+evidence = "EVO"
+status = "implemented"
+forms = ["sticky nets/traps (Arthrobotrys)", "constricting rings", "trap density", "lure odour"]
+sources = [26]
+
+[predators]
+category = "biological"
+evidence = "EFFECT"
+status = "implemented"
+sim_keys = ["predators", "pred_speed", "pred_sense", "pred_sense_still", "pred_bite", "pred_damage", "pred_cooldown",
+            "pred_loner", "pred_confuse"]
+forms = ["generic chaser (today)", "Pristionchus predator worm (planned item 12)", "mites", "motion-sensing predator",
+         "selfish-herd predator (targets loners / confused by groups)"]
+sources = [2]
+
+[competitors]
+category = "biological"
+evidence = "EVO"
+status = "implemented"
+forms = ["C. briggsae (temperature-dependent winner)", "other bacteria-eating nematodes", "competing for food only"]
+sources = [2]
+
+[carriers]
+category = "biological"
+evidence = "EVO"
+status = "implemented"
+forms = ["snails / slugs", "isopods", "insects", "nictation behaviour", "carrier visit rate"]
+sources = [27]
+
+# ======================================================================= POPULATION AND GENETICS
+[population_density]
+category = "population"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["worm_population", "pheromone", "pher_gain", "pher_sigma_cells", "pher_full"]
+forms = ["density", "ascaroside pheromone (crowding signal)", "dauer entry when crowded", "aggregation"]
+sources = [28]
+
+[boom_bust]
+category = "population"
+evidence = "EVO"
+status = "implemented"
+forms = ["patch colonised by 1 worm", "growth to 10,000", "collapse when food ends", "dispersal of dauers"]
+sources = [2]
+
+[population_size]
+category = "population"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["worm_population", "population"]
+forms = ["large", "small (strong drift)", "bottleneck (one-off crash)", "repeated bottlenecks", "single-worm transfer (no selection)"]
+sources = [29]
+
+[mating_system]
+category = "population"
+evidence = "EVO"
+status = "implemented"
+forms = ["selfing only", "outcrossing with males", "male frequency", "obligate outcrossing", "sperm competition"]
+sources = [20, 24]
+
+[migration]
+category = "population"
+evidence = "EVO"
+status = "implemented"
+forms = ["isolated patches", "migration rate between patches", "global mixing (selective sweeps)"]
+sources = [30]
+
+[mutation_rate]
+category = "genetic"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["worm_mutation_rate", "p_silence", "p_restore", "p_knockout", "p_flip"]
+forms = ["fixed rate", "evolvable rate (planned item 8)", "DNA-repair efficiency", "mutation bias", "rate set by radiation/mutagens"]
+sources = [19, 20]
+
+[inheritance_extra]
+category = "genetic"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["learned avoidance passed to offspring (small RNA, ~4 generations)", "maternal provisioning", "bet-hedging"]
+sources = [5, 31]
+
+# ======================================================================= CHEMICALS / TOXINS
+[toxins]
+category = "chemical"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["senses", "toxic_zones", "toxic_cost"]   # today: generic toxic zones that cost energy
+forms = ["nematicide / pesticide (levamisole: resistance in 10-20 gens)", "anthelmintics (ivermectin, benzimidazoles)",
+         "heavy metals (cadmium, copper, lead)", "hydrogen sulfide", "ethanol", "microplastics / nanoplastics",
+         "oxidants (hydrogen peroxide)", "antibiotics", "bacterial toxins"]
+notes = "Levamisole also cut male frequency to 0 by reducing movement (fewer matings)."
+sources = [32, 33, 34, 35]
+
+# ======================================================================= VARIABILITY ITSELF
+[variability]
+category = "meta"
+evidence = "EVO"
+status = "implemented"
+sim_keys = ["season_every"]
+forms = ["stable", "regular (predictable) change", "irregular (random) change", "rate of change", "how many factors change at once"]
+notes = "Predictable change evolved maternal effects; random change did not evolve bet-hedging."
+sources = [5, 36]

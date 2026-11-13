@@ -11,3 +11,10 @@ python/*.flag
 
 # local GPU quiet-mode setting (per machine)
 python/gpu_throttle.txt
+
+# engine / equilibrium run outputs (big; charts + stats are kept)
+python/engine/results/*.json
+python/equilibrium/results/*.json
+python/engine/run_log.txt
+python/equilibrium/eq_log.txt
+python/engine/configs/_gui_check.toml

@@ -1,0 +1,12 @@
+# EXAMPLE (Easy mode, custom values): isolate radiation as a mutation source.
+# Question: does a chronic gamma + radon dose (x10 natural background) speed up genetic change and does DNA repair evolve?
+[run]
+name = "radiation_x10"             # [R1]
+
+[factors.radiation]                # [F14]
+mode = "custom"
+sources = { gamma = 0.02, radon = 0.005 }   # Gy per 1000 ticks; see guide for weighting
+
+[factors.mutation_rate]            # [F34]
+mode = "custom"
+repair_cost = 0.002                # repair is not free, so it only evolves if the damage is worth fixing

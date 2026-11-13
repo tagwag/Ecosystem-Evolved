@@ -1,0 +1,115 @@
+[run]
+name = "all_auto"
+founders = "toybrain"
+
+[factors.temperature]
+mode = "auto"
+
+[factors.oxygen]
+mode = "auto"
+
+[factors.carbon_dioxide]
+mode = "auto"
+
+[factors.humidity]
+mode = "auto"
+
+[factors.osmolarity]
+mode = "auto"
+
+[factors.ph]
+mode = "auto"
+
+[factors.substrate]
+mode = "auto"
+
+[factors.light]
+mode = "auto"
+
+[factors.mechanical]
+mode = "auto"
+
+[factors.electric_field]
+mode = "auto"
+
+[factors.magnetic_field]
+mode = "auto"
+
+[factors.gravity]
+mode = "auto"
+
+[factors.radiofrequency]
+mode = "auto"
+
+[factors.radiation]
+mode = "auto"
+
+[factors.chemical_mutagens]
+mode = "auto"
+
+[factors.food_amount]
+mode = "auto"
+
+[factors.food_layout]
+mode = "auto"
+
+[factors.food_quality]
+mode = "auto"
+
+[factors.digestion]
+mode = "auto"
+
+[factors.microbiome]
+mode = "auto"
+
+[factors.pathogen_bacteria]
+mode = "auto"
+
+[factors.virus]
+mode = "auto"
+
+[factors.microsporidia]
+mode = "auto"
+
+[factors.fungal_parasites]
+mode = "auto"
+
+[factors.predatory_fungi]
+mode = "auto"
+
+[factors.predators]
+mode = "auto"
+
+[factors.competitors]
+mode = "auto"
+
+[factors.carriers]
+mode = "auto"
+
+[factors.population_density]
+mode = "auto"
+
+[factors.boom_bust]
+mode = "auto"
+
+[factors.population_size]
+mode = "auto"
+
+[factors.mating_system]
+mode = "auto"
+
+[factors.migration]
+mode = "auto"
+
+[factors.mutation_rate]
+mode = "auto"
+
+[factors.inheritance_extra]
+mode = "auto"
+
+[factors.toxins]
+mode = "auto"
+
+[factors.variability]
+mode = "auto"
+

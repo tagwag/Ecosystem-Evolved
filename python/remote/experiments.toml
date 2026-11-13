@@ -32,3 +32,33 @@ about = "Quick check that the GPU and PyTorch work (seconds)"
 cwd = "."
 cmd = ["{py}", "-c", "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"]
 gpu = false
+
+[toybrain_gpu_fair]
+about = "Toy brain on the 3080, FAIR version: mutation scaled by genome size, starting weights by brain size"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all", "--fair"]
+gpu = true
+args.seeds = { type = "int", min = 1, max = 500, default = 30 }
+args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
+
+[eq_world]
+about = "Equilibrium world (python/equilibrium): frozen / neutral shadow / real arms, ~380 worms per world, then analysis"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "{replicates}", "{ticks}"]
+gpu = true
+args.replicates = { type = "int", min = 1, max = 200, default = 30 }
+args.ticks      = { type = "int", min = 1000, max = 1000000, default = 50000 }
+
+[form]
+about = "Factor engine: run an experiment form python/engine/configs/<form>.toml (full run, then chart + stats)"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml"]
+gpu = true
+args.form = { type = "name", default = "baseline" }
+
+[form_quick]
+about = "Factor engine: quick check of a form (1 replicate, 3000 ticks) - seconds"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml", "--quick"]
+gpu = false
+args.form = { type = "name", default = "baseline" }

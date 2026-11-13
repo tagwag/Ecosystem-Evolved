@@ -8,6 +8,8 @@ Last updated: 2026-11-13
 - He brainstorms out loud: DON'T build or schedule from brainstorming unless he clearly says "do it / run it".
 - Wants push-back and reality checks (avoid "AI psychosis"): no overclaiming novelty, report null results plainly.
 - Before each experiment: state the end goal and the success rule BEFORE seeing results.
+- (2026-11-13) DOCUMENT EVERYTHING: every piece of code gets thorough, easy-to-understand docs, written as if
+  handing it to a new hire (README per folder: what it is, how to use, files, troubleshooting, design reasons).
 
 === REPO ===
 - github.com/tagwag/Ecosystem-Evolved (PUBLIC). Original Java project tagwag/Ecosystem stays untouched.

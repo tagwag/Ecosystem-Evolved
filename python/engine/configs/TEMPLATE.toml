@@ -1,0 +1,282 @@
+# ============================================================================================
+# EXPERIMENT FORM. Fill it in like a form, then run:  python run.py configs/<your-copy>.toml
+# Every setting has a footnote tag like [F7]; look it up in FACTOR_GUIDE.md (same folder) for what it
+# means, how it is modelled, the research behind it and the sources.
+# Factors: mode = "off" (not in the world) | "auto" (realistic autopilot) | "custom" (your values).
+# To ISOLATE one trait/factor: set that one to custom, leave the rest off (or auto for a natural background).
+# ============================================================================================
+
+[run]
+name = "unnamed"                              # [R1]
+replicates = 30                               # [R2]
+ticks = 50000                                 # [R3]
+arms = ["frozen", "shadow", "real"]           # [R4]
+seed = 1                                      # [R5]
+founders = "toybrain_fair"                    # [R6]
+every = 500                                   # [R7]
+
+[world]   # the equilibrium world; change only if you know why (Researcher mode in the GUI)
+# size = 400.0                                # [W1]
+# patches = 80                                # [W2]
+# patch_r = 4.0                               # [W3]
+# food_max = 20.0                             # [W4]
+# regrow = 0.01                               # [W5]
+# bite = 0.5                                  # [W6]
+# sig_smell = 25.0                            # [W7]
+# sig_taste = 5.0                             # [W8]
+# e_start = 10.0                              # [W9]
+# e_split = 20.0                              # [W10]
+# cost_base = 0.02                            # [W11]
+# cost_move = 0.02                            # [W12]
+# max_age = 6000                              # [W13]
+# mut_sigma = 0.1                             # [W14]
+# slots = 640                                 # [W15]
+# start_fill = 0.25                           # [W16]
+# trait_cost = 0.005                          # [W17]
+# dauer_cost = 0.002                          # [W18]
+
+# ------------------------------------------------------------------ PHYSICAL
+[factors.temperature]                         # [F1] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 20.0 }
+# q10 = 2.0
+# effects = { ok_low = 16, ok_high = 24, below = { speed = -0.04, fert = 0.05 }, above = { cost = 0.002, death = 0.0003, fert = 0.4 } }
+[factors.oxygen]                              # [F2] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 8.0 }
+# sense = "oxygen"
+# sense_center = 8.0
+# sense_scale = 0.1
+# effects = { ok_low = 5, ok_high = 12, below = { speed = -0.15, death = 0.0002 }, above = { cost = 0.0005, mut = 0.01 } }
+[factors.carbon_dioxide]                      # [F3] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# sense = "co2"
+# sense_scale = 0.5
+# effects = { ok_low = 0, ok_high = 1, below = {  }, above = { cost = 0.002 } }
+[factors.humidity]                            # [F4] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 1.0 }
+# resist = "dauer"
+# effects = { ok_low = 0.6, ok_high = 1.0, below = { death = 0.02, cost = 0.01 }, above = {  } }
+[factors.osmolarity]                          # [F5] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 50.0 }
+# sense = "salt"
+# sense_center = 50.0
+# sense_scale = 0.01
+# effects = { ok_low = 0, ok_high = 150, below = {  }, above = { cost = 5e-05, death = 5e-06, speed = -0.001 } }
+[factors.ph]                                  # [F6] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 6.5 }
+# sense = "ph"
+# sense_center = 6.5
+# sense_scale = 0.5
+# effects = { ok_low = 5, ok_high = 8, below = { cost = 0.002, death = 0.0003 }, above = { cost = 0.002, death = 0.0003 } }
+[factors.substrate]                           # [F7] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 1.0 }
+# cost_per_unit = 0.01
+# pillars = 0
+# pillar_r = 15.0
+[factors.light]                               # [F8] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# sense = "light"
+# sense_scale = 1.0
+# effects = { ok_low = -1, ok_high = 0.3, below = {  }, above = { cost = 0.002, mut = 0.2 } }
+[factors.mechanical]                          # [F9] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# sense = "vibration"
+# sense_scale = 1.0
+# effects = {  }
+[factors.electric_field]                      # [F10] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# angle = 0.0
+# sense = "efield"
+# sense_scale = 0.3
+[factors.magnetic_field]                      # [F11] CONTESTED, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# angle = 90.0
+# sense = "mfield"
+# sense_scale = 1.0
+[factors.gravity]                             # [F12] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 1.0 }
+# effects = { ok_low = 0.8, ok_high = 1.2, below = { speed = -0.2, cost = 0.005 }, above = { cost = 0.003 } }
+[factors.radiofrequency]                      # [F13] UNTESTED, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# effects = { ok_low = -1, ok_high = 0, below = {  }, above = { cost = 0.001, fert = 0.05 } }
+
+# ------------------------------------------------------------------ RADIATION
+[factors.radiation]                           # [F14] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# sources = {  }
+# field = { space = "uniform", level = 1.0 }
+# mut_per_gy = 2.0
+# fert_per_gy = 0.05
+# death_per_gy = 2e-05
+[factors.chemical_mutagens]                   # [F15] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "uniform", level = 0.0 }
+# mut_per_unit = 1.0
+# cost_per_unit = 0.0005
+
+# ------------------------------------------------------------------ FOOD
+[factors.food_amount]                         # [F16] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# food_max_mult = 1.0
+# regrow_mult = 1.0
+# value_mult = 1.0
+# famine_every = 0
+# famine_len = 0
+# famine_mult = 0.1
+[factors.food_layout]                         # [F17] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# mode = "fixed"
+# drift = 0.05
+# relocate_every = 10000
+[factors.food_quality]                        # [F18] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# frac_b = 0.0
+# value_b = 2.0
+# frac_toxic = 0.0
+# toxic_cost = 2.0
+# quality_mult = 1.0
+[factors.digestion]                           # [F19] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# gut_cap = 3.0
+# rate = 0.1
+[factors.microbiome]                          # [F20] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# frac_protective = 0.3
+# frac_harmful = 0.0
+# gain = 0.01
+# loss = 0.0005
+# protection = 0.5
+# harm_cost = 0.01
+# vertical = 0.5
+
+# ------------------------------------------------------------------ BIOLOGICAL
+[factors.pathogen_bacteria]                   # [F21] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# mode = "fixed"
+# frac_patches = 0.3
+# infect = 0.02
+# cost = 0.02
+# death = 0.0002
+# fert_loss = 0.3
+# recover = 0.0005
+# vertical = 0.0
+# lag = 5000
+[factors.virus]                               # [F22] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# start_frac = 0.05
+# radius = 5.0
+# transmit = 0.01
+# cost = 0.005
+# death = 2e-05
+# fert_loss = 0.1
+# recover = 0.001
+# vertical = 0.0
+# hgt = 0.0
+# hgt_frac = 0.05
+[factors.microsporidia]                       # [F23] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "spots", low = 0.0, high = 0.002, n_spots = 3, spot_r = 40.0 }
+# cost = 0.005
+# death = 5e-05
+# fert_loss = 0.5
+# recover = 0.0
+# vertical = 0.3
+[factors.fungal_parasites]                    # [F24] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# field = { space = "spots", low = 0.0, high = 0.001, n_spots = 2, spot_r = 30.0 }
+# cost = 0.01
+# death = 0.002
+# fert_loss = 0.5
+# recover = 0.0
+# vertical = 0.0
+[factors.predatory_fungi]                     # [F25] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# n_traps = 10
+# trap_r = 6.0
+# catch = 0.05
+# lure = 0.0
+[factors.predators]                           # [F26] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# mode = "chaser"
+# count = 3
+# speed = 0.8
+# sense_r = 60.0
+# bite_r = 3.0
+# damage = 5.0
+# cooldown = 60
+# touch_r = 8.0
+# switch_food = 0.5
+[factors.competitors]                         # [F27] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# count = 50
+# bite = 0.5
+# temp_slope = 0.05
+[factors.carriers]                            # [F28] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# every = 2000
+# radius = 20.0
+# board = 0.5
+# distance = 150.0
+
+# ------------------------------------------------------------------ POPULATION
+[factors.population_density]                  # [F29] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# per_cell_full = 10.0
+# crowd = 1.0
+# hungry = 2.0
+# dauer_rate = 0.01
+# exit_rate = 0.01
+[factors.boom_bust]                           # [F30] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# patch_death = 0.0002
+[factors.population_size]                     # [F31] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# bottleneck_at = []
+# bottleneck_every = 0
+# survive = 0.1
+[factors.mating_system]                       # [F32] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# mode = "androdioecy"
+# radius = 10.0
+# male_scale = 1.0
+[factors.migration]                           # [F33] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# islands = 4
+# rate = 0.0001
+
+# ------------------------------------------------------------------ GENETIC
+[factors.mutation_rate]                       # [F34] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# base_mult = 1.0
+# evolvable = false
+# repair_cost = 0.0
+[factors.inheritance_extra]                   # [F35] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# avoid_generations = 4
+# maternal_evolvable = true
+# maternal_fixed = 0.5
+
+# ------------------------------------------------------------------ CHEMICAL
+[factors.toxins]                              # [F36] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# sources = {  }
+# field = { space = "spots", low = 0.0, high = 1.0, n_spots = 3, spot_r = 40.0 }
+
+# ------------------------------------------------------------------ META
+[factors.variability]                         # [F37] EVO, implemented
+mode = "off"                                  # off | auto | custom
+# mode = "regular"
+# every = 5000
+# step = 0.2

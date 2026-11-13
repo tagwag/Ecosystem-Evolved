@@ -1,0 +1,10 @@
+# EXAMPLE (Easy mode): isolate ONE factor - temperature - everything else off (equilibrium background).
+# Question: does a warm gradient (15-25 C, with a slow cycle) change what evolves, compared with the baseline run?
+# Footnote tags [..] -> FACTOR_GUIDE.md
+[run]
+name = "temperature_gradient"      # [R1]
+replicates = 30                    # [R2]
+ticks = 50000                      # [R3]
+
+[factors.temperature]              # [F1]
+mode = "auto"                      # realistic gradient + slow cycle

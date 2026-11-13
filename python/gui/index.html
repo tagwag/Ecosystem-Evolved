@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worm Experiment Lab</title>
+<style>
+:root{--bg:#f6f6f3;--panel:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#2f6f4f;--accent2:#e9f2ec;
+--warn:#a35b00;--warnbg:#fff4e2;--bad:#a12a2a;--badbg:#fdeaea;--chip:#efeee9}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#151614;--panel:#1d1f1c;--ink:#ecebe6;--muted:#9a9a93;
+--line:#30322e;--accent:#7cc39b;--accent2:#22322a;--warn:#f0b35c;--warnbg:#33281a;--bad:#f08a8a;--badbg:#3a1f1f;--chip:#2a2c28}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+h1{font-size:17px;margin:0 12px 0 0}
+.tabs{display:flex;gap:4px;background:var(--chip);padding:3px;border-radius:9px}
+.tabs button{border:0;background:transparent;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--ink);font:inherit}
+.tabs button.on{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.15);font-weight:600}
+.modehelp{color:var(--muted);font-size:13px;flex:1;min-width:220px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px 18px;max-width:1400px;margin:auto}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:13px}
+label.f span{color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+textarea{min-height:58px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+a.fn{font-size:11px;color:var(--accent);text-decoration:none;margin-left:4px}
+.factor{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0}
+.factor.on{border-color:var(--accent);background:var(--accent2)}
+.frow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.frow .nm{font-weight:600;min-width:150px}
+.badge{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--chip);color:var(--muted)}
+.badge.CONTESTED,.badge.UNTESTED{background:var(--warnbg);color:var(--warn)}
+.frow select{width:auto}
+.desc{color:var(--muted);font-size:12.5px;margin-top:4px}
+.params{margin-top:8px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button.b{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+button.b.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.b.primary{color:#0d1a12}}
+.msg{white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px;border-radius:6px;margin-top:10px;display:none}
+.msg.ok{display:block;background:var(--accent2)}.msg.err{display:block;background:var(--badbg);color:var(--bad)}
+.status div{margin:3px 0}.k{color:var(--muted)}
+.res img{width:100%;border:1px solid var(--line);border-radius:6px;margin-top:6px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.warnbox{background:var(--warnbg);color:var(--warn);padding:8px 10px;border-radius:6px;font-size:13px;margin-bottom:10px}
+.cat{margin-top:14px;font-weight:600;color:var(--muted);text-transform:capitalize}
+</style>
+</head>
+<body>
+<header>
+  <h1>Worm Experiment Lab</h1>
+  <div class="tabs" id="tabs">
+    <button data-m="easy">Easy</button><button data-m="advanced">Advanced</button><button data-m="researcher">Researcher</button>
+  </div>
+  <div class="modehelp" id="modehelp"></div>
+</header>
+<main>
+  <section>
+    <div class="card" id="runcard"><h2>Run</h2><div class="grid" id="runfields"></div></div>
+    <div class="card" id="worldcard" hidden><h2>World (equilibrium baseline)</h2>
+      <div class="warnbox">Changing these changes the baseline itself. Results are then not comparable with runs using the defaults.</div>
+      <div class="grid" id="worldfields"></div></div>
+    <div class="card"><h2 id="factitle">Factors</h2><div id="factors"></div></div>
+    <div class="card"><h2>Check and run</h2>
+      <div class="btns">
+        <button class="b" id="bcheck">Check form</button><button class="b" id="bsave">Save form</button>
+        <button class="b" id="bquick">Quick check (seconds)</button><button class="b primary" id="brun">Run on the 3080</button>
+      </div>
+      <div class="msg" id="msg"></div>
+      <details style="margin-top:10px"><summary>Show the form file this creates</summary><pre class="msg ok" id="tomlview" style="display:block"></pre></details>
+    </div>
+  </section>
+  <aside>
+    <div class="card status"><h2>Watcher / GPU</h2><div id="status">loading…</div></div>
+    <div class="card"><h2>Recent jobs</h2><div id="recent"></div></div>
+    <div class="card res"><h2>Latest results</h2><div id="results"></div></div>
+  </aside>
+</main>
+<script>
+const MODES = {
+  easy: "Isolate ONE factor. Everything else stays off, so any change is caused by that factor alone.",
+  advanced: "Combine several factors. Contested and untested factors are hidden.",
+  researcher: "Everything: contested/untested factors, world physics, arms, seeds and founders. Footnotes explain every setting."
+};
+let S = null, mode = "easy";
+const form = { run: {}, world: {}, factors: {} };   // only values that differ from defaults are stored
+try { mode = localStorage.getItem("labmode") || "easy"; } catch (e) {}
+
+const $ = (s, el = document) => el.querySelector(s);
+const el = (t, a = {}, ...kids) => { const e = document.createElement(t); for (const [k, v] of Object.entries(a)) { if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); } for (const k of kids) e.append(k); return e; };
+const fn = tag => el("a", { class: "fn", href: "/guide#" + tag, target: "_blank", title: "Open the explanation" }, "[" + tag + "]");
+
+function field(label, value, onchange, tag, doc) {
+  const wrap = el("label", { class: "f", title: doc || "" });
+  const head = el("span", {}, label); if (tag) head.append(fn(tag));
+  let inp;
+  if (typeof value === "boolean") { inp = el("select"); inp.append(el("option", { value: "true" }, "true"), el("option", { value: "false" }, "false")); inp.value = String(value); inp.onchange = () => onchange(inp.value === "true"); }
+  else if (typeof value === "number") { inp = el("input", { type: "number", step: "any" }); inp.value = value; inp.oninput = () => onchange(inp.value === "" ? value : Number(inp.value)); }
+  else if (typeof value === "string") { inp = el("input", { type: "text" }); inp.value = value; inp.oninput = () => onchange(inp.value); }
+  else { inp = el("textarea"); inp.value = JSON.stringify(value); inp.oninput = () => { try { onchange(JSON.parse(inp.value)); inp.style.borderColor = ""; } catch (e) { inp.style.borderColor = "var(--bad)"; } }; }
+  wrap.append(head, inp); return wrap;
+}
+
+function leaves(obj, prefix = []) {          // flatten nested dicts; lists/empty dicts stay whole (edited as JSON)
+  const out = [];
+  for (const [k, v] of Object.entries(obj)) {
+    if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length) out.push(...leaves(v, [...prefix, k]));
+    else out.push([[...prefix, k], v]);
+  }
+  return out;
+}
+function setPath(o, path, v) { let c = o; for (const p of path.slice(0, -1)) c = c[p] = c[p] || {}; c[path.at(-1)] = v; }
+function getPath(o, path) { let c = o; for (const p of path) { if (c == null) return undefined; c = c[p]; } return c; }
+function merged(a, b) { const o = structuredClone(a); for (const [p, v] of leaves(b || {})) setPath(o, p, v); return o; }
+
+function renderRun() {
+  const box = $("#runfields"); box.innerHTML = "";
+  const show = { easy: ["name", "replicates", "ticks"], advanced: ["name", "replicates", "ticks", "arms"], researcher: null }[mode];
+  for (const r of S.run) {
+    if (show && !show.includes(r.key)) continue;
+    const cur = form.run[r.key] ?? r.default;
+    box.append(field(r.key, cur, v => { form.run[r.key] = v; }, r.tag, r.doc));
+  }
+  $("#worldcard").hidden = mode !== "researcher";
+  const wb = $("#worldfields"); wb.innerHTML = "";
+  for (const r of S.world) wb.append(field(r.key, form.world[r.key] ?? r.default, v => { form.world[r.key] = v; }, r.tag, r.doc));
+}
+
+function factorBox(f) {
+  const sec = form.factors[f.name] || (form.factors[f.name] = { mode: "off" });
+  const box = el("div", { class: "factor" + (sec.mode !== "off" ? " on" : "") });
+  const sel = el("select"); for (const m of ["off", "auto", "custom"]) sel.append(el("option", { value: m }, m)); sel.value = sec.mode;
+  const params = el("div", { class: "params grid" });
+  const draw = () => {
+    params.innerHTML = ""; box.className = "factor" + (sec.mode !== "off" ? " on" : "");
+    if (sec.mode === "auto") params.append(el("div", { class: "desc" }, "Autopilot changes: " + (Object.keys(f.auto).length ? JSON.stringify(f.auto) : "none (uses defaults)")));
+    if (sec.mode !== "custom") return;
+    const base = merged(f.default, {});
+    for (const [path, def] of leaves(base)) {
+      const cur = getPath(sec.custom || {}, path) ?? def;
+      params.append(field(path.join("."), cur, v => { sec.custom = sec.custom || {}; setPath(sec.custom, path, v); }, null, ""));
+    }
+  };
+  sel.onchange = () => { sec.mode = sel.value; if (sel.value !== "custom") delete sec.custom; draw(); };
+  const row = el("div", { class: "frow" }, el("span", { class: "nm" }, f.name.replaceAll("_", " ")), fn(f.tag),
+    el("span", { class: "badge " + f.evidence }, f.evidence), sel);
+  box.append(row, el("div", { class: "desc" }, (f.notes ? f.notes + " " : "") + "Forms: " + f.forms.join(", ") + "."), params);
+  draw(); return box;
+}
+
+function renderFactors() {
+  const box = $("#factors"); box.innerHTML = "";
+  const visible = S.factors.filter(f => mode === "researcher" || f.level === "easy");
+  if (mode === "easy") {
+    $("#factitle").textContent = "Factor to isolate";
+    const pick = el("select"); pick.append(el("option", { value: "" }, "— choose one factor —"));
+    for (const f of visible) pick.append(el("option", { value: f.name }, f.category + ": " + f.name.replaceAll("_", " ")));
+    const on = Object.entries(form.factors).find(([, s]) => s.mode !== "off");
+    pick.value = on ? on[0] : "";
+    const holder = el("div");
+    pick.onchange = () => {
+      for (const s of Object.values(form.factors)) { s.mode = "off"; delete s.custom; }
+      holder.innerHTML = "";
+      const f = S.factors.find(x => x.name === pick.value);
+      if (f) { form.factors[f.name] = { mode: "auto" }; holder.append(factorBox(f)); }
+    };
+    box.append(el("label", { class: "f" }, el("span", {}, "Which factor?"), pick), holder);
+    if (on) { const f = S.factors.find(x => x.name === on[0]); if (f) holder.append(factorBox(f)); }
+    box.append(el("div", { class: "desc" }, "All other factors are off. Compare the result with the 'baseline' run (all off)."));
+    return;
+  }
+  $("#factitle").textContent = mode === "advanced" ? "Factors (choose any)" : "All factors (including contested / untested)";
+  let cat = "";
+  for (const f of visible) {
+    if (f.category !== cat) { cat = f.category; box.append(el("div", { class: "cat" }, cat)); }
+    box.append(factorBox(f));
+  }
+}
+
+function payload() {
+  const factors = {};
+  for (const [n, s] of Object.entries(form.factors)) {
+    if (s.mode === "off") continue;
+    if (mode !== "researcher" && S.factors.find(f => f.name === n)?.level !== "easy") continue;
+    factors[n] = s.mode === "custom" ? { mode: "custom", ...(s.custom || {}) } : { mode: s.mode };
+  }
+  const run = {}; for (const r of S.run) { const v = form.run[r.key]; if (v !== undefined && JSON.stringify(v) !== JSON.stringify(r.default)) run[r.key] = v; }
+  run.name = form.run.name ?? "my_experiment";
+  const world = {}; if (mode === "researcher") for (const r of S.world) { const v = form.world[r.key]; if (v !== undefined && v !== r.default) world[r.key] = v; }
+  return { run, world, factors };
+}
+
+async function post(url, body) { const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.json(); }
+function show(ok, text) { const m = $("#msg"); m.className = "msg " + (ok ? "ok" : "err"); m.textContent = text; }
+$("#bcheck").onclick = async () => { const r = await post("/api/check", { form: payload() }); $("#tomlview").textContent = r.toml || ""; show(r.ok, r.ok ? "Form is valid." : r.errors.join("\n")); };
+$("#bsave").onclick = async () => { const r = await post("/api/save", { form: payload() }); show(r.ok, r.ok ? "Saved: " + r.saved : (r.errors || [r.error]).join("\n")); };
+$("#bquick").onclick = async () => { const r = await post("/api/queue", { form: payload(), quick: true }); show(r.ok, r.ok ? "Queued quick check: " + r.queued : (r.errors || [r.error]).join("\n")); refresh(); };
+$("#brun").onclick = async () => { const r = await post("/api/queue", { form: payload() }); show(r.ok, r.ok ? "Queued on the 3080: " + r.queued + "\nThe watcher runs jobs one at a time; see the panel on the right." : (r.errors || [r.error]).join("\n")); refresh(); };
+
+async function refresh() {
+  try {
+    const s = await (await fetch("/api/status")).json(); const w = s.watcher || {};
+    const alive = s.watcher_seconds_since_update != null && s.watcher_seconds_since_update < 30;
+    const g = w.gpu || {};
+    $("#status").innerHTML = "";
+    $("#status").append(
+      el("div", {}, el("span", { class: "k" }, "Watcher: "), alive ? (w.state || "?") : "NOT RUNNING (start python\\remote\\start_watcher.bat)"),
+      el("div", {}, el("span", { class: "k" }, "Job: "), w.job ? `${w.job} (${w.experiment}, ${w.minutes ?? 0} min)` : "—"),
+      el("div", {}, el("span", { class: "k" }, "GPU: "), g.temp_c != null ? `${g.temp_c} °C, ${g.util_pct}% busy, ${g.power_w ?? "?"} W` : "—"),
+      el("div", {}, el("span", { class: "k" }, "Waiting: "), s.queued.length ? s.queued.join(", ") : "none"));
+    $("#recent").innerHTML = "";
+    for (const j of s.recent.slice(0, 6)) $("#recent").append(el("div", { class: "desc" }, `${j._state === "done" ? "✓" : "✗"} ${j._file.replace(".json", "")} ${j.result?.error ? "— " + j.result.error : ""}`));
+    $("#results").innerHTML = "";
+    for (const r of s.results.slice(0, 3)) $("#results").append(el("div", { class: "desc" }, el("a", { href: "/results/" + r.stats, target: "_blank" }, r.png.replace(".png", "") + " (stats)")), el("img", { src: "/results/" + r.png + "?t=" + Date.now(), alt: r.png }));
+  } catch (e) { $("#status").textContent = "GUI server not reachable."; }
+}
+
+function setMode(m) {
+  mode = m; try { localStorage.setItem("labmode", m); } catch (e) {}
+  for (const b of $("#tabs").children) b.classList.toggle("on", b.dataset.m === m);
+  $("#modehelp").textContent = MODES[m];
+  if (m === "easy") { const on = Object.entries(form.factors).filter(([, s]) => s.mode !== "off"); for (const [, s] of on.slice(1)) { s.mode = "off"; delete s.custom; } }
+  renderRun(); renderFactors();
+}
+for (const b of $("#tabs").children) b.onclick = () => setMode(b.dataset.m);
+(async () => { S = await (await fetch("/api/schema")).json(); form.run.name = "my_experiment"; setMode(mode); refresh(); setInterval(refresh, 5000); })();
+</script>
+</body>
+</html>

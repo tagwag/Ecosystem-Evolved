@@ -1,0 +1,13 @@
+# EXAMPLE (Advanced mode): several factors at once - a Red Queen world.
+# Coevolving bacterial pathogen + protective microbiome + inherited avoidance + males possible.
+[run]
+name = "red_queen"
+
+[factors.pathogen_bacteria]
+mode = "auto"
+[factors.microbiome]
+mode = "auto"
+[factors.inheritance_extra]
+mode = "auto"
+[factors.mating_system]
+mode = "auto"

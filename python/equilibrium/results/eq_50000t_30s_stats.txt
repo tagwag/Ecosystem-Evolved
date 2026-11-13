@@ -1,0 +1,23 @@
+Equilibrium world: 30 replicates x 3 arms, 50000 ticks, founders: C:\Users\Tag\PycharmProjects\Ecosystem-Evolved\python\toybrain\results_gpu_300g_30s_fair.json
+
+EQUILIBRIUM rule (frozen within +-10% of its mean, last 75%, every replicate): FAIL
+  frozen population mean 384.8 (replicates 336.5-450.4); worst swing 12.6% (median 4.7%)
+ZERO POINT (frozen genetic distance == 0): PASS (max 0)
+
+End of run, mean over replicates (frozen / shadow / real):
+  population                           384.9     482.5     482.5
+  genetic distance from founder            0     4.945     5.564
+  genetic diversity                2.885e-12     24.13      30.1
+  founder lineages alive               20.78     22.07     44.39
+  eating rate (food/worm/tick)       0.03893   0.03104   0.03362
+  speed                               0.9388    0.8686    0.6029
+  turning                             0.4535    0.5075     0.573
+  births per sample                    162.3     60.59     60.59
+
+ADAPTATION = real minus shadow (paired by replicate, sign-flip test):
+  genetic distance from founder       +0.619   real higher in 29/30   p=5e-05
+  genetic diversity                    +5.97   real higher in 28/30   p=5e-05
+  founder lineages alive              +22.33   real higher in 30/30   p=5e-05
+  eating rate (food/worm/tick)     +0.002579   real higher in 30/30   p=5e-05
+  speed                              -0.2658   real higher in 1/30   p=5e-05
+  turning                           +0.06547   real higher in 30/30   p=5e-05
