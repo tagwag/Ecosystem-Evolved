@@ -1,0 +1,10 @@
+# EXAMPLE (queue item 12): Pristionchus pacificus-like predator worms. They graze normally and switch to
+# predatory mouth form when food on the map falls below half. Question: do prey evolve escape (escape trait,
+# predator/touch sense wiring) or avoidance of crowded/low-food times?
+# Footnote tags [..] -> FACTOR_GUIDE.md. Compare with results/baseline (all factors off).
+
+[run]
+name = "pristionchus"                # [R1]
+
+[factors.predators]                # [F26]
+mode = "auto"                     # 8 pristionchus-mode predators per world

@@ -1,0 +1,18 @@
+# EXAMPLE (queue item 16): near-starvation 'pain' signal (ASH-like) in a world where food is scarce and
+# toxins sit between food. Question: does evolution wire the alarm into behaviour, and does hunger-overrides-aversion
+# (hungry worms ignore toxin smell to reach food, as in Ghosh et al. 2016) help or hurt?
+# Footnote tags [..] -> FACTOR_GUIDE.md. Compare with results/baseline (all factors off).
+
+[run]
+name = "ash_pain"                # [R1]
+
+[factors.starvation_signal]        # [F37]
+mode = "auto"                     # alarm on, hunger_override = 0.5
+
+[factors.food_amount]              # [F16]
+mode = "custom"
+regrow_mult = 0.5                 # scarce food: half the regrowth
+
+[factors.toxins]                   # [F36]
+mode = "custom"
+sources = { cadmium = 1.0 }

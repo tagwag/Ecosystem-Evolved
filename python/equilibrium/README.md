@@ -98,3 +98,18 @@ number), or random genomes if that file is missing (random founders starve; that
   the behaviour columns show whether it matters.
 - The shadow's worms still move and eat with their own brains (so food on the map behaves the same), but their
   success never depends on it.
+
+## 8. Snapshots, replays and continuing one world (added 2026-11-13)
+- `--save-at 13000,20000` saves the complete state of every world at those ticks to `snapshots/eq<tag>_t<tick>.pt`
+  (worm positions, genomes, energy, ages, food, random-generator state, mutation counters).
+- `--resume FILE` continues from a snapshot. With `--pick r --copies k` it keeps only replicate world r (all 3 arms)
+  and makes k copies of it; each copy continues with its own random luck (same world, same moment, different futures).
+- Why: the first 50k run had one frozen world (#19) whose population dipped 12.6 % at tick 13,000. Because the run is
+  seeded, re-running it reproduces the same history (`eq_replay`; the stats should show the same dip) and saves a
+  snapshot at tick 13,000; `eq_continue` then follows world #19 from that moment for 600 generations
+  (1.6 M ticks; one generation is ~2,700 ticks in the real arm).
+- **Mutation tracking:** every worm carries `nmut` (mutation events on its line of descent since its founder) and
+  `msize` (total size of those mutations). Measured every sample: `mutations`, `mutation_size` (population means),
+  `top_family` (the founder slot whose descendants are most numerous), `top_family_share`, `top_family_mutations`.
+- Watcher experiments: `eq_replay` (args: ticks) and `eq_continue` (args: at, world, copies, ticks). eq_continue waits
+  for the snapshot if the replay is still running.

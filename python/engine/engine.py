@@ -23,7 +23,7 @@ DEV = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 BASE_INPUTS = ["smell", "dsmell", "taste", "dtaste", "eating"]
 SENSES = ["temperature", "dtemperature", "oxygen", "co2", "salt", "ph", "light", "touch", "vibration",
-          "efield", "mfield", "pheromone", "toxin", "pathogen", "predator"]
+          "efield", "mfield", "pheromone", "toxin", "pathogen", "predator", "nociception"]
 INPUTS = BASE_INPUTS + SENSES
 H = 8                                                    # hidden neurons (toy-brain reference size)
 TRAITS = {                                              # name: default value (founders start here)
@@ -109,6 +109,13 @@ class World:
         self.G = F.repeat(A, 1)[:, None, :].expand(N, S, F.shape[1]).clone()
         self.founder = F.repeat(A, 1)
         self.lineage = torch.arange(S, device=DEV)[None].expand(N, S).clone()
+        # GENEALOGY: every worm gets a unique id within its world (founders 0..S-1, then counting up); births and deaths
+        # are logged (see tree_log / genealogy.py) so any family tree can be rebuilt after the run.
+        self.uid = torch.arange(S, device=DEV)[None].expand(N, S).clone()
+        self.next_uid = torch.full((N,), S, dtype=torch.long, device=DEV)
+        self.nmut = torch.zeros(N, S, device=DEV)     # mutation events on this worm's line of descent since its founder
+        self.msize = torch.zeros(N, S, device=DEV)    # total size of those mutations
+        self.tree_log = dict(births=[], deaths=[])    # filled only when record_tree is on
         self.energy = torch.full((N, S), float(e["e_start"]), device=DEV) * self.alive
         self.age = float(e["max_age"]) * torch.rand(N, S, generator=self.gen, device=DEV) * self.alive
         self.xy = self.size * torch.rand(N, S, 2, generator=self.gen, device=DEV)
@@ -122,6 +129,9 @@ class World:
         self.extra_deaths = {}                                         # cause -> (N,) count (from factors)
         self.p = unpack(self.G)
         self.factors = factors
+        self.record_tree = bool(cfg["run"].get("record_tree", True))
+        self.mut_evolvable = any(f.name == "mutation_rate" and f.params.get("evolvable") for f in factors)
+        self._trait_offset = glen() - len(TRAITS)                    # genome index where the trait genes start
         for f in factors:
             f.setup(self)
 
@@ -225,6 +235,9 @@ class World:
             need[sw] = die[rw].sum()
         die = die | self.pick(self.alive & shadow[:, None], need)
         st["deaths"] += die.sum(1)
+        if self.record_tree and bool(die.any()):
+            dw, ds = die.nonzero(as_tuple=True)
+            self.tree_log["deaths"].append(torch.stack([torch.full_like(dw, self.t), dw, self.uid[dw, ds]], 1).cpu())
         self.alive = self.alive & ~die
         self.energy = self.energy * self.alive
         self.dauer = self.dauer & self.alive
@@ -249,12 +262,23 @@ class World:
         g = self.G[wi, pi]
         e = self.cfg["world"]
         sigma = float(e["mut_sigma"]) * math.sqrt(REF_GENES / g.shape[1])           # fair scaling by genome size
-        rate = 10 ** self.p["traits"][wi, pi, TRAIT_NAMES.index("mut_rate")].clamp(-3, 2)
+        # The mutation-rate gene only acts (and only exists as a heritable trait) when the mutation_rate factor makes
+        # it evolvable. Otherwise it is locked at 0 (= x1): earlier versions let it drift in every run, and in the
+        # shadow arm (no selection) it snowballed and inflated mutation (bug found 2026-11-13).
+        mi = TRAIT_NAMES.index("mut_rate")
+        if self.mut_evolvable:
+            rate = 10 ** self.p["traits"][wi, pi, mi].clamp(-3, 2)
+        else:
+            rate = torch.ones(len(wi), device=DEV)
         mult = (~self.is_frozen[wi]).float() * rate * mut_mult[wi, pi]
-        g = g + (sigma * mult)[:, None] * self.randn(*g.shape)
+        dg = (sigma * mult)[:, None] * self.randn(*g.shape)
+        self._last_dsize = dg.norm(dim=-1)
+        g = g + dg
         frac = self.p["traits"][wi, pi, TRAIT_NAMES.index("maternal")].clamp(0.05, 0.95)
         child_e = self.energy[wi, pi] * frac
         self.energy[wi, pi] = self.energy[wi, pi] - child_e
+        if not self.mut_evolvable:
+            g[:, self._trait_offset + mi] = 0.0
         self.G[wi, ci] = g
         self.energy[wi, ci] = child_e
         self.xy[wi, ci] = self.xy[wi, pi]
@@ -262,12 +286,44 @@ class World:
         self.h[wi, ci] = 0; self.prev[wi, ci] = self.prev[wi, pi]
         self.age[wi, ci] = 0
         self.lineage[wi, ci] = self.lineage[wi, pi]
+        # genealogy: new ids (counting up per world), mutation counters, birth log
+        cnt = torch.bincount(wi, minlength=self.N)
+        start = torch.cumsum(cnt, 0) - cnt                                 # index of each world's first birth
+        rank = torch.arange(len(wi), device=DEV) - start[wi]
+        new_uid = self.next_uid[wi] + rank
+        self.next_uid += cnt
+        self.uid[wi, ci] = new_uid
+        self.nmut[wi, ci] = self.nmut[wi, pi] + (mult > 0).float()
+        self.msize[wi, ci] = self.msize[wi, pi] + self._last_dsize
+        if self.record_tree:
+            self.tree_log["births"].append(torch.stack([torch.full_like(wi, self.t), wi, self.uid[wi, pi], new_uid,
+                                                        (self._last_dsize * 1e4).long()], 1).cpu())
         self.dauer[wi, ci] = False
         self.alive[wi, ci] = True
         self.stats["births"] += torch.bincount(wi, minlength=self.N).float()
         self.p = unpack(self.G)
         for f in self.factors:
             f.on_birth(self, wi, pi, ci)
+
+    # ------------------------------------------------------------------------------------------------ live view
+    @torch.no_grad()
+    def frame(self, world=0, max_worms=640):
+        """A small picture of one world for the live view / replay: worms [x, y, kind] (kind 0 = active, 1 = dauer),
+        food patches [x, y, fraction full], and extras: arm, population, moving agents (predators, competitors),
+        traps."""
+        n = min(max(world, 0), self.N - 1)
+        a = self.alive[n]
+        xy = self.xy[n][a][:max_worms].cpu().tolist(); da = self.dauer[n][a][:max_worms].cpu().tolist()
+        worms = [[round(p[0], 1), round(p[1], 1), int(d)] for p, d in zip(xy, da)]
+        food = [[round(p[0], 1), round(p[1], 1), round(f, 2)] for p, f in
+                zip(self.patches[n].cpu().tolist(), (self.food[n] / self.food_max[n].clamp(min=1e-9)).cpu().tolist())]
+        extra = {"arm": self.arm_name[n], "pop": int(a.sum())}
+        for f in self.factors:
+            if hasattr(f, "pos"):
+                extra.setdefault("agents", []).extend([[round(p[0], 1), round(p[1], 1), f.name] for p in f.pos[n].cpu().tolist()])
+            if hasattr(f, "traps"):
+                extra.setdefault("traps", []).extend([[round(p[0], 1), round(p[1], 1)] for p in f.traps[n].cpu().tolist()])
+        return dict(size=self.size, worms=worms, food=food, extra=extra)
 
     # ------------------------------------------------------------------------------------------------ measuring
     @torch.no_grad()
@@ -282,7 +338,12 @@ class World:
                    energy=(self.energy * af).sum(1) / nn, food=self.food.sum(1), gdist=(dist * af).sum(1) / nn,
                    diversity=div, lineages=(lin > 0).sum(1).float(), eat_rate=st["eaten"] / at,
                    speed=st["speed"] / at, turn=st["turn"] / at, age=(self.age * af).sum(1) / nn,
-                   dauer=(self.dauer & a).sum(1).float())
+                   dauer=(self.dauer & a).sum(1).float(),
+                   mutations=(self.nmut * af).sum(1) / nn, mutation_size=(self.msize * af).sum(1) / nn,
+                   top_family=lin.argmax(1).float(), top_family_share=lin.max(1).values / nn,
+                   next_uid=self.next_uid.float())
+        dom = lin.argmax(1); in_dom = (self.lineage == dom[:, None]) & a
+        row["top_family_mutations"] = (self.nmut * in_dom).sum(1) / in_dom.sum(1).clamp(min=1)
         for k in TRAIT_NAMES:                                      # mean value of every trait gene
             row["trait_" + k] = (self.trait(k) * af).sum(1) / nn
         sense_w = self.p["Win"][..., 5:].abs().mean(2)            # (N, S, n_senses): how strongly each sense is wired

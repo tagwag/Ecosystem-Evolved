@@ -316,3 +316,12 @@ sim_keys = ["season_every"]
 forms = ["stable", "regular (predictable) change", "irregular (random) change", "rate of change", "how many factors change at once"]
 notes = "Predictable change evolved maternal effects; random change did not evolve bet-hedging."
 sources = [5, 36]
+
+# ======================================================================= INTERNAL SIGNALS
+[starvation_signal]
+category = "internal"
+evidence = "EFFECT"
+status = "implemented"
+forms = ["near-starvation alarm (ASH-like nociception)", "hunger overriding aversion to toxins / pathogens / predators"]
+notes = "Hungry C. elegans cross an aversive copper barrier to reach food: hunger reduces ASH-driven avoidance (Ghosh et al. 2016)."
+sources = [37, 38]

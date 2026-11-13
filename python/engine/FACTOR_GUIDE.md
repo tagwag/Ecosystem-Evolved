@@ -31,6 +31,12 @@ Default: `"toybrain_fair"`. Which brains start the worlds: toybrain_fair (evolve
 ### [R7] run.every
 Default: `500`. Measure every N ticks.
 
+### [R8] run.checkpoint_every
+Default: `10000`. Save the complete state every N ticks (results/<name>_ckpt/). A stopped run resumes from the last one automatically; `run.py ... --from-tick T --as NEW` branches a new run from tick T. 0 = never.
+
+### [R9] run.record_tree
+Default: `true`. Log every birth (parent id, child id, tick, mutation size) and death, so family trees, lineages and mutation histories can be rebuilt with genealogy.py. Costs a little disk.
+
 ## World settings (the equilibrium baseline)
 
 ### [W1] world.size
@@ -826,9 +832,36 @@ Sense: 'toxin' channel = total toxin level (worms can learn/evolve avoidance).
 - [34] Natural variation in heavy-metal (cadmium) responses — https://pmc.ncbi.nlm.nih.gov/articles/PMC11513058
 - [35] Micro/nanoplastics and the C. elegans gut — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10459583/ ; hydrogen sulfide avoidance — https://elifesciences.org/reviewed-preprints/92964v1/reviews
 
+### Category: internal
+
+#### [F37] starvation_signal  (EFFECT; GUI level: easy)
+
+**Real-world forms:** near-starvation alarm (ASH-like nociception), hunger overriding aversion to toxins / pathogens / predators.
+
+**What the research says:** Hungry C. elegans cross an aversive copper barrier to reach food: hunger reduces ASH-driven avoidance (Ghosh et al. 2016).
+
+**How the engine models it:**
+
+```
+Near-starvation 'pain' signal (ASH-nociceptor-like). When a worm's energy is below `threshold`, the
+nociception sense reads (threshold - energy) / threshold x `gain` (0 when fed, up to `gain` at zero energy), so
+evolution can wire an alarm into behaviour. `hunger_override` (0..1): real hungry worms ignore aversive cues to
+reach food (Ghosh et al. 2016); while the signal is on, the toxin, pathogen and predator senses are scaled down by
+hunger_override x signal (0 = no override).
+```
+
+**Custom defaults:** `{ threshold = 3.0, gain = 1.0, hunger_override = 0.0 }`
+
+**Autopilot (auto) changes:** `{ threshold = 3.0, gain = 1.0, hunger_override = 0.5 }`
+
+**Sources:**
+
+- [37] Ghosh et al. 2016, *Neural architecture of hunger-dependent multisensory decision making in C. elegans*, Neuron — https://pmc.ncbi.nlm.nih.gov/articles/PMC5147516
+- [38] *Satiety behavior is regulated by ASI/ASH reciprocal antagonism* — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5931959/
+
 ### Category: meta
 
-#### [F37] variability  (EVO; GUI level: easy)
+#### [F38] variability  (EVO; GUI level: easy)
 
 **Real-world forms:** stable, regular (predictable) change, irregular (random) change, rate of change, how many factors change at once.
 

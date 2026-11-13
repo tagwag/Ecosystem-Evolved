@@ -14,6 +14,8 @@ arms = ["frozen", "shadow", "real"]           # [R4]
 seed = 1                                      # [R5]
 founders = "toybrain_fair"                    # [R6]
 every = 500                                   # [R7]
+checkpoint_every = 10000                      # [R8]
+record_tree = true                            # [R9]
 
 [world]   # the equilibrium world; change only if you know why (Researcher mode in the GUI)
 # size = 400.0                                # [W1]
@@ -274,8 +276,15 @@ mode = "off"                                  # off | auto | custom
 # sources = {  }
 # field = { space = "spots", low = 0.0, high = 1.0, n_spots = 3, spot_r = 40.0 }
 
+# ------------------------------------------------------------------ INTERNAL
+[factors.starvation_signal]                   # [F37] EFFECT, implemented
+mode = "off"                                  # off | auto | custom
+# threshold = 3.0
+# gain = 1.0
+# hunger_override = 0.0
+
 # ------------------------------------------------------------------ META
-[factors.variability]                         # [F37] EVO, implemented
+[factors.variability]                         # [F38] EVO, implemented
 mode = "off"                                  # off | auto | custom
 # mode = "regular"
 # every = 5000

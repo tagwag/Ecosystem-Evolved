@@ -1,0 +1,12 @@
+# EXAMPLE (queue item 18): a virus as a source of mutation. Orsay-like virus spreading worm to worm; 5% of
+# transmissions copy a block of the donor's genome into the new host (horizontal gene transfer).
+# Question: does HGT speed up genetic change / spread of useful genes beyond what mutation alone does?
+# Footnote tags [..] -> FACTOR_GUIDE.md. Compare with results/baseline (all factors off).
+
+[run]
+name = "virus_hgt"                # [R1]
+
+[factors.virus]                    # [F22]
+mode = "custom"
+hgt = 0.05
+hgt_frac = 0.05

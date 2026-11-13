@@ -98,3 +98,37 @@ the end of the run per arm, and tests real vs shadow (sign-flip permutation test
 - Switching on everything at once (`auto` everywhere) makes the world unlivable within a few thousand ticks. That is
   expected: every hazard is active at once.
 - Short `--quick` runs show whether a form works, not what evolves. Evolution needs the full run.
+
+## 9. Evolution toolkit: checkpoints, resume, branching, family trees (added 2026-11-13)
+
+**Safe interrupt and resume.** Every `run.checkpoint_every` ticks (default 10,000) the complete state is saved to
+`results/<name>_ckpt/t<tick>.pt`: every worm, genome, id and counter, every factor's internal state (infections,
+predator positions, gut contents, fields...), the random generator and the measurements so far. If a run is stopped
+(window closed, power cut, watcher CANCEL), running the same form again **resumes from the latest checkpoint**
+automatically and continues exactly as if it had never stopped (tested: identical final numbers). `--fresh` starts over.
+
+**Return to / branch from any saved moment.**
+`python run.py configs/<form>.toml --from-tick 20000 --as my_branch --seed 7`
+starts a new run called `my_branch` from tick 20,000 of `<form>`'s run. Without `--seed` it repeats the original
+exactly; with a seed it is the same world at the same moment with new luck: a **Lenski-style replay** ("would
+evolution go the same way again?"). The branch also copies the family-tree log up to that moment.
+Watcher: `{"experiment": "form_branch", "args": {"form": "...", "tick": 20000, "as": "my_branch", "seed": 7}}`.
+
+**Family-tree recording** (`run.record_tree = true`, default). Every worm gets an id (founders 0..slots-1, then
+counting up in each world). Every birth is logged (tick, world, parent id, child id, mutation size) and every death
+(tick, world, id) in `results/<name>_tree/part*.npz`. Every worm also carries `nmut` (mutation events on its line of
+descent since its founder) and `msize` (their total size). Measured every sample: `mutations`, `mutation_size`,
+`top_family`, `top_family_share`, `top_family_mutations`.
+
+**Genealogy tools** (`genealogy.py`; worlds numbered arm by arm: frozen 0..R-1, shadow R..2R-1, real 2R..3R-1):
+| command | answers |
+|---|---|
+| `python genealogy.py <run> summary --world W` | how many generations deep, births/deaths per 1000 ticks, mutation size per birth, founder families extinct |
+| `... living --world W` | which founder families are alive at the end, their share and generation depth |
+| `... trace --world W --uid U` | worm U's full line of descent: every ancestor, birth tick, mutation size, death tick |
+| `... mrca --world W` | the most recent common ancestor of everyone alive at the end, and when the population coalesced |
+| `... fixation --world W --level 0.95` | when (if ever) one founder family took over |
+| `... muller --world W` | Muller plot (PNG): share of each founder family over time |
+| `... family --world W --uid U` | one family's size over time + a drawing of its tree (PNG) |
+| `... report --world W` | all of the above in one text file + PNGs (`results/<run>_w<W>_genealogy.txt`) |
+Watcher: `{"experiment": "genealogy_report", "args": {"run": "baseline", "world": 60}}` (CPU only, seconds).

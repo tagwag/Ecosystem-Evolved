@@ -137,6 +137,89 @@ end (or per finished part, e.g. per brain type). A stopped run simply produces n
 
 ---
 
+## 6b. Several experiments at once (added 2026-11-13)
+
+Experiments marked `share = true` in `experiments.toml` are **light**: they use only part of the GPU (the small toy
+brains mostly wait on Python, not on the GPU). Up to **3 light jobs run at the same time**, each starting whenever it is
+picked up from the queue, as long as the GPU is **under 50 % busy and below 80 °C** (checked before each start).
+
+| you want | job file |
+|---|---|
+| run alongside other light jobs (default for light experiments) | `{"experiment": "toybrain_gpu_fair", "args": {...}}` |
+| use the whole GPU, nothing beside it | add `"exclusive": true` |
+| force an experiment to share (or not) | add `"share": true` or `"share": false` |
+
+- The queue is **first-in-first-out**: a whole-GPU job at the front waits until the running light jobs finish (and the
+  jobs behind it wait too), so a big run is never starved.
+- `status.json` now has a `jobs` list (every running job, its minutes, its log) besides the old single-job fields.
+- `CANCEL` stops **all** running jobs. To stop just one, remove nothing and ask Claude (or end its python process).
+- Limits are at the top of `watcher.py`: `MAX_PARALLEL = 3`, `UTIL_MAX = 50`, `TEMP_MAX = 80`.
+- The new code takes effect when the watcher next restarts itself, which it does automatically the next time it is
+  idle (no job running).
+
+## 6c. Safety gate (added 2026-11-13): nothing runs if it could harm this computer
+
+Every job passes these checks. The reason is always written to `failed/<job>.json` (`"error"`), `watcher_log.txt`,
+and `status.json` (`"waiting"`).
+
+**Refused immediately (the settings themselves are unsafe):**
+| check | example message |
+|---|---|
+| the experiment's own preflight (engine forms: `run.py --preflight` estimates memory and checks every setting) | `needs ~38,880 MB of GPU memory (limit 7,500 MB): 600 worlds x 5000 slots x 80 patches is too big. Lower replicates, world.slots or world.patches.` |
+| needs more GPU memory than the card has (minus 1,200 MB kept for Windows) | `needs ~30000 MB GPU memory but this GPU has 10240 MB (1200 MB kept free): it can never fit` |
+| absurd run length (engine: > 20 million ticks) | `ticks = ... is over the 20,000,000 safety cap` |
+
+**Waits (temporary), then fails after 1 hour with the reason:**
+| check | limit |
+|---|---|
+| GPU temperature | starts only below 80 °C |
+| free GPU memory | the job's need + 1,200 MB margin |
+| free disk | ≥ 5 GB |
+| free RAM | ≥ 2 GB |
+
+**Stops running jobs:**
+| check | action |
+|---|---|
+| GPU ≥ 90 °C | all jobs stopped immediately |
+| GPU ≥ 87 °C for 3 minutes | that job stopped (`overheat`) |
+| free disk < 1 GB, or free RAM < 0.5 GB | all jobs stopped before Windows starts struggling |
+
+Each experiment declares its GPU memory need in `experiments.toml` (`vram_mb`) or a `preflight` command that
+computes it from the settings. All limits are in the `SAFE` table at the top of `watcher.py` (soon also editable in
+the GUI's Watcher page).
+
+## 11. Settings, live view and replay (added 2026-11-13)
+
+All watcher and simulation settings live in **`watcher_settings.toml`**. Edit it, or use the GUI's **Watcher** page
+(start `python\gui\start_gui.bat`, click *Watcher*). Changes apply **live** within a few seconds; no restart.
+Every value has a **safe range** (`SETTING_RANGES` in `simctl.py`): the GUI refuses values outside it and the watcher
+clamps to it, so no setting can make a run dangerous for the computer.
+
+| section | setting | meaning (range) |
+|---|---|---|
+| display | `theme` | GUI look: system / light / dark |
+| display | `refresh_seconds` | GUI refresh interval (1-60) |
+| jobs | `max_parallel` | light jobs at once (1-4) |
+| jobs | `util_max` | a light job starts beside others only below this % GPU busy (10-90) |
+| jobs | `max_wait_minutes` | a job that can't start safely this long fails (1-1440) |
+| safety | `start_temp_max`, `overheat_temp` + `overheat_seconds`, `hard_temp_stop` | temperature gates, see 6c (max 83 / 88 / 92 C) |
+| safety | `vram_margin_mb`, `min_disk_gb_*`, `min_ram_gb_*` | memory / disk margins, see 6c |
+| speed | `quiet` | 0 = full speed .. 0.9 = GPU rests 90 % of the time (quieter fans) |
+| speed | `tick_delay_ms` | slow motion for watching (0-1000 ms per tick) |
+| live | `enabled`, `frame_every`, `world`, `max_worms_drawn` | live picture of one world of each running simulation |
+| replay | `record`, `record_every`, `max_frames` | save frames for playback (capped for disk safety) |
+
+**How the simulations use it:** `simctl.py` (`SimControl.after_tick`) is called once per tick by the engine
+(`engine/run.py`) and the equilibrium world (`equilibrium/eqworld.py`). It re-reads the settings every 2 s, applies
+quiet mode and slow motion, writes the live frame to `live/<job>.json` and appends replay frames to
+`replays/<job>/frames.jsonl`. (The toy brain and the old ecosim don't publish frames; the old ecosim keeps its own
+`gpu_throttle.txt` quiet mode.)
+
+**Watcher page in the GUI:** live view (pick a running job; worms orange, dauer grey, food green, predators /
+competitors red triangles, traps purple), GPU chart (temperature and % busy, with the safety limits as dashed lines),
+running jobs (including light jobs running side by side and any safety wait), replay player (pick a recorded run;
+play / pause, 1-30x speed, scrub slider), and the settings form with help text and ranges.
+
 ## 7. How Claude uses it
 
 Claude reaches the workstation's files through the Claude desktop app link (the "device" tools). Claude cannot

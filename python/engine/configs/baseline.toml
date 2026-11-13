@@ -1,3 +1,2 @@
 [run]
-name = "baseline"
-founders = "toybrain"
+name = "baseline"                 # [R1] all factors off: the reference for every factor experiment

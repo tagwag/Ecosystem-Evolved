@@ -38,3 +38,5 @@ Broad literature pass, 2026-11-13. Reviews and key papers, not a systematic revi
 34. Natural variation in heavy-metal (cadmium) responses — https://pmc.ncbi.nlm.nih.gov/articles/PMC11513058
 35. Micro/nanoplastics and the C. elegans gut — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10459583/ ; hydrogen sulfide avoidance — https://elifesciences.org/reviewed-preprints/92964v1/reviews
 36. *Evolution of phenotypic plasticity during environmental fluctuations* — https://www.biorxiv.org/content/10.1101/2023.01.22.523389.full.pdf
+37. Ghosh et al. 2016, *Neural architecture of hunger-dependent multisensory decision making in C. elegans*, Neuron — https://pmc.ncbi.nlm.nih.gov/articles/PMC5147516
+38. *Satiety behavior is regulated by ASI/ASH reciprocal antagonism* — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5931959/

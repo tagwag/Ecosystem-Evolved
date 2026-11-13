@@ -542,3 +542,30 @@ class Variability(Factor):
         f = fs[t % len(fs)]
         rng = (f.field.base.max() - f.field.base.min()).clamp(min=1.0)
         f.field.base = f.field.base + float(p.get("step", 0.2)) * rng * (1 if (t // ev) % 2 else -1)
+
+
+# ===================================================================================================== INTERNAL
+class StarvationSignal(Factor):
+    """Near-starvation 'pain' signal (ASH-nociceptor-like). When a worm's energy is below `threshold`, the
+    nociception sense reads (threshold - energy) / threshold x `gain` (0 when fed, up to `gain` at zero energy), so
+    evolution can wire an alarm into behaviour. `hunger_override` (0..1): real hungry worms ignore aversive cues to
+    reach food (Ghosh et al. 2016); while the signal is on, the toxin, pathogen and predator senses are scaled down by
+    hunger_override x signal (0 = no override)."""
+    name = "starvation_signal"
+
+    def modify(self, w, m):
+        p = self.params; thr = float(p.get("threshold", 3.0))
+        sig = ((thr - w.energy) / thr).clamp(0, 1) * w.alive
+        w.sense["nociception"] += sig * float(p.get("gain", 1.0))
+        ov = float(p.get("hunger_override", 0.0))
+        if ov > 0:
+            self._scale = (1 - ov * sig)
+        self._last = sig
+
+    def after_eat(self, w, got, m):
+        if hasattr(self, "_scale"):                     # aversive senses were filled during modify(); damp them now
+            for k in ("toxin", "pathogen", "predator"):
+                w.sense[k] *= self._scale
+
+    def measure(self, w):
+        return {"starvation_signal_mean": _mean(w, self._last)} if hasattr(self, "_last") else {}

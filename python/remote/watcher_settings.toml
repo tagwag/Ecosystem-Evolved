@@ -1,0 +1,36 @@
+# Watcher + simulation settings. Written by the GUI 2026-11-13 12:32. Read live; explained in python/remote/README.md section 11.
+
+[display]
+theme = "system"                 # GUI look: follow Windows, or force light / dark.
+refresh_seconds = 5             # How often the GUI refreshes status, charts and the live view.
+
+[jobs]
+max_parallel = 3                # Light jobs allowed at the same time (heavy jobs always run alone).
+util_max = 50                   # A light job only starts beside others while the GPU is below this % busy.
+max_wait_minutes = 60           # A job that can't start safely for this long fails with the reason.
+
+[safety]
+start_temp_max = 80             # No job starts at or above this GPU temperature (C).
+overheat_temp = 87              # A running job is stopped after `overheat_seconds` at or above this (C).
+overheat_seconds = 180          # How long the GPU may stay at the overheat temperature.
+hard_temp_stop = 90             # Everything stops immediately at or above this (C). Max 92.
+vram_margin_mb = 1200           # GPU memory always kept free for Windows / the desktop.
+min_disk_gb_start = 5           # Free disk needed to start a job (GB).
+min_disk_gb_run = 1.0           # Below this free disk, running jobs are stopped (GB).
+min_ram_gb_start = 2            # Free system memory needed to start a job (GB).
+min_ram_gb_run = 0.5            # Below this free memory, running jobs are stopped (GB).
+
+[speed]
+quiet = 0.0                     # 0 = full speed .. 0.9 = GPU rests 90% of the time (quieter, slower). Applies live.
+tick_delay_ms = 0               # Slow motion: pause after every tick, for watching the live view. 0 = off.
+
+[live]
+enabled = true                  # Running simulations publish a live picture of one world.
+frame_every = 20                # Ticks between live frames (lower = smoother, slightly slower runs).
+world = 0                       # Which world to show (0 = first world of the first arm).
+max_worms_drawn = 640           # Cap on worms per frame.
+
+[replay]
+record = true                   # Save frames to remote/replays/<job>/ for playback.
+record_every = 200              # Ticks between recorded frames.
+max_frames = 5000               # Stop recording a run after this many frames (disk safety).

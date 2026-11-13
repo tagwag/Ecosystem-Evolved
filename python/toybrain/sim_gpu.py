@@ -2,7 +2,12 @@
 evolves at once on the 3080 (seeds x population x 3 arenas = thousands of worms per step).
 Not number-for-number identical to sim.py (different random streams, float32) -> compare statistically.
 
-Usage: python sim_gpu.py [seeds] [gens] [conds comma-list or 'all']
+Usage: python sim_gpu.py [seeds] [gens] [conds comma-list or 'all'] [--fair] [--resume RESULTS.json]
+                          [--from-gen G [--as NAME] [--seed S]]
+  Checkpoints: the whole population of every lineage is saved every 50 generations to checkpoints/. An interrupted run
+  RESUMES from its latest checkpoint automatically (finished brain types are skipped as before).
+  --from-gen G : BRANCH a new run from generation G of the same run (same settings), e.g. a Lenski-style replay;
+                 --seed S gives it new luck (otherwise it repeats exactly).
 Writes results_gpu_<gens>g_<seeds>s.json (+ best genomes, learning curves) and a progress log run_gpu_log.txt.
 SAFE TO INTERRUPT: each condition's results are saved when it finishes; a rerun skips finished conditions.
 """
@@ -100,13 +105,41 @@ def mut_sigma(c):
     return 0.1 * (glen(REF) / glen(c)) ** 0.5 if FAIR else 0.1
 
 
-def evolve(c, S, gens, gen, pop=48, elite=8, reps=3):
-    """All S seeds at once. Returns best genome per seed (S, L) and the mean-fitness curve per seed (S, gens)."""
+CKPT_EVERY = 50          # save the WHOLE population of every lineage every 50 generations (checkpoints/)
+
+
+def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start=None):
+    """All S lineages (seeds) at once.
+    init: optional (S, L) starting champions (continuation): each lineage starts as its champion + pop-1 mutants of it.
+    Tracks, for every individual: its gen-0 ANCESTOR (which of the 48 starting genomes it descends from), the number of
+    MUTATION EVENTS on its line of descent (one per child birth; elites copied unchanged add none) and the total SIZE
+    of those changes (sum of mutation vector lengths).
+    ckpt: file-name prefix for checkpoints (Path); start: a checkpoint dict to continue from (resume / branch).
+    Returns dict: best (S, L), curve (S, gens), and for the best: nmut, mutsize, ancestor share of the final population."""
     L = glen(c)
-    G = init_scale(c) * torch.randn(S, pop, L, generator=gen, device=DEV)
     sig = mut_sigma(c)
-    curve = torch.zeros(S, gens)
-    for g in range(gens):
+    if init is None:
+        G = init_scale(c) * torch.randn(S, pop, L, generator=gen, device=DEV)
+        nmut = torch.zeros(S, pop, device=DEV); msize = torch.zeros(S, pop, device=DEV)
+    else:
+        G = init.to(DEV)[:, None].repeat(1, pop, 1)
+        d = sig * torch.randn(S, pop - 1, L, generator=gen, device=DEV)
+        G[:, 1:] += d
+        nmut = torch.zeros(S, pop, device=DEV); nmut[:, 1:] = 1
+        msize = torch.zeros(S, pop, device=DEV); msize[:, 1:] = d.norm(dim=-1)
+    anc = torch.arange(pop, device=DEV)[None].repeat(S, 1)
+    curve = torch.zeros(S, gens); g0 = 0
+    if start is not None:                                          # resume / branch from a saved generation
+        G, nmut, msize, anc = (start[k].to(DEV) for k in ("G", "nmut", "msize", "anc"))
+        g0 = start["g"]; curve[:, :g0] = start["curve"][:, :g0]
+        if start.get("rng") is not None:
+            gen.set_state(start["rng"])
+        log(f"  continuing from generation {g0}")
+    for g in range(g0, gens):
+        if ckpt is not None and g > 0 and g % CKPT_EVERY == 0:
+            ckpt.parent.mkdir(exist_ok=True)
+            torch.save(dict(g=g, G=G.cpu(), nmut=nmut.cpu(), msize=msize.cpu(), anc=anc.cpu(), curve=curve.clone(),
+                            rng=gen.get_state()), f"{ckpt}_g{g}.pt")
         pt = arenas(S * reps, NPATCH, gen)                           # one arena per seed per rep, shared by its pop
         pt = pt.view(S, reps, 1, NPATCH, 2).expand(S, reps, pop, NPATCH, 2).reshape(-1, NPATCH, 2)
         Gx = G[:, None].expand(S, reps, pop, L).reshape(-1, L)
@@ -114,17 +147,36 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3):
         curve[:, g] = f.mean(1).cpu()
         idx = torch.argsort(-f, 1)[:, :elite]
         E = torch.gather(G, 1, idx[:, :, None].expand(S, elite, L))
+        eN, eS, eA = (torch.gather(x, 1, idx) for x in (nmut, msize, anc))
         par = torch.randint(0, elite, (S, pop - elite), generator=gen, device=DEV)
-        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L)) + sig * torch.randn(S, pop - elite, L, generator=gen, device=DEV)
+        d = sig * torch.randn(S, pop - elite, L, generator=gen, device=DEV)
+        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L)) + d
         G = torch.cat([E, kids], 1)
+        nmut = torch.cat([eN, torch.gather(eN, 1, par) + 1], 1)
+        msize = torch.cat([eS, torch.gather(eS, 1, par) + d.norm(dim=-1)], 1)
+        anc = torch.cat([eA, torch.gather(eA, 1, par)], 1)
         if g % 25 == 0 or g == gens - 1:
             log(f"  gen {g:3d}  mean food {curve[:, g].mean():6.1f}  (seed range {curve[:, g].min():.1f}-{curve[:, g].max():.1f})")
     # final pick: best of the elite over 10 arenas
     E = G[:, :elite]; reps = 10
     pt = arenas(S * reps, NPATCH, gen).view(S, reps, 1, NPATCH, 2).expand(S, reps, elite, NPATCH, 2).reshape(-1, NPATCH, 2)
     f = run(E[:, None].expand(S, reps, elite, L).reshape(-1, L), c, pt, gen).view(S, reps, elite).mean(1)
-    best = E[torch.arange(S), f.argmax(1)]
-    return best, curve
+    j = f.argmax(1); ar = torch.arange(S, device=DEV)
+    best_anc = anc[ar, j]
+    share = (anc == best_anc[:, None]).float().mean(1)               # reproductive success of the best's founder line
+    return dict(best=E[ar, j], curve=curve, nmut=nmut[ar, j].cpu(), mutsize=msize[ar, j].cpu(), share=share.cpu())
+
+
+def combined_score(fair, share, curve, slope_window=100):
+    """'Best' as chosen by the owner (2026-11-13): COMBINED SCORE = reproductive success x fair-test score.
+       reproductive success = share of the lineage's final population descended from the winner's gen-0 ancestor (0-1)
+       fair-test score      = food eaten on 30 fresh unseen arenas (normal arena)
+       tie-break            = slope of mean training food over the last `slope_window` generations (still rising?)
+    Returns (score, slope) per lineage."""
+    c = np.asarray(curve)[:, -slope_window:]
+    slope = np.polyfit(np.arange(c.shape[1]), c.T, 1)[0] * 100
+    return np.asarray(share) * np.asarray(fair), slope
+
 
 def test(best, c, npatch, gen, n=30):
     """best (S, L) -> mean food per seed over n fresh arenas (S,)."""
@@ -133,15 +185,28 @@ def test(best, c, npatch, gen, n=30):
     return run(best[:, None].expand(S, n, L).reshape(-1, L), c, pt, gen).view(S, n).mean(1)
 
 if __name__ == "__main__":
-    argv = [a for a in sys.argv[1:] if a != "--fair"]
-    FAIR = "--fair" in sys.argv
+    argv = sys.argv[1:]
+    def opt(name, default=None):
+        if name in argv:
+            i = argv.index(name); v = argv[i + 1]; del argv[i:i + 2]; return v
+        return default
+    resume = opt("--resume")                       # continue from the champions saved in a results file
+    from_gen = opt("--from-gen"); branch_as = opt("--as"); bseed = opt("--seed")   # branch from a checkpoint
+    FAIR = "--fair" in argv; argv = [a for a in argv if a != "--fair"]
     S = int(argv[0]) if len(argv) > 0 else 30
     gens = int(argv[1]) if len(argv) > 1 else 300
     names = list(CONDS) if len(argv) <= 2 or argv[2] == "all" else argv[2].split(",")
-    out = Path(f"results_gpu_{gens}g_{S}s{'_fair' if FAIR else ''}.json")
+    prev = json.loads(Path(resume).read_text()) if resume else None
+    tag = f"_cont{gens}_from_{Path(resume).stem.replace('results_gpu_', '')}" if resume else ""
+    out = Path(f"results_gpu_{gens}g_{S}s{'_fair' if FAIR else ''}{tag}.json")
+    src_out = out
+    if from_gen:
+        out = Path(f"results_gpu_{gens}g_{S}s{'_fair' if FAIR else ''}{tag}_{branch_as or 'from' + from_gen}.json")
     res = json.loads(out.read_text()) if out.exists() else {}
-    log(f"{'FAIR mode (mutation scaled by genome size, init by brain size). ' if FAIR else ''}start on {DEV} ({torch.cuda.get_device_name(0) if DEV.type == 'cuda' else 'cpu'}): {S} seeds x {gens} gens")
-    gen = torch.Generator(device=DEV); gen.manual_seed(12345)
+    log(f"{'FAIR mode (mutation scaled by genome size, init by brain size). ' if FAIR else ''}"
+        f"{'CONTINUING from ' + resume + '. ' if resume else ''}start on {DEV} "
+        f"({torch.cuda.get_device_name(0) if DEV.type == 'cuda' else 'cpu'}): {S} lineages x {gens} gens")
+    gen = torch.Generator(device=DEV); gen.manual_seed(12345 + (7 if resume else 0))
     if "random_walk" not in res:
         c = dict(smell=1, H=8, plastic=0); z = torch.zeros(S, glen(c), device=DEV)
         res["random_walk"] = dict(normal=test(z, c, NPATCH, gen).tolist(), sparse=test(z, c, 2, gen).tolist())
@@ -149,11 +214,34 @@ if __name__ == "__main__":
         if name in res:
             log(f"{name}: already done, skipped"); continue
         c = CONDS[name]; t0 = time.time(); log(f"{name}: evolving")
-        gen.manual_seed(1000 + list(CONDS).index(name))
-        best, curve = evolve(c, S, gens, gen)
-        r = dict(normal=test(best, c, NPATCH, gen).tolist(), sparse=test(best, c, 2, gen).tolist(),
-                 curves=curve.tolist(), genomes=best.cpu().tolist(), sec=time.time() - t0)
+        gen.manual_seed(1000 + list(CONDS).index(name) + (500 if resume else 0))
+        init = torch.tensor(prev[name]["genomes"], dtype=torch.float32)[:S] if prev else None
+        ck = Path("checkpoints") / f"{out.stem}_{name.replace('+', '-')}"
+        start = None
+        if from_gen:                                               # BRANCH: start from the source run's checkpoint
+            f = Path("checkpoints") / f"{src_out.stem}_{name.replace('+', '-')}_g{int(from_gen)}.pt"
+            if not f.exists():
+                log(f"{name}: no checkpoint {f.name}, skipped"); continue
+            start = torch.load(f, weights_only=False)
+            if bseed:
+                start["rng"] = None; gen.manual_seed(int(bseed))
+        else:                                                      # RESUME: latest checkpoint of this run, if any
+            have = sorted(Path("checkpoints").glob(f"{ck.name}_g*.pt"), key=lambda p: int(p.stem.rsplit("_g", 1)[1])) if Path("checkpoints").exists() else []
+            if have:
+                start = torch.load(have[-1], weights_only=False); log(f"{name}: RESUMING from {have[-1].name}")
+        ev = evolve(c, S, gens, gen, init=init, ckpt=ck, start=start)
+        fair_n = test(ev["best"], c, NPATCH, gen); fair_s = test(ev["best"], c, 2, gen)
+        score, slope = combined_score(fair_n.cpu().numpy(), ev["share"].numpy(), ev["curve"].numpy())
+        prev_n = prev[name]["normal"][:S] if prev else None
+        r = dict(normal=fair_n.tolist(), sparse=fair_s.tolist(), curves=ev["curve"].tolist(),
+                 genomes=ev["best"].cpu().tolist(), sec=time.time() - t0,
+                 mutations=ev["nmut"].tolist(), mutation_size=ev["mutsize"].tolist(), repro_share=ev["share"].tolist(),
+                 combined=score.tolist(), slope_last100=slope.tolist(),
+                 previous_normal=prev_n, mutations_counted_from=("continuation start" if prev else "generation 0"))
         res[name] = r
         out.write_text(json.dumps(res))
-        log(f"{name}: normal {np.mean(r['normal']):6.1f}  sparse {np.mean(r['sparse']):6.1f}  ({r['sec']:.0f} s)")
+        k = int(np.lexsort((-slope, -score))[0])
+        log(f"{name}: normal {np.mean(r['normal']):6.1f}  sparse {np.mean(r['sparse']):6.1f}  "
+            f"{'(was ' + format(np.mean(prev_n), '.1f') + ') ' if prev else ''}| best lineage {k}: combined {score[k]:.1f} "
+            f"= share {r['repro_share'][k]:.2f} x fair {r['normal'][k]:.1f}, {int(r['mutations'][k])} mutations  ({r['sec']:.0f} s)")
     log("GPU_DONE")

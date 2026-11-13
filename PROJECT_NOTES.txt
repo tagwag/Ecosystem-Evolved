@@ -210,6 +210,26 @@ Remote watcher (python/remote; watcher.py + experiments.toml): starts experiment
   CANCEL / PAUSE files in queue/. Autostart at login installed. Restarts itself when watcher.py changes.
   HOW CLAUDE STARTS A RUN: write a .json job file into python/remote/queue/ (device_bash); read status.json + logs/.
 
+=== 2026-11-13 (afternoon): ENGINE v2, SAFETY, PARALLEL WATCHER, DASHBOARD, TOOLKIT, AGENT ===
+- Fair toy rerun (30 lineages): frontal no longer worse than no_smell (55.3 vs 57.9, p=0.3); hippo still worse (p<1e-11).
+- Equilibrium world (equilibrium/): zero point PASS; equilibrium rule FAIL narrowly (world #19 dipped 12.6% at tick 13,000;
+  29/30 within 10%). Real worms evolve ~31% slower + more efficient vs shadow (p<1e-4): even a calm world selects thrift.
+- Factor engine (engine/): 38 factors (catalog + starvation_signal) as off/auto/custom; forms with footnotes; GUI.
+  Engine batch v1 was CONTAMINATED (mutation-rate gene drifted without its factor; baseline used other founders):
+  archived in engine/results/old_mutbug/, fixed, batch v3 queued. Behaviour result held in every world.
+- Watcher: up to 3 light jobs in parallel (GPU <50% busy, <80 C), "exclusive" jobs run alone; SAFETY GATE refuses
+  unsafe jobs with exact reasons (memory estimates, temps, disk, RAM); settings in remote/watcher_settings.toml (safe
+  ranges enforced); live view + replay frames (remote/live, remote/replays) shown on the GUI's Watcher page.
+- Toolkit: engine checkpoints (auto-resume, --from-tick branching), per-worm ids + birth/death log, mutation counts
+  per lineage, genealogy.py (summary/trace/living/mrca/fixation/muller/family/report). Toy brain: population
+  checkpoints every 50 gens, resume, --from-gen branching, mutation counts, combined score (repro share x fair test).
+- "Best" (owner, 2026-11-13) = COMBINED SCORE: reproductive success (share of final population from the winner's
+  ancestor) x fair-test score; tie-break: slope over the last 100 generations.
+- worm-lab-agent: separate local project C:/Users/Tag/PycharmProjects/worm-lab-agent (own git, not yet on GitHub;
+  owner must create the empty GitHub repo). Needs Ollama + a model. Approval mode on by default.
+- Owner rules: document everything for a new hire; status line at the end of every message; after an interruption
+  answer then "Resuming Queue: <task>"; never run anything dangerous for the computer.
+
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
   so parents won food ties. Now random order each tick (own RNG, layouts unchanged). Steps 1-4 + 3b/3c were

@@ -29,6 +29,10 @@ RUN_DOCS = {
     "founders": "Which brains start the worlds: toybrain_fair (evolved champions of the toy-brain fair run, one per "
                 "replicate), toybrain (original run), random (unevolved; they usually starve), or a path to a results file.",
     "every": "Measure every N ticks.",
+    "checkpoint_every": "Save the complete state every N ticks (results/<name>_ckpt/). A stopped run resumes from the last one "
+                        "automatically; `run.py ... --from-tick T --as NEW` branches a new run from tick T. 0 = never.",
+    "record_tree": "Log every birth (parent id, child id, tick, mutation size) and death, so family trees, lineages and "
+                   "mutation histories can be rebuilt with genealogy.py. Costs a little disk.",
 }
 WORLD_DOCS = {
     "size": "Arena width and height (units). 400 x 400 holds ~380 worms with the default food.",

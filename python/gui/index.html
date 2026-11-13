@@ -9,7 +9,19 @@
 --warn:#a35b00;--warnbg:#fff4e2;--bad:#a12a2a;--badbg:#fdeaea;--chip:#efeee9}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#151614;--panel:#1d1f1c;--ink:#ecebe6;--muted:#9a9a93;
 --line:#30322e;--accent:#7cc39b;--accent2:#22322a;--warn:#f0b35c;--warnbg:#33281a;--bad:#f08a8a;--badbg:#3a1f1f;--chip:#2a2c28}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+:root[data-theme="dark"]{--bg:#151614;--panel:#1d1f1c;--ink:#ecebe6;--muted:#9a9a93;--line:#30322e;--accent:#7cc39b;
+--accent2:#22322a;--warn:#f0b35c;--warnbg:#33281a;--bad:#f08a8a;--badbg:#3a1f1f;--chip:#2a2c28}
+*{box-sizing:border-box}
+.pages{display:flex;gap:4px;background:var(--chip);padding:3px;border-radius:9px}
+.pages button{border:0;background:transparent;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--ink);font:inherit}
+.pages button.on{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.15);font-weight:600}
+canvas{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;display:block}
+.wgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;padding:16px 18px;max-width:1400px;margin:auto}
+@media (max-width:900px){.wgrid{grid-template-columns:1fr}}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.row select,.row input{width:auto}
+.sgroup{margin-top:10px;font-weight:600;text-transform:capitalize;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:12px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
 header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
 h1{font-size:17px;margin:0 12px 0 0}
 .tabs{display:flex;gap:4px;background:var(--chip);padding:3px;border-radius:9px}
@@ -51,12 +63,13 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 <body>
 <header>
   <h1>Worm Experiment Lab</h1>
+  <div class="pages" id="pages"><button data-p="exp" class="on">Experiments</button><button data-p="watch">Watcher</button></div>
   <div class="tabs" id="tabs">
     <button data-m="easy">Easy</button><button data-m="advanced">Advanced</button><button data-m="researcher">Researcher</button>
   </div>
   <div class="modehelp" id="modehelp"></div>
 </header>
-<main>
+<main id="exppage">
   <section>
     <div class="card" id="runcard"><h2>Run</h2><div class="grid" id="runfields"></div></div>
     <div class="card" id="worldcard" hidden><h2>World (equilibrium baseline)</h2>
@@ -78,6 +91,35 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
     <div class="card res"><h2>Latest results</h2><div id="results"></div></div>
   </aside>
 </main>
+<div class="wgrid" id="watchpage" hidden>
+  <section>
+    <div class="card"><h2>Live view</h2>
+      <div class="row"><select id="livejob"></select><span class="desc" id="liveinfo">no running simulation</span></div>
+      <canvas id="livecv" width="640" height="640"></canvas>
+      <div class="legend" style="margin-top:6px"><span><i class="dot" style="background:#e07b39"></i>worm</span>
+        <span><i class="dot" style="background:#9a9a93"></i>dauer</span><span><i class="dot" style="background:#4c9a6a"></i>food patch (bigger = fuller)</span>
+        <span><i class="dot" style="background:#c0392b"></i>predator / competitor</span><span><i class="dot" style="background:#8e5bb5"></i>trap</span></div>
+      <div class="desc">Shows world <b>live.world</b> of the selected run every <b>live.frame_every</b> ticks. Use the Speed settings (slow motion) to watch closely.</div>
+    </div>
+    <div class="card"><h2>Replay</h2>
+      <div class="row"><select id="repjob"></select><button class="b" id="repplay">Play</button>
+        <select id="repspeed"><option value="1">1x</option><option value="2">2x</option><option value="5" selected>5x</option><option value="10">10x</option><option value="30">30x</option></select>
+        <span class="desc" id="repinfo"></span></div>
+      <input type="range" id="repslider" min="0" max="0" value="0" style="width:100%">
+      <canvas id="repcv" width="640" height="640" style="margin-top:8px"></canvas>
+    </div>
+  </section>
+  <aside>
+    <div class="card"><h2>Running jobs</h2><div id="wjobs" class="desc">-</div></div>
+    <div class="card"><h2>GPU (last samples)</h2><canvas id="gpucv" width="600" height="220"></canvas>
+      <div class="legend"><span><i class="dot" style="background:#c0392b"></i>temperature C</span><span><i class="dot" style="background:#3a7bd5"></i>% busy</span><span><i class="dot" style="background:#7a7a72"></i>safety limits</span></div>
+      <div class="desc" id="gpunow"></div></div>
+    <div class="card"><h2>Settings</h2><div id="settings"></div>
+      <div class="btns" style="margin-top:10px"><button class="b primary" id="ssave">Save settings</button></div>
+      <div class="msg" id="smsg"></div>
+      <div class="desc" style="margin-top:6px">Saved settings apply live (no restart). Values outside the safe ranges are refused.</div></div>
+  </aside>
+</div>
 <script>
 const MODES = {
   easy: "Isolate ONE factor. Everything else stays off, so any change is caused by that factor alone.",
@@ -225,7 +267,109 @@ function setMode(m) {
   renderRun(); renderFactors();
 }
 for (const b of $("#tabs").children) b.onclick = () => setMode(b.dataset.m);
-(async () => { S = await (await fetch("/api/schema")).json(); form.run.name = "my_experiment"; setMode(mode); refresh(); setInterval(refresh, 5000); })();
+// ======================================================================== Watcher page
+let page = "exp", SET = null, refreshMs = 5000, refreshTimer = null, rep = { frames: [], i: 0, playing: false, job: null, timer: null };
+function applyTheme(t) { if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
+function setPage(p) {
+  page = p; for (const b of $("#pages").children) b.classList.toggle("on", b.dataset.p === p);
+  $("#exppage").hidden = p !== "exp"; $("#watchpage").hidden = p !== "watch";
+  $("#tabs").style.display = p === "exp" ? "" : "none"; $("#modehelp").style.display = p === "exp" ? "" : "none";
+  try { localStorage.setItem("labpage", p); } catch (e) {}
+  if (p === "watch") { loadSettings(); loadReplays(); watchRefresh(); }
+}
+for (const b of $("#pages").children) b.onclick = () => setPage(b.dataset.p);
+
+function drawWorld(cv, f) {
+  const c = cv.getContext("2d"), W = cv.width, H = cv.height; c.clearRect(0, 0, W, H);
+  if (!f) { c.fillStyle = "#888"; c.fillText("no frame", 10, 20); return; }
+  const k = W / f.size;
+  for (const [x, y, a] of f.food) { c.beginPath(); c.fillStyle = `rgba(76,154,106,${0.25 + 0.6 * a})`; c.arc(x * k, y * k, 3 + 7 * a, 0, 7); c.fill(); }
+  for (const t of (f.extra?.traps || [])) { c.fillStyle = "#8e5bb5"; c.fillRect(t[0] * k - 4, t[1] * k - 4, 8, 8); }
+  for (const [x, y, d] of f.worms) { c.fillStyle = d ? "#9a9a93" : "#e07b39"; c.fillRect(x * k - 1.5, y * k - 1.5, 3, 3); }
+  for (const a of (f.extra?.agents || [])) { c.beginPath(); c.fillStyle = "#c0392b"; c.moveTo(a[0] * k, a[1] * k - 6); c.lineTo(a[0] * k - 5, a[1] * k + 4); c.lineTo(a[0] * k + 5, a[1] * k + 4); c.fill(); }
+}
+
+async function watchRefresh() {
+  if (page !== "watch") return;
+  try {
+    const sel = $("#livejob"), want = sel.value;
+    const L = await (await fetch("/api/live" + (want ? "?job=" + encodeURIComponent(want) : ""))).json();
+    const opts = L.jobs.map(j => j.job).join("|");
+    if (sel.dataset.opts !== opts) { sel.innerHTML = ""; for (const j of L.jobs) sel.append(el("option", { value: j.job }, `${j.job} (${j.age_s}s ago)`)); sel.dataset.opts = opts; if (want) sel.value = want; }
+    drawWorld($("#livecv"), L.frame);
+    $("#liveinfo").textContent = L.frame ? `tick ${L.frame.t} at ${L.frame.time}, ${L.frame.extra?.arm ?? ""} arm, ${L.frame.extra?.pop ?? L.frame.worms.length} worms` : "no running simulation";
+    const st = await (await fetch("/api/status")).json(); const w = st.watcher || {};
+    $("#wjobs").innerHTML = "";
+    const js = w.jobs || (w.job ? [{ job: w.job, experiment: w.experiment, minutes: w.minutes }] : []);
+    if (!js.length) $("#wjobs").textContent = w.waiting || "none running";
+    for (const j of js) $("#wjobs").append(el("div", {}, `${j.job} - ${j.experiment}, ${j.minutes} min${j.light ? " (light)" : ""}`));
+    if (w.waiting) $("#wjobs").append(el("div", { style: "color:var(--warn)" }, w.waiting));
+    const G = await (await fetch("/api/gpu?n=240")).json(); drawGpu(G.rows);
+  } catch (e) {}
+}
+
+function drawGpu(rows) {
+  const cv = $("#gpucv"), c = cv.getContext("2d"), W = cv.width, H = cv.height; c.clearRect(0, 0, W, H);
+  const lim = SET ? Object.fromEntries(SET.fields.filter(f => f.section === "safety").map(f => [f.key, f.value])) : {};
+  const y = v => H - 10 - (v / 100) * (H - 20);
+  c.strokeStyle = "#7a7a72"; c.setLineDash([4, 4]);
+  for (const v of [lim.start_temp_max, lim.hard_temp_stop].filter(Boolean)) { c.beginPath(); c.moveTo(0, y(v)); c.lineTo(W, y(v)); c.stroke(); }
+  c.setLineDash([]);
+  if (!rows.length) { c.fillStyle = "#888"; c.fillText("no samples yet (written while jobs run)", 10, 20); $("#gpunow").textContent = ""; return; }
+  for (const [key, col] of [["temp", "#c0392b"], ["util", "#3a7bd5"]]) {
+    c.beginPath(); c.strokeStyle = col; c.lineWidth = 2;
+    rows.forEach((r, i) => { const x = i / Math.max(1, rows.length - 1) * W; i ? c.lineTo(x, y(r[key])) : c.moveTo(x, y(r[key])); }); c.stroke();
+  }
+  const r = rows[rows.length - 1];
+  $("#gpunow").textContent = `latest ${r.time}: ${r.temp} C, ${r.util}% busy, ${Math.round(r.mem)} MB, ${r.power ?? "?"} W; dashed lines = start limit / hard stop`;
+}
+
+async function loadSettings() {
+  SET = await (await fetch("/api/settings")).json();
+  const box = $("#settings"); box.innerHTML = ""; let sec = "", grid = null;
+  for (const f of SET.fields) {
+    if (f.section !== sec) { sec = f.section; box.append(el("div", { class: "sgroup" }, sec)); grid = el("div", { class: "grid" }); box.append(grid); }
+    const lab = el("label", { class: "f", title: f.help }); lab.append(el("span", {}, f.key + (f.min != null ? ` (${f.min}-${f.max})` : "")));
+    let inp;
+    if (f.choices) { inp = el("select"); for (const ch of f.choices) inp.append(el("option", { value: JSON.stringify(ch) }, String(ch))); inp.value = JSON.stringify(f.value); inp.onchange = () => { f.value = JSON.parse(inp.value); if (f.key === "theme") applyTheme(f.value); }; }
+    else { inp = el("input", { type: "number", step: "any", min: f.min, max: f.max }); inp.value = f.value; inp.oninput = () => { f.value = inp.value === "" ? f.value : Number(inp.value); }; }
+    lab.append(inp, el("span", { class: "desc" }, f.help)); grid.append(lab);
+    if (f.key === "theme") applyTheme(f.value);
+    if (f.key === "refresh_seconds") { refreshMs = 1000 * f.value; restartTimer(); }
+  }
+}
+$("#ssave").onclick = async () => {
+  const out = {}; for (const f of SET.fields) (out[f.section] = out[f.section] || {})[f.key] = f.value;
+  const r = await post("/api/settings", { settings: out }); const m = $("#smsg");
+  m.className = "msg " + (r.ok ? "ok" : "err"); m.textContent = r.ok ? "Saved. Applies within a few seconds." : r.errors.join("\n");
+  if (r.ok) loadSettings();
+};
+
+async function loadReplays() {
+  const R = await (await fetch("/api/replays")).json(); const sel = $("#repjob"); const cur = sel.value; sel.innerHTML = "";
+  for (const r of R.replays) sel.append(el("option", { value: r.job }, `${r.job} (${r.frames} frames, ${r.mb} MB)`));
+  if (cur) sel.value = cur; if (sel.value) openReplay(sel.value);
+}
+async function openReplay(job) {
+  rep.job = job; rep.frames = []; rep.i = 0; let start = 0;
+  while (true) { const r = await (await fetch(`/api/replay?job=${encodeURIComponent(job)}&start=${start}&n=1000`)).json(); rep.frames.push(...r.frames); if (r.frames.length < 1000) break; start += 1000; }
+  $("#repslider").max = Math.max(0, rep.frames.length - 1); showRep();
+}
+function showRep() { const f = rep.frames[rep.i]; drawWorld($("#repcv"), f); $("#repslider").value = rep.i; $("#repinfo").textContent = f ? `frame ${rep.i + 1}/${rep.frames.length}, tick ${f.t}, ${f.worms.length} worms` : "no frames"; }
+$("#repjob").onchange = () => openReplay($("#repjob").value);
+$("#repslider").oninput = () => { rep.i = Number($("#repslider").value); showRep(); };
+$("#repplay").onclick = () => {
+  rep.playing = !rep.playing; $("#repplay").textContent = rep.playing ? "Pause" : "Play"; clearInterval(rep.timer);
+  if (rep.playing) rep.timer = setInterval(() => { if (rep.i >= rep.frames.length - 1) { rep.playing = false; $("#repplay").textContent = "Play"; clearInterval(rep.timer); return; } rep.i = Math.min(rep.frames.length - 1, rep.i + Number($("#repspeed").value)); showRep(); }, 100);
+};
+function restartTimer() { clearInterval(refreshTimer); refreshTimer = setInterval(() => { refresh(); watchRefresh(); }, refreshMs); }
+
+(async () => {
+  S = await (await fetch("/api/schema")).json(); form.run.name = "my_experiment"; setMode(mode); refresh();
+  try { const st = await (await fetch("/api/settings")).json(); for (const f of st.fields) { if (f.key === "theme") applyTheme(f.value); if (f.key === "refresh_seconds") refreshMs = 1000 * f.value; } } catch (e) {}
+  restartTimer();
+  let p0 = "exp"; try { p0 = localStorage.getItem("labpage") || "exp"; } catch (e) {} setPage(p0);
+})();
 </script>
 </body>
 </html>

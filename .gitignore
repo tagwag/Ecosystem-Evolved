@@ -18,3 +18,14 @@ python/equilibrium/results/*.json
 python/engine/run_log.txt
 python/equilibrium/eq_log.txt
 python/engine/configs/_gui_check.toml
+
+# live view / replay / snapshot data (big, per machine)
+python/remote/live/
+python/remote/replays/
+python/equilibrium/snapshots/
+python/remote/watcher_log.txt
+
+# engine checkpoints + family-tree logs, toy checkpoints (big)
+python/engine/results/*_ckpt/
+python/engine/results/*_tree/
+python/toybrain/checkpoints/

@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 CATALOG = HERE.parent / "factors" / "catalog.toml"
 
 RUN_DEFAULTS = dict(name="unnamed", replicates=30, ticks=50000, arms=["frozen", "shadow", "real"], seed=1,
-                    founders="toybrain_fair", every=500)
+                    founders="toybrain_fair", every=500, checkpoint_every=10000, record_tree=True)
 WORLD_DEFAULTS = dict(size=400.0, patches=80, patch_r=4.0, food_max=20.0, regrow=0.01, bite=0.5, sig_smell=25.0,
                       sig_taste=5.0, e_start=10.0, e_split=20.0, cost_base=0.02, cost_move=0.02, max_age=6000,
                       mut_sigma=0.1, slots=640, start_fill=0.25, trait_cost=0.005, dauer_cost=0.002)
@@ -145,6 +145,9 @@ REGISTRY = {
     "toxins": (lambda p: E.Toxins(p),
                dict(sources={}, field=F("spots", low=0.0, high=1.0, n_spots=3, spot_r=40.0)),
                dict(sources={"cadmium": 0.5, "hydrogen_sulfide": 0.3, "microplastics": 0.5})),
+    # ---------------------------------------------------------------- internal signals
+    "starvation_signal": (lambda p: B.StarvationSignal(p), dict(threshold=3.0, gain=1.0, hunger_override=0.0),
+                          dict(threshold=3.0, gain=1.0, hunger_override=0.5)),
     # ---------------------------------------------------------------- meta
     "variability": (lambda p: B.Variability(p), dict(mode="regular", every=5000, step=0.2), dict(mode="irregular")),
 }
@@ -211,3 +214,35 @@ def load(path):
         if prm is not None:
             active.append(REGISTRY[name][0](prm))
     return dict(run=run, world=world, factors=used), active
+
+
+# ------------------------------------------------------------------------------------------------ safety estimate
+GPU_BUDGET_MB = 7500        # most GPU memory one engine run may plan to use (RTX 3080 has 10 GB; leave room for Windows)
+RAM_BUDGET_MB = 8000        # most system memory for the results kept in memory
+
+
+def estimate(cfg):
+    """Rough memory need of a run (MB) and hard-limit errors, BEFORE anything is allocated.
+    Main GPU arrays per tick: worm x food-patch distances (N x S x P), genomes (N x S x genes, x3 copies while
+    mutating), brain state, and N x S x S for the virus factor (worm-to-worm distances). x2.5 for temporaries."""
+    from engine import glen, H
+    run, w = cfg["run"], cfg["world"]
+    N = int(run["replicates"]) * len(run["arms"]); S = int(w["slots"]); P = int(w["patches"])
+    genes = glen(); b = 4
+    gpu = N * S * P * b * 6 + N * S * genes * b * 3 + N * S * (H + 40) * b
+    if cfg["factors"].get("virus", {}).get("params") is not None:
+        gpu += N * S * S * b * 3
+    gpu_mb = gpu * 2.5 / 2 ** 20 + 600                              # + CUDA/PyTorch overhead
+    n_samples = int(run["ticks"]) // max(1, int(run["every"]))
+    ram_mb = n_samples * N * 80 * 8 / 2 ** 20 + 1500
+    errs = []
+    if gpu_mb > GPU_BUDGET_MB:
+        errs.append(f"needs ~{gpu_mb:,.0f} MB of GPU memory (limit {GPU_BUDGET_MB:,} MB): "
+                    f"{N} worlds x {S} slots x {P} patches is too big. Lower replicates, world.slots or world.patches.")
+    if ram_mb > RAM_BUDGET_MB:
+        errs.append(f"keeps ~{ram_mb:,.0f} MB of measurements in memory (limit {RAM_BUDGET_MB:,} MB): raise run.every or lower ticks.")
+    if int(w["slots"]) < 1 or int(run["replicates"]) < 1 or int(run["ticks"]) < 1:
+        errs.append("replicates, ticks and world.slots must be >= 1")
+    if int(run["ticks"]) > 20_000_000:
+        errs.append(f"ticks = {int(run['ticks']):,} is over the 20,000,000 safety cap (days of GPU time)")
+    return dict(gpu_mb=round(gpu_mb), ram_mb=round(ram_mb), errors=errs)

@@ -16,7 +16,10 @@ champion genomes from the toy-brain fair run (one lineage per replicate world), 
 Everything is batched on the GPU: R replicate worlds x 3 arms, each world has a fixed number of worm SLOTS; a slot is
 alive or empty. Births fill empty slots.
 
-Usage:  python eqworld.py [replicates] [ticks] [--founders PATH] [--slots N] [--quick]
+Usage:  python eqworld.py [replicates] [ticks] [--founders PATH] [--slots N] [--quick] [--every N] [--tag NAME]
+        --save-at 13000,20000      save full snapshots at those ticks (snapshots/eq<tag>_t<tick>.pt)
+        --resume FILE [--pick r --copies k]   continue from a snapshot; with --pick only replicate r, as k copies
+                                              (each copy gets its own random luck from that moment on)
 See README.md in this folder for the full explanation.
 Output: results/eq_<ticks>t_<seeds>s.json (time series per world + summary), progress in eq_log.txt
 """
@@ -80,6 +83,8 @@ class EqWorld:
         self.G = f.repeat(3, 1)[:, None, :].expand(N, S, L).clone()      # every slot starts as the founder
         self.founder = f.repeat(3, 1)                                    # (N, L) for genetic distance
         self.lineage = torch.arange(S, device=DEV)[None].expand(N, S).clone()  # founder slot id = lineage label
+        self.nmut = torch.zeros(N, S, device=DEV)      # mutation events on this worm's line of descent since the founder
+        self.msize = torch.zeros(N, S, device=DEV)     # total size of those mutations (sum of mutation vector lengths)
         self.energy = torch.full((N, S), W["e_start"], device=DEV) * self.alive
         # founders get random ages so they don't all die of old age on the same tick
         self.age = W["max_age"] * torch.rand(N, S, generator=self.gen, device=DEV) * self.alive
@@ -173,7 +178,10 @@ class EqWorld:
         # child = parent copy (+ mutation unless frozen); energy split in half (real/frozen); shadow children draw e_start
         g = self.G[w_idx, p_idx]
         mutate = (self.arm[w_idx] != 0).float()[:, None]
-        g = g + mutate * W["mut_sigma"] * torch.randn(g.shape, generator=self.gen, device=DEV)
+        d = mutate * W["mut_sigma"] * torch.randn(g.shape, generator=self.gen, device=DEV)
+        g = g + d
+        self.nmut[w_idx, c_idx] = self.nmut[w_idx, p_idx] + mutate[:, 0]
+        self.msize[w_idx, c_idx] = self.msize[w_idx, p_idx] + d.norm(dim=-1)
         self.G[w_idx, c_idx] = g
         half = self.energy[w_idx, p_idx] / 2
         self.energy[w_idx, p_idx] = half
@@ -197,7 +205,13 @@ class EqWorld:
         div = (((self.G - mean_g[:, None]) ** 2).sum(-1) * a).sum(1) / nn               # genetic diversity (variance)
         lin = torch.zeros(self.N, self.S, device=DEV).scatter_add_(1, self.lineage, a.float())
         t = self.alive_ticks.clamp(min=1)
+        dom = lin.argmax(1)                                                             # biggest surviving family
+        in_dom = (self.lineage == dom[:, None]) & a
+        nd = in_dom.sum(1).clamp(min=1)
         row = dict(pop=n, births=self.births.clone(), deaths=self.deaths.clone(),
+                   mutations=(self.nmut * a).sum(1) / nn, mutation_size=(self.msize * a).sum(1) / nn,
+                   top_family=dom.float(), top_family_share=in_dom.sum(1) / nn,
+                   top_family_mutations=(self.nmut * in_dom).sum(1) / nd,
                    energy=(self.energy * a).sum(1) / nn, food=self.food.sum(1),
                    gdist=(dist * a).sum(1) / nn, diversity=div, lineages=(lin > 0).sum(1).float(),
                    eat_rate=self.eaten / t, speed=self.speed_sum / t, turn=self.turn_sum / t,
@@ -205,6 +219,52 @@ class EqWorld:
         self.births.zero_(); self.deaths.zero_(); self.eaten.zero_(); self.speed_sum.zero_()
         self.turn_sum.zero_(); self.alive_ticks.zero_()
         return {k: v.cpu().tolist() for k, v in row.items()}
+
+
+STATE_KEYS = ["patches", "food", "alive", "G", "founder", "lineage", "energy", "age", "xy", "hd", "h", "prev", "nmut", "msize"]
+
+
+def save_snapshot(w, path, t):
+    """Everything needed to continue the run exactly from tick t (plus the random generator state)."""
+    torch.save(dict(t=t, R=w.R, S=w.S, W=W, state={k: getattr(w, k).cpu() for k in STATE_KEYS},
+                    gen=w.gen.get_state()), path)
+
+
+def resume_snapshot(path, pick=None, copies=1, seed=None):
+    """Rebuild a world from a snapshot. pick=r keeps only replicate r (in all 3 arms) and makes `copies` copies of it;
+    each copy then continues with its own random luck (new seed) - same world, same moment, different futures."""
+    snap = torch.load(path, weights_only=False)
+    R, S = snap["R"], snap["S"]
+    w = EqWorld.__new__(EqWorld)
+    st = {k: v.to(DEV) for k, v in snap["state"].items()}
+    for k in ("nmut", "msize"):                                    # snapshots from before mutation tracking
+        st.setdefault(k, torch.zeros_like(st["energy"]))
+    if pick is not None:
+        idx = torch.tensor([a * R + pick for a in range(3) for _ in range(copies)], device=DEV)
+        st = {k: v[idx].clone() for k, v in st.items()}
+        R = copies
+    w.R, w.S, w.N = R, S, 3 * R
+    w.gen = torch.Generator(device=DEV)
+    if seed is None:
+        w.gen.set_state(snap["gen"])
+    else:
+        w.gen.manual_seed(seed)
+    w.arm = torch.arange(w.N, device=DEV) // R
+    for k, v in st.items():
+        setattr(w, k, v)
+    for k in ("births", "deaths", "eaten", "speed_sum", "turn_sum", "alive_ticks"):
+        setattr(w, k, torch.zeros(w.N, device=DEV))
+    w.p = unpack(w.G)
+    return w, snap["t"]
+
+
+@torch.no_grad()
+def frame(w, world=0, max_worms=640):
+    """Live view / replay picture of one world (see python/remote/simctl.py)."""
+    n = min(max(world, 0), w.N - 1); a = w.alive[n]
+    worms = [[round(p[0], 1), round(p[1], 1), 0] for p in w.xy[n][a][:max_worms].cpu().tolist()]
+    food = [[round(p[0], 1), round(p[1], 1), round(f / W["food_max"], 2)] for p, f in zip(w.patches[n].cpu().tolist(), w.food[n].cpu().tolist())]
+    return dict(size=W["size"], worms=worms, food=food, extra={"arm": ARMS[int(w.arm[n])], "pop": int(a.sum())})
 
 
 def load_founders(path, R):
@@ -220,31 +280,53 @@ def main():
             i = args.index(name); v = args[i + 1]; del args[i:i + 2]; return v
         return default
     founders = opt("--founders", str(HERE.parent / "toybrain" / "results_gpu_300g_30s_fair.json"))
-    S = int(opt("--slots", 640)); quick = "--quick" in args; args = [a for a in args if a != "--quick"]
+    S = int(opt("--slots", 640)); save_at = [int(x) for x in opt("--save-at", "").split(",") if x]
+    resume = opt("--resume", None); pick = opt("--pick", None); copies = int(opt("--copies", 1))
+    tag = opt("--tag", ""); every = int(opt("--every", 500))
+    quick = "--quick" in args; args = [a for a in args if a != "--quick"]
+    if quick:
+        every = 50
     R = int(args[0]) if args else 30
     T = int(args[1]) if len(args) > 1 else 50000
-    every = 500 if not quick else 50
     log = (HERE / "eq_log.txt").open("a")
     def say(m):
         line = f"{time.strftime('%H:%M:%S')} {m}"; print(line, flush=True); log.write(line + "\n"); log.flush()
-    if Path(founders).exists():
-        F = load_founders(founders, R); src = founders
+    snapdir = HERE / "snapshots"; snapdir.mkdir(exist_ok=True)
+    if resume:
+        waited = 0
+        while not Path(resume).exists() and waited < 7200:        # the job making it may still be running
+            if waited % 300 == 0:
+                say(f"waiting for snapshot {resume} ...")
+            time.sleep(10); waited += 10
+        w, t_start = resume_snapshot(resume, None if pick is None else int(pick), copies, seed=None if pick is None else 1000 + int(pick))
+        R = w.R; src = f"snapshot {Path(resume).name} (tick {t_start}" + (f", replicate {pick} x {copies} copies)" if pick is not None else ")")
     else:
-        F = 0.5 * torch.randn(R, glen(BRAIN), generator=torch.Generator().manual_seed(0)); src = "random"
-    say(f"equilibrium world on {DEV}: {R} replicates x 3 arms x {S} slots, {T} ticks, founders: {src}")
-    w = EqWorld(F, R, S, seed=1)
+        if Path(founders).exists():
+            F = load_founders(founders, R); src = founders
+        else:
+            F = 0.5 * torch.randn(R, glen(BRAIN), generator=torch.Generator().manual_seed(0)); src = "random"
+        w = EqWorld(F, R, S, seed=1); t_start = 0
+    say(f"equilibrium world on {DEV}: {R} replicates x 3 arms x {w.S} slots, ticks {t_start} -> {t_start + T}, from: {src}")
     series, t0 = [], time.time()
-    for t in range(1, T + 1):
+    sys.path.insert(0, str(HERE.parent / "remote"))
+    from simctl import SimControl
+    ctl = SimControl(f"eq{tag}", sync=(torch.cuda.synchronize if torch.cuda.is_available() else None))
+    for t in range(t_start + 1, t_start + T + 1):
         w.tick()
+        ctl.after_tick(t, lambda i, m: frame(w, i, m))
+        if t in save_at:
+            fn = snapdir / f"eq{tag}_t{t}.pt"; save_snapshot(w, fn, t); say(f"snapshot saved: {fn.name}")
         if t % every == 0:
             m = w.measure(); m["t"] = t; series.append(m)
-            if t % (every * 10) == 0 or t == T:
+            if t % (every * 20) == 0 or t == t_start + T:
                 pop = np.array(m["pop"]).reshape(3, R).mean(1); gd = np.array(m["gdist"]).reshape(3, R).mean(1)
-                say(f"t {t:6d}  pop frozen/shadow/real {pop[0]:5.1f} {pop[1]:5.1f} {pop[2]:5.1f}   "
+                say(f"t {t:7d}  pop frozen/shadow/real {pop[0]:5.1f} {pop[1]:5.1f} {pop[2]:5.1f}   "
                     f"genetic distance {gd[0]:.2f} {gd[1]:.2f} {gd[2]:.2f}   ({time.time() - t0:.0f} s)")
-    out = HERE / "results" / f"eq_{T}t_{R}s.json"; out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps(dict(world=W, slots=S, replicates=R, ticks=T, every=every, founders=src,
-                                   arms=ARMS, series=series)))
+    if T >= 100000 or resume:
+        save_snapshot(w, snapdir / f"eq{tag}_end_t{t_start + T}.pt", t_start + T)
+    out = HERE / "results" / f"eq{tag}_{t_start + T}t_{R}s.json"; out.parent.mkdir(exist_ok=True)
+    out.write_text(json.dumps(dict(world=W, slots=w.S, replicates=R, ticks=T, start_tick=t_start, every=every,
+                                   founders=src, arms=ARMS, series=series)))
     say(f"saved {out.name}  EQ_DONE")
 
 

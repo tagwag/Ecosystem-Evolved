@@ -1,0 +1,13 @@
+# EXAMPLE (queue item 8, Step 20): an evolvable mutation rate under a radiation background.
+# The mut_rate gene (log10 multiplier) is inherited and mutates; DNA repair costs energy.
+# Question: does evolution turn its own mutation rate up or down, and does repair evolve under radiation?
+# Footnote tags [..] -> FACTOR_GUIDE.md. Compare with results/baseline (all factors off).
+
+[run]
+name = "mutation_evolvable"                # [R1]
+
+[factors.mutation_rate]            # [F34]
+mode = "auto"                     # evolvable = true, repair costs energy
+
+[factors.radiation]                # [F14]
+mode = "auto"                     # natural-ish background: gamma + radon + UV-B

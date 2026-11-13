@@ -1,4 +1,5 @@
 # Registry of experiments the remote watcher may run. ONLY these can be started remotely.
+# share = true: light, may run alongside other light jobs. vram_mb / preflight: used by the SAFETY GATE (README 6c).
 # cmd: list of words; {py} = the project's Python; {name} = an argument below. cwd is relative to python/.
 # Each arg: type (int / name), min/max for ints, default. 'name' args must be letters, digits, _ or -.
 # gpu = true -> waits until no other program is using the GPU before starting.
@@ -8,6 +9,8 @@ about = "Toy brain experiment on the 3080: 5 brain types (smell / no smell / big
 cwd = "toybrain"
 cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all"]
 gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.seeds = { type = "int", min = 1, max = 500, default = 30 }
 args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
 
@@ -16,6 +19,8 @@ about = "Toy brain experiment, original CPU code, parallel across cores"
 cwd = "toybrain"
 cmd = ["{py}", "-u", "run_cpu.py", "{seeds}", "{gens}", "{workers}"]
 gpu = false
+vram_mb = 0               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.seeds   = { type = "int", min = 1, max = 50, default = 3 }
 args.gens    = { type = "int", min = 1, max = 5000, default = 300 }
 args.workers = { type = "int", min = 1, max = 10, default = 8 }
@@ -25,6 +30,7 @@ about = "Config-file factor sweep (python/sweeps/<config>.toml): evolve all arms
 cwd = "."
 cmd = ["{py}", "-u", "-m", "ecosim.sweep", "run", "{config}"]
 gpu = true
+vram_mb = 3000               # safety: GPU memory this job needs (estimate)
 args.config = { type = "name", default = "screen1" }
 
 [gpu_check]
@@ -32,12 +38,16 @@ about = "Quick check that the GPU and PyTorch work (seconds)"
 cwd = "."
 cmd = ["{py}", "-c", "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"]
 gpu = false
+vram_mb = 300               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 
 [toybrain_gpu_fair]
 about = "Toy brain on the 3080, FAIR version: mutation scaled by genome size, starting weights by brain size"
 cwd = "toybrain"
 cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all", "--fair"]
 gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.seeds = { type = "int", min = 1, max = 500, default = 30 }
 args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
 
@@ -46,6 +56,8 @@ about = "Equilibrium world (python/equilibrium): frozen / neutral shadow / real 
 cwd = "equilibrium"
 cmd = ["{py}", "-u", "eqworld.py", "{replicates}", "{ticks}"]
 gpu = true
+vram_mb = 1500               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.replicates = { type = "int", min = 1, max = 200, default = 30 }
 args.ticks      = { type = "int", min = 1000, max = 1000000, default = 50000 }
 
@@ -54,6 +66,8 @@ about = "Factor engine: run an experiment form python/engine/configs/<form>.toml
 cwd = "engine"
 cmd = ["{py}", "-u", "run.py", "configs/{form}.toml"]
 gpu = true
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]   # safety: memory estimate + settings check
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.form = { type = "name", default = "baseline" }
 
 [form_quick]
@@ -61,4 +75,58 @@ about = "Factor engine: quick check of a form (1 replicate, 3000 ticks) - second
 cwd = "engine"
 cmd = ["{py}", "-u", "run.py", "configs/{form}.toml", "--quick"]
 gpu = false
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]   # safety: memory estimate + settings check
+vram_mb = 700               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
 args.form = { type = "name", default = "baseline" }
+
+[toybrain_continue]
+about = "Toy brain FAIR: continue every lineage from its saved champion for more generations (tracks mutations + combined score)"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "30", "{gens}", "all", "--fair", "--resume", "results_gpu_300g_30s_fair.json"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.gens = { type = "int", min = 1, max = 5000, default = 600 }
+
+[eq_replay]
+about = "Equilibrium world: replay the original 30-world run (same seed) up to a tick and save a snapshot there"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "30", "{ticks}", "--save-at", "{ticks}", "--tag", "_replay"]
+gpu = true
+vram_mb = 1500               # safety: GPU memory this job needs (estimate)
+share = true
+args.ticks = { type = "int", min = 100, max = 50000, default = 13000 }
+
+[eq_continue]
+about = "Equilibrium world: continue ONE replicate world from a replay snapshot, as several copies with their own luck"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "0", "{ticks}", "--resume", "snapshots/eq_replay_t{at}.pt", "--pick", "{world}", "--copies", "{copies}", "--tag", "_w{world}", "--every", "5000"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true
+args.at = { type = "int", min = 100, max = 50000, default = 13000 }
+args.world = { type = "int", min = 0, max = 29, default = 19 }
+args.copies = { type = "int", min = 1, max = 30, default = 10 }
+args.ticks = { type = "int", min = 1000, max = 5000000, default = 1600000 }
+
+[form_branch]
+about = "Factor engine: start a new run from a saved tick of a form's run (resume point / Lenski-style replay with new luck)"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml", "--from-tick", "{tick}", "--as", "{as}", "--seed", "{seed}"]
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]
+gpu = true
+share = true
+args.form = { type = "name", default = "baseline" }
+args.tick = { type = "int", min = 1, max = 20000000, default = 20000 }
+args.as = { type = "name", default = "branch" }
+args.seed = { type = "int", min = 0, max = 1000000, default = 1 }
+
+[genealogy_report]
+about = "Family-tree report for one world of a finished engine run (summary, families, common ancestor, takeover, Muller plot, tree)"
+cwd = "engine"
+cmd = ["{py}", "-u", "genealogy.py", "{run}", "report", "--world", "{world}"]
+gpu = false
+vram_mb = 0
+args.run = { type = "name", default = "baseline" }
+args.world = { type = "int", min = 0, max = 10000, default = 60 }

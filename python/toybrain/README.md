@@ -55,3 +55,26 @@ The original behaviour stays the default so old results can be reproduced.
 
 ## Results so far
 See `PROJECT_NOTES.txt` (section 2026-11-11..13) and the `*_stats.txt` files.
+
+## Continuing a run, mutation counts, and "best" (added 2026-11-13)
+- **Continue:** `sim_gpu.py 30 600 all --fair --resume results_gpu_300g_30s_fair.json` (watcher: `toybrain_continue`).
+  Each lineage restarts from its saved champion + 47 mutants of it (only champions were saved, not whole
+  populations) and evolves N more generations. Output: `results_gpu_600g_30s_fair_cont600_from_300g_30s_fair.json`;
+  `previous_normal` holds each lineage's score before continuing.
+- **Mutation tracking:** every individual carries (1) its gen-0 ancestor, (2) the number of mutation events on its
+  line of descent (one per birth; elites copied unchanged add none), (3) the total size of those mutations. Saved per
+  lineage as `mutations`, `mutation_size`. In a continuation they count from the continuation start (the first 300
+  generations weren't tracked).
+- **"Best" = combined score** (owner's choice): `repro_share x fair-test score`, where repro_share = fraction of the
+  final population descended from the winner's gen-0 ancestor (how completely its line took over) and fair-test score
+  = food on 30 fresh unseen arenas. Tie-break: slope of the training curve over the last 100 generations
+  (`slope_last100`, food per 100 generations: is it still rising?). Function `combined_score()` in `sim_gpu.py`.
+
+## Checkpoints, resume and branching (added 2026-11-13)
+- Every 50 generations the **whole population** of every lineage (genomes, ancestors, mutation counters, the training
+  curve, the random generator) is saved to `checkpoints/<run>_<brain type>_g<gen>.pt`.
+- An interrupted run **resumes** from its latest checkpoint automatically (run the same command again).
+- **Branch / replay:** `sim_gpu.py 30 600 all --fair --from-gen 300 --as replayA --seed 9` starts a new run from
+  generation 300 of the same run (same settings), with new luck if `--seed` is given. Output gets `_replayA` added.
+- Runs started before this feature (the first fair run, and the continuation that was running when it was added)
+  have no checkpoints.
