@@ -1,0 +1,102 @@
+{
+ "name": "teacher",
+ "mode": "teacher",
+ "description": "Does chasing learning progress across a pool of worlds keep evolution climbing, and make worms better on worlds they never trained in?",
+ "teacher": {
+  "generations": 300,
+  "block": 10,
+  "test_every": 50,
+  "arms": [
+   "teacher",
+   "random",
+   "fixed"
+  ],
+  "explore": 0.5,
+  "random_pick": 0.1
+ },
+ "base": {
+  "predators": 6,
+  "touch_gain": 3.0,
+  "food_regrow_per_tick": 0.2,
+  "hunger": true,
+  "fitness": "end"
+ },
+ "evolve": {
+  "seeds": 8,
+  "brains": 16,
+  "worlds_per_generation": 2
+ },
+ "test": {
+  "worlds": 8
+ },
+ "world_option": [
+  {
+   "name": "base"
+  },
+  {
+   "name": "scarce",
+   "cfg": {
+    "food_regrow_per_tick": 0.1
+   }
+  },
+  {
+   "name": "moving_food",
+   "cfg": {
+    "season_every": 300
+   }
+  },
+  {
+   "name": "fast_predators",
+   "cfg": {
+    "pred_speed": 3.5,
+    "pred_sense": 200.0
+   }
+  },
+  {
+   "name": "toxin",
+   "features": {
+    "toxin": {
+     "a": 1.5
+    }
+   }
+  },
+  {
+   "name": "temperature",
+   "features": {
+    "temperature": {
+     "a": 1.0,
+     "period": 3000
+    }
+   }
+  }
+ ],
+ "holdout": [
+  {
+   "name": "rich_food",
+   "cfg": {
+    "food_regrow_per_tick": 0.4
+   }
+  },
+  {
+   "name": "many_predators",
+   "cfg": {
+    "predators": 10
+   }
+  },
+  {
+   "name": "few_big_patches",
+   "cfg": {
+    "food_patches": 3
+   }
+  },
+  {
+   "name": "light_zones",
+   "features": {
+    "light": {
+     "a": 1.0
+    }
+   }
+  }
+ ],
+ "factor": []
+}

@@ -1,6 +1,6 @@
 ECOSYSTEM-EVOLVED — CONDENSED PROJECT NOTES
 (Read this first in a new session instead of re-reading old chats. Keep it short; update at the end of each session.)
-Last updated: 2026-11-08
+Last updated: 2026-11-13
 
 === WHO / HOW TO WORK ===
 - Owner: tagwag. Programmer, weak with GitHub, very visual (wants charts/pictures).
@@ -184,6 +184,29 @@ Reserved breeding slots, GPU (ecosim/step9_gpu.py, run_step9.bat). Starts from l
 Rule (set before): slots beat food_only on puzzle food (parent pool, 6 unseen worlds), paired p < 0.05 over 30 pairs.
 Side question: do lucky lineages keep their edge (replay)? GPU port check on CPU: lucky genomes score 3.07/2.61/1.82
 vs CPU 3.35/2.68/2.52 (matches statistically). run_step9.bat waits for run_queue.bat (QUEUE_DONE) before starting.
+
+=== 2026-11-11..13: SWEEP SCREEN1, RESTART DECISION, TOY BRAIN, REMOTE WATCHER ===
+Sweep screen1 (16 arms x 8 seeds x 100 gens; results/sweep_screen1.md): NO factor raised general skill. Harder/richer worlds
+  lowered it: all_senses -0.52 (0/8 seeds up), digestion -0.47, scarce_food -0.26 (0/8), predators -0.22, seasons -0.14;
+  worm scent, obstacles, mutation rate ~0. DESIGN FLAW: with 8 seeds the sign-flip test's smallest p is 2/256, Holm x8 ->
+  0.0625, so the pre-set rule (Holm p < 0.05) could never pass. Use >= 16 seeds (or a different test) next time.
+USER DECISION (2026-11-12): "none of this is working properly" -> start over in some way; keep all old results + seeds.
+  This commit is tagged v1-baseline = the state before the restart. Direction: expand what is measured and controlled;
+  first an equilibrium 'perfect world' (carrying capacity, in-world reproduction, arms: frozen / neutral shadow / real).
+Quiet mode: python/gpu_throttle.txt (0 = full speed .. 0.9) makes batch3_fast rest the GPU between bursts (results unchanged).
+  quiet_gpu.bat / normal_gpu.bat (Run as administrator) set a 150 W / 320 W power cap. User now wants full speed (throttle 0).
+Toy brain (python/toybrain; sim.py original numpy, sim_gpu.py = PyTorch port, matches statistically; analyze.py):
+  5 brain types, 300 gens. GPU: 30 lineages each (results_gpu_300g_30s*). Food in unseen arenas (normal / sparse):
+  random 6.9/2.5 | normal 102/54 | no_smell 58/26 | no_smell+frontal 48/24 | no_smell+frontal+hippo 25/9 | normal+frontal+hippo 69/33.
+  Smell loss -44 (p<1e-27). Bigger brains worse in every comparison, curves nearly flat at 300 gens.
+  CAVEAT: mutation sigma is per gene, so 6x more genes = ~2.5x bigger total mutation per child -> big brains are mutated
+  harder (unfair). Hippo neurons start off and switch on during life. Fair re-test: scale mutation by genome size.
+  GPU is launch-bound (tiny nets): ~8 s per lineage vs ~81 s per CPU core; more seeds ~free; CUDA graphs would speed it up.
+Remote watcher (python/remote; watcher.py + experiments.toml): starts experiments from job files in remote/queue/
+  ({"experiment": "toybrain_gpu", "args": {"seeds": 30, "gens": 300}}), one at a time, whitelist only, waits for a free GPU
+  (only python GPU processes count), stops a job at >= 87 C for 3 min, logs temps (gpu_temps.csv), status in status.json.
+  CANCEL / PAUSE files in queue/. Autostart at login installed. Restarts itself when watcher.py changes.
+  HOW CLAUDE STARTS A RUN: write a .json job file into python/remote/queue/ (device_bash); read status.json + logs/.
 
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,

@@ -1,0 +1,11 @@
+# runtime state (per machine)
+status.json
+status.tmp
+watcher_log.txt
+gpu_temps.csv
+queue/*
+running/*
+done/*
+failed/*
+logs/*
+!*/.gitkeep

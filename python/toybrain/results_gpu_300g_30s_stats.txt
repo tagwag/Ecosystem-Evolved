@@ -1,0 +1,17 @@
+brain                            normal arena       sparse arena  plateau (last 50 gens slope /100 gens)
+random_walk                     6.9 ±   0.5         2.5 ±   0.3    
+normal                        102.1 ±   2.1        54.0 ±   1.9      +3.9 food
+no_smell                       57.9 ±   3.3        26.2 ±   1.7      -0.6 food
+no_smell+frontal               47.8 ±   3.5        23.5 ±   2.3      +3.1 food
+no_smell+frontal+hippo         25.0 ±   1.7         9.4 ±   1.2      +0.3 food
+normal+frontal+hippo           68.6 ±   4.0        33.0 ±   2.8      +3.8 food
+
+Comparisons (Welch t-test, independent seeds; Holm-corrected over the 4 planned tests):
+  [normal] no_smell vs normal:  -44.2 food  p=2.5e-28  Holm p=9.9e-28
+  [normal] no_smell+frontal vs no_smell:  -10.0 food  p=7.1e-05  Holm p=7.1e-05
+  [normal] no_smell+frontal+hippo vs no_smell+frontal:  -22.8 food  p=4.7e-15  Holm p=9.4e-15
+  [normal] normal+frontal+hippo vs normal:  -33.5 food  p=2.5e-19  Holm p=7.4e-19
+  [sparse] no_smell vs normal:  -27.9 food  p=3.2e-30  Holm p=1.3e-29
+  [sparse] no_smell+frontal vs no_smell:   -2.7 food  p=0.056  Holm p=0.056
+  [sparse] no_smell+frontal+hippo vs no_smell+frontal:  -14.1 food  p=1.4e-14  Holm p=2.7e-14
+  [sparse] normal+frontal+hippo vs normal:  -21.0 food  p=1.8e-17  Holm p=5.3e-17

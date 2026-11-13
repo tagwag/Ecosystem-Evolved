@@ -30,6 +30,19 @@ from pathlib import Path
 import numpy as np
 import torch
 
+_THROTTLE_FILE = Path(__file__).resolve().parent.parent / 'gpu_throttle.txt'
+
+
+def gpu_idle_fraction():
+    """Quiet mode. python/gpu_throttle.txt holds the fraction of time the GPU rests (0 = full speed, 0.5 = rest half
+    the time, max 0.9). Read once per generation, so it can be changed while a run is going. Missing file = 0.
+    It only adds sleeps between tick blocks: the numbers computed are identical."""
+    try:
+        return min(0.9, max(0.0, float(_THROTTLE_FILE.read_text().split()[0])))
+    except Exception:
+        return 0.0
+
+
 from .batch3_gpu import gauss_kernel, blur_wrap
 from .config import Config
 from .connectome import Connectome, SENSORS
@@ -579,11 +592,18 @@ class FastSim:
             with torch.cuda.graph(self.graph):
                 self._block()
         self.load(genomes, rngs)
-        for _ in range(n_blocks):
+        idle, t_b = gpu_idle_fraction(), time.perf_counter()
+        for i in range(n_blocks):
             if self.graph is not None:
                 self.graph.replay()
             else:
                 self._block()
+            if idle and i % 5 == 4:                  # quiet mode: rest the GPU between short bursts (results unchanged)
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                busy = time.perf_counter() - t_b
+                time.sleep(busy * idle / (1 - idle))
+                t_b = time.perf_counter()
         T, cfg = self.cfg.ticks_per_generation, self.cfg
         if self.fitness_mode == 'energy':          # average energy held (Step 3; can be gamed by idling, see 3e)
             fit = self.esum / T / cfg.food_value

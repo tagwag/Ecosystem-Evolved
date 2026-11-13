@@ -8,3 +8,6 @@ python/runs/
 python/.venv/
 python/*_log.txt
 python/*.flag
+
+# local GPU quiet-mode setting (per machine)
+python/gpu_throttle.txt

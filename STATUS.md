@@ -9,8 +9,9 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: teacher experiment, finished 2026-11-09 11:16 MT) | | | | |
-| QUEUED (user starts it) | Sweep screen1: 8-factor fractional factorial, 16 arms x 8 seeds x 100 gens | - | run_sweep.bat screen1 (waits for STEP19_DONE) | sweep_screen1_log.txt | ~6-10 h after start (estimate, check timing.txt) |
+| idle | (last: toy brain 300 gens, finished 2026-11-13 10:33 MT) | | | | |
+
+**GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
@@ -29,6 +30,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 - Steps 16-18: new worlds did NOT break the plateau (all arms fell, even the control: small-world training vs
   full-world test mismatch suspected); champions didn't recover; obstacles -> no hiding (near-rock time flat ~8%).
 - Step 19: with matched scoring skill keeps climbing slowly (base 2.54 -> 3.33, still rising); all-senses world no faster.
+- Sweep screen1: no factor raised general skill; harsher worlds lowered it (all_senses -0.52, digestion -0.47); test could not pass by design (8 seeds).
+- Toy brain (300 gens, 30 lineages): no smell -44 food; bigger brains worse (mutation not scaled by genome size = unfair).
 - Teacher (curriculum): lost to a single fixed world (intelligence -0.49, p=0.008); = random rotation. Switching hurt.
 
 ## How to run things

@@ -1,0 +1,26 @@
+10:15:49 start: 18 jobs, 3 seeds x 300 gens, 8 workers
+10:17:11 normal seed 0: normal 106.5 sparse 45.4 (81 s)
+10:17:11 no_smell seed 0: normal 56.1 sparse 23.7 (81 s)
+10:17:11 no_smell seed 1: normal 56.8 sparse 28.1 (81 s)
+10:17:11 no_smell seed 2: normal 59.4 sparse 30.8 (82 s)
+10:17:12 normal seed 1: normal 99.1 sparse 48.9 (82 s)
+10:17:12 normal seed 2: normal 96.8 sparse 54.7 (83 s)
+10:17:30 no_smell+frontal seed 0: normal 43.1 sparse 22.0 (100 s)
+10:17:31 no_smell+frontal seed 1: normal 47.8 sparse 21.3 (101 s)
+10:17:34 random_walk seed 0: normal 5.0 sparse 2.5 (4 s)
+10:17:38 random_walk seed 1: normal 7.1 sparse 3.2 (4 s)
+10:17:42 random_walk seed 2: normal 5.2 sparse 3.2 (4 s)
+10:18:50 no_smell+frontal seed 2: normal 31.2 sparse 15.5 (99 s)
+10:19:49 no_smell+frontal+hippo seed 2: normal 28.9 sparse 11.1 (158 s)
+10:20:04 normal+frontal+hippo seed 2: normal 60.0 sparse 26.8 (154 s)
+10:20:08 normal+frontal+hippo seed 1: normal 72.0 sparse 31.6 (176 s)
+10:20:08 no_smell+frontal+hippo seed 0: normal 23.9 sparse 5.4 (177 s)
+10:20:09 normal+frontal+hippo seed 0: normal 52.4 sparse 16.6 (177 s)
+10:20:11 no_smell+frontal+hippo seed 1: normal 29.0 sparse 10.7 (180 s)
+normal                     normal  100.8  sparse   49.7
+no_smell                   normal   57.4  sparse   27.5
+no_smell+frontal           normal   40.7  sparse   19.6
+no_smell+frontal+hippo     normal   27.3  sparse    9.1
+normal+frontal+hippo       normal   61.4  sparse   25.0
+random_walk                normal    5.8  sparse    3.0
+CPU_DONE in 262 s

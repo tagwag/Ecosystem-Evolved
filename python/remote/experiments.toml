@@ -1,0 +1,34 @@
+# Registry of experiments the remote watcher may run. ONLY these can be started remotely.
+# cmd: list of words; {py} = the project's Python; {name} = an argument below. cwd is relative to python/.
+# Each arg: type (int / name), min/max for ints, default. 'name' args must be letters, digits, _ or -.
+# gpu = true -> waits until no other program is using the GPU before starting.
+
+[toybrain_gpu]
+about = "Toy brain experiment on the 3080: 5 brain types (smell / no smell / bigger brains) x seeds x generations"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all"]
+gpu = true
+args.seeds = { type = "int", min = 1, max = 500, default = 30 }
+args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
+
+[toybrain_cpu]
+about = "Toy brain experiment, original CPU code, parallel across cores"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "run_cpu.py", "{seeds}", "{gens}", "{workers}"]
+gpu = false
+args.seeds   = { type = "int", min = 1, max = 50, default = 3 }
+args.gens    = { type = "int", min = 1, max = 5000, default = 300 }
+args.workers = { type = "int", min = 1, max = 10, default = 8 }
+
+[sweep]
+about = "Config-file factor sweep (python/sweeps/<config>.toml): evolve all arms (skips finished ones)"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.sweep", "run", "{config}"]
+gpu = true
+args.config = { type = "name", default = "screen1" }
+
+[gpu_check]
+about = "Quick check that the GPU and PyTorch work (seconds)"
+cwd = "."
+cmd = ["{py}", "-c", "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"]
+gpu = false
