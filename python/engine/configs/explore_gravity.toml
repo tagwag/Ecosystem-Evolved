@@ -1,0 +1,9 @@
+# EXPLORATION RUN (queued 2026-11-13 to fill spare GPU). Gravity's autopilot is Earth gravity (1.0 = no effect).
+# This run uses Mars-like gravity (0.38 g), below the 0.8-1.2 comfort band -> slower movement and extra energy cost,
+# a rough stand-in for the muscle and movement changes seen in spaceflight studies of C. elegans.
+[run]
+name = "explore_gravity"            # [R1]
+
+[factors.gravity]
+mode = "custom"
+field = { space = "uniform", level = 0.38 }

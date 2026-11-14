@@ -1,0 +1,8 @@
+# EXPLORATION RUN (queued 2026-11-13 to fill spare GPU): one factor on autopilot, everything else off.
+# Question: does radiation change evolution versus the equilibrium baseline (results/baseline.json)?
+# Compare with: python analyze.py results/explore_radiation.json  and the baseline run of the same batch.
+[run]
+name = "explore_radiation"                 # [R1]
+
+[factors.radiation]
+mode = "auto"

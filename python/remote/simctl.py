@@ -26,7 +26,7 @@ DEFAULTS = {"speed": {"quiet": 0.0, "tick_delay_ms": 0},
 # no setting can be made dangerous for the computer (e.g. a hard temperature stop above 92 C).
 SETTING_RANGES = {
     ("display", "theme"): ["system", "light", "dark"], ("display", "refresh_seconds"): (1, 60),
-    ("jobs", "max_parallel"): (1, 4), ("jobs", "util_max"): (10, 90), ("jobs", "max_wait_minutes"): (1, 1440),
+    ("jobs", "max_parallel"): (1, 8), ("jobs", "util_max"): (10, 90), ("jobs", "max_wait_minutes"): (1, 1440),
     ("safety", "start_temp_max"): (50, 83), ("safety", "overheat_temp"): (60, 88), ("safety", "overheat_seconds"): (10, 600),
     ("safety", "hard_temp_stop"): (65, 92), ("safety", "vram_margin_mb"): (500, 6000),
     ("safety", "min_disk_gb_start"): (2, 500), ("safety", "min_disk_gb_run"): (0.5, 100),

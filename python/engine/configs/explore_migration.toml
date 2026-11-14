@@ -1,0 +1,8 @@
+# EXPLORATION RUN (queued 2026-11-13 to fill spare GPU): one factor on autopilot, everything else off.
+# Question: does migration change evolution versus the equilibrium baseline (results/baseline.json)?
+# Compare with: python analyze.py results/explore_migration.json  and the baseline run of the same batch.
+[run]
+name = "explore_migration"                 # [R1]
+
+[factors.migration]
+mode = "auto"

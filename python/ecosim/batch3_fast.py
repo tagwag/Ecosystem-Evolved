@@ -75,6 +75,65 @@ def make_sense_fields(cfg, rng, gw, gh):
     return np.stack([T, L, X_]).astype(np.float32)
 
 
+def make_phase_schedule(rng, n_blocks, dmin, dmax):
+    """Step 22: 0/1 per block, alternating phases of random length dmin..dmax blocks, random first phase."""
+    out, on, i = np.zeros(n_blocks, np.float32), bool(rng.integers(2)), 0
+    while i < n_blocks:
+        d = int(rng.integers(dmin, dmax + 1))
+        out[i:i + d] = 1.0 if on else 0.0
+        on, i = not on, i + d
+    return out
+
+
+def simplex2d(x, y, seed=0):
+    """2-D simplex noise (Perlin / Gustavson), vectorised with NumPy. x, y: arrays of the same shape -> values in
+    about -1..1. Same family of noise as the OpenSimplexNoise class the original Java game used for its cave walls
+    (not number-for-number the same map: different permutation table)."""
+    perm = np.random.default_rng(seed).permutation(256); perm = np.concatenate([perm, perm])
+    g = np.array([[1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]], float)
+    F2, G2 = 0.5 * (np.sqrt(3.0) - 1.0), (3.0 - np.sqrt(3.0)) / 6.0
+    s = (x + y) * F2
+    i, j = np.floor(x + s).astype(int), np.floor(y + s).astype(int)
+    t = (i + j) * G2
+    x0, y0 = x - (i - t), y - (j - t)
+    i1 = (x0 > y0).astype(int); j1 = 1 - i1
+    x1, y1 = x0 - i1 + G2, y0 - j1 + G2
+    x2, y2 = x0 - 1.0 + 2.0 * G2, y0 - 1.0 + 2.0 * G2
+    ii, jj = i & 255, j & 255
+
+    def corner(xc, yc, di, dj):
+        gi = perm[ii + di + perm[jj + dj]] % 8
+        tt = np.maximum(0.5 - xc * xc - yc * yc, 0.0)
+        return tt ** 4 * (g[gi, 0] * xc + g[gi, 1] * yc)
+    return 70.0 * (corner(x0, y0, 0, 0) + corner(x1, y1, i1, j1) + corner(x2, y2, 1, 1))
+
+
+def make_gravity_pattern(cfg, gw, gh):
+    """Step 21: the fixed gravity pattern on the smell grid, values -1..+1 with mean 0 (+ = heavier than 1 g).
+    Made like the cave walls of the original Java game (Obstacle.java: wall where simplex noise, sampled at a
+    feature size, is high), with three changes for this world:
+      1. the world wraps around, so the noise is cross-faded with shifted copies of itself to tile without a seam;
+      2. FEATHERED EDGES: instead of the hard wall / no-wall cut, a smooth ramp (smoothstep) of half-width
+         grav_feather around the wall level grav_wall, so heavy regions fade into light ones like blended paint;
+      3. the result is shifted to mean 0 and scaled so the largest value is 1 in size: walls end up near +1
+         (heavy), open ground slightly negative (light).
+    Layout fixed by cfg.grav_seed: every world and every run gets the SAME pattern; only its strength differs."""
+    c, W, H, fs = cfg.smell_cell, cfg.width, cfg.height, cfg.grav_feature
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * c, (np.arange(gh) + 0.5) * c, indexing='ij')
+    n = lambda x, y: simplex2d(x / fs, y / fs, cfg.grav_seed)
+    wx, wy = X / W, Y / H                                   # cross-fade weights for seamless wrap-around
+    N = (n(X, Y) * (1 - wx) * (1 - wy) + n(X - W, Y) * wx * (1 - wy)
+         + n(X - W, Y - H) * wx * wy + n(X, Y - H) * (1 - wx) * wy)
+    N = N / max(np.abs(N).max(), 1e-9)                      # -1..1
+    if cfg.grav_feather > 0:
+        u = np.clip((N - (cfg.grav_wall - cfg.grav_feather)) / (2 * cfg.grav_feather), 0.0, 1.0)
+        S = u * u * (3 - 2 * u)                             # smoothstep: 0 = open ground, 1 = inside a wall
+    else:
+        S = (N >= cfg.grav_wall).astype(float)              # the original hard cave-wall edge
+    G = S - S.mean()
+    return (G / max(np.abs(G).max(), 1e-9)).astype(np.float32)
+
+
 def make_obstacles(cfg, rng):
     """Step 18: random pillars, walls and caves rasterised on an obs_cell grid. Returns bool (gw, gh), True = solid."""
     c = cfg.obs_cell
@@ -161,6 +220,22 @@ class FastSim:
         ng = self.gw * self.gh if self.sense_on else 1
         self.sfield, self.dmap, self.onfood = z(K, 3, ng), z(K, 2, ng), z(K, P)
         self.sense_cost = z(K, 4)              # energy lost to temperature, light, toxic, CO2 (per worm, summed)
+        # Step 21 gravity pattern (see config.py): fixed pattern, per-world strength grav_s (K,1), default 0 = no
+        # gravity differences. Set strengths before the first run: sim.grav_s.copy_(...)  (shape (K, 1)).
+        self.grav_on = getattr(cfg, 'gravity', False)
+        gp = make_gravity_pattern(cfg, self.gw, self.gh).reshape(1, -1) if self.grav_on else np.zeros((1, 1), np.float32)
+        self.gpat = torch.as_tensor(gp, **f).repeat(K, 1)                 # (K, cells)
+        self.grav_s = z(K, 1)
+        self.gexp = z(K, 3)                    # sums over living worm-ticks: dg, pattern value, count
+        gm = torch.zeros(conn.N, **f)
+        if self.grav_on:
+            gm[torch.as_tensor(conn.ids(['PVDL', 'PVDR']), device=dev)] = cfg.grav_gain
+        self.gmap = gm
+        # Step 22 red light / green light (see config.py): per-world phase schedule and the signal the peptide carries
+        self.red_on = getattr(cfg, 'redlight', False)
+        nb = cfg.ticks_per_generation // BLOCK
+        self.red_sched, self.sig_sched = z(K, nb), z(K, nb)
+        self.rexp = z(K, 4)                    # sums over living worm-ticks: speed on red, red count, speed on green, green count
         self.form = None                       # test-bench formula world (ecosim/bench), set by set_formula()
         self.wcost = z(K, 1)                   # Step 20: extra energy per tick per world (copy-fidelity cost); 0 = as before
         self.los_fr = torch.tensor([0.15, 0.3, 0.45, 0.6, 0.75, 0.9], **f)   # sight-line sample points (made here:
@@ -236,6 +311,13 @@ class FastSim:
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_(); self.spd.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
+        self.gexp.zero_(); self.rexp.zero_()
+        if self.red_on:                        # new random phases every generation, per world (drawn last: the
+            nb = cfg.ticks_per_generation // BLOCK   # world layouts above use the same random numbers as without it)
+            rr = [np.random.default_rng(r.integers(2**62)) for r in rngs]
+            red = np.stack([make_phase_schedule(x, nb, cfg.red_min, cfg.red_max) for x in rr])
+            sig = red if cfg.red_signal == 'true' else np.stack([make_phase_schedule(x, nb, cfg.red_min, cfg.red_max) for x in rr])
+            self.red_sched.copy_(torch.as_tensor(red, **f)); self.sig_sched.copy_(torch.as_tensor(sig, **f))
         if self.form is not None:
             self._load_formula(rngs)
         if self.sense_on:
@@ -366,6 +448,11 @@ class FastSim:
             self.pmap.copy_(self._pher_map(pos, alive))
         SENSE, onfood = self.sense_on, self.onfood
         FORM = self.form is not None
+        GRAV = self.grav_on
+        RED = self.red_on
+        if RED:                                  # this block's phase (K,1) and the peptide command, graph-safe lookup
+            red = self.red_sched.index_select(1, self.bi.view(1))
+            Hcmd = self.sig_sched.index_select(1, self.bi.view(1)).expand(K, P)
         if SENSE:
             self.dmap.copy_(self._sense_maps(self.pos, self.alive, self.ppos))
         nrow = self.n_sched.index_select(0, self.bi.view(1)).squeeze(0)    # graph-safe (no CPU sync)
@@ -400,13 +487,23 @@ class FastSim:
             if FORM:                                 # test bench: formula features -> chosen sensory neurons
                 fv = self._formula_at(pos)                                                         # (K,P,F)
                 inject = torch.einsum('kpf,kfn->kpn', fv, self.form['SM']).reshape(K * P, -1)
-            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), H.view(-1), alarm, touch, pher,
+            if GRAV:                                 # Step 21: local gravity offset at each worm, sensed by PVD
+                gix = (torch.clamp((pos[..., 0] / cfg.smell_cell).long(), 0, self.gw - 1) * self.gh
+                       + torch.clamp((pos[..., 1] / cfg.smell_cell).long(), 0, self.gh - 1))         # (K,P)
+                gpv = self.gpat.gather(1, gix)                                                   # pattern, -1..+1
+                dg = self.grav_s * gpv                                                           # gravity - 1 g
+                ginj = dg.reshape(K * P, 1) * self.gmap[None, :]
+                inject = ginj if inject is None else inject + ginj
+            Hin = Hcmd if RED else H                 # Step 22: the peptide carries the outside command, not hunger
+            bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), Hin.reshape(-1), alarm, touch, pher,
                                                                bump.view(-1) if OBS else None, extra,
                                                                inject=inject, tick=self.ti)
             p_tumble, speed_frac, turn = p_tumble.view(K, P), speed_frac.view(K, P), turn.view(K, P)
             tumble = self._rand(K, P) < p_tumble
             heading = torch.where(tumble, self._rand(K, P) * TAU, heading + torch.clamp(turn, -0.5, 0.5))
             speed = speed_frac * torch.clamp(cfg.speed_slope * size + cfg.speed_max, cfg.speed_min, cfg.speed_max)
+            if GRAV:                                 # heavier ground is slower, lighter ground faster
+                speed = speed * torch.clamp(1 - cfg.grav_slow * dg, 0.25, 1.75)
             step = torch.stack([torch.cos(heading), torch.sin(heading)], -1) * speed[..., None]
             npos = torch.remainder(pos + step, self.wh)
             if OBS:                                  # rock blocks the move; the worm feels the bump next tick
@@ -416,6 +513,15 @@ class FastSim:
             else:
                 pos = torch.where(alive[..., None], npos, pos)
             energy = energy - torch.where(alive, cfg.base_cost + self.wcost + cfg.move_cost * speed, zero)
+            if RED:                                  # moving on red costs energy; standing still is free
+                af = alive.float()
+                energy = energy - cfg.red_cost * red * speed_frac * af
+                self.rexp += torch.stack([(speed_frac * af * red).sum(1), (af * red).sum(1),
+                                          (speed_frac * af * (1 - red)).sum(1), (af * (1 - red)).sum(1)], 1)
+            if GRAV:                                 # heavier ground costs more energy, lighter ground less
+                af = alive.float()
+                energy = energy - cfg.grav_cost * dg * af
+                self.gexp += torch.stack([(dg * af).sum(1), (gpv * af).sum(1), af.sum(1)], 1)
             if FORM:                                 # test bench feature costs (signed features: |value|)
                 fa = fv.abs() * alive[..., None].float()
                 fpaid = fa * self.form['cost'][:, None, :]
@@ -614,6 +720,8 @@ class FastSim:
         fit, eaten, esum, alive, sat, bites, nn, wall, odiag = (x.cpu().numpy() for x in (
             fit, self.eaten, self.esum, self.alive, self.sat, self.bites, self.nn, self.wall, self.odiag))
         scost = self.sense_cost.cpu().numpy()
+        gexp = self.gexp.cpu().numpy()
+        rexp = self.rexp.cpu().numpy()
         spd = self.spd.cpu().numpy()
         fexp = self.form['exp'].cpu().numpy() if self.form is not None else None
         fpaid = self.form['paid'].cpu().numpy() if self.form is not None else None
@@ -628,6 +736,14 @@ class FastSim:
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),
                       odiag=odiag[k].tolist() if self.obs_on else None,
                       sense_cost=(scost[k] / self.P).tolist() if self.sense_on else None,
+                      # Step 21: where the worms spend their time. grav_pattern = mean pattern value under living
+                      # worms (-1 lightest .. +1 heaviest; negative = they stay on light ground); grav_offset = the
+                      # same in g units (x the world's strength)
+                      # Step 22: mean speed command (0..1) during red and during green phases
+                      speed_red=float(rexp[k, 0] / max(rexp[k, 1], 1.0)) if self.red_on else float('nan'),
+                      speed_green=float(rexp[k, 2] / max(rexp[k, 3], 1.0)) if self.red_on else float('nan'),
+                      grav_offset=float(gexp[k, 0] / max(gexp[k, 2], 1.0)) if self.grav_on else float('nan'),
+                      grav_pattern=float(gexp[k, 1] / max(gexp[k, 2], 1.0)) if self.grav_on else float('nan'),
                       feature_exposure=(fexp[k] / (self.P * T)).tolist() if fexp is not None else None,
                       feature_cost=(fpaid[k] / self.P).tolist() if fexp is not None else None)
                  for k in range(self.K)]
@@ -639,7 +755,8 @@ class FastSim:
 
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
-           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None, on_gen=None):
+           eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None, on_gen=None,
+           deadline=None):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -653,7 +770,9 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     brains: brains per seed in clonal mode (default worm_population). eval_worlds: clonal mode scores every brain
           on this many different worlds per generation and averages (Step 19).
     init: {seed: genome} = start each seed's population from that brain (it + mutants of it) instead of random
-          brains (clonal mode only; Step 14a)."""
+          brains (clonal mode only; Step 14a).
+    deadline: (clonal mode only) a time.time() value, or a function returning True when it is time to stop. Checked
+          before every generation; on stop the best brains + history so far are saved as usual (Step 20)."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -663,7 +782,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     P = cfg.worm_population
     if clonal:
         return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init,
-                              brains, eval_worlds, setup, freeze, on_gen)
+                              brains, eval_worlds, setup, freeze, on_gen, deadline)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -721,7 +840,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
 
 
 def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1,
-                   setup=None, freeze=None, on_gen=None):
+                   setup=None, freeze=None, on_gen=None, deadline=None):
     """setup(sim, cfg): test-bench hook called once after the simulator is built (formula world, brain dials).
     freeze: bool gene mask; those genes never mutate (test bench).
     on_gen(g, k, fit (P,), per-brain stats list (P), elite indices, population (P, genes)): called every generation
@@ -765,6 +884,11 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
           f'food per world {cfg.food_patches}x{cfg.food_per_patch}', flush=True)
     t_all = time.perf_counter()
     for g in range(generations):
+        # Step 20: stop cleanly (keeping everything so far) at a clock time (deadline = time.time() value) or when
+        # deadline is a function that returns True (e.g. 'the job that started me was cancelled').
+        if deadline is not None and (deadline() if callable(deadline) else time.time() >= deadline):
+            print(f'{cond}: STOP (deadline or cancel) before generation {g}; saving what we have', flush=True)
+            break
         t0 = time.perf_counter()
         wseed = [[int(r.integers(2**63)) for _ in range(W)] for r in rngs]   # W world layouts per seed per generation
         world_rngs = [np.random.default_rng(wseed[k][v]) for k in range(K) for _ in range(P) for v in range(W)]

@@ -244,7 +244,7 @@ def main():
         (Q / "PAUSE").unlink(missing_ok=True)
         say("unpaused after code reload")
     active, my_mtime, last_g, g = [], Path(__file__).stat().st_mtime, 0, None
-    outside, need_cache, first_seen = [], {}, {}
+    outside, need_cache, first_seen, known_outside = [], {}, {}, set()
     apply_settings()
     try:
         while True:
@@ -258,9 +258,15 @@ def main():
             for j in [j for j in active if j.done()]:
                 j.close(); active.remove(j)
             if time.time() - last_g >= (30 if active else 10):
-                last_g = time.time(); g, outside = gpu_info()
-                mine = {j.proc.pid for j in active}
-                outside = [p for p in outside if p not in mine]
+                last_g = time.time(); g, gpu_pids = gpu_info()
+                # Which GPU python processes are OURS? On Windows the venv python.exe is a launcher that starts the
+                # real python as a CHILD process with another pid, so job pids can't be matched directly (bug found
+                # 2026-11-13: the watcher saw its own job as an outside program and stalled the queue). Rule: python
+                # GPU processes already present while none of our jobs ran are outside; anything that appears while
+                # our jobs run is ours.
+                if not active:
+                    known_outside = set(gpu_pids)
+                outside = [p for p in gpu_pids if p in known_outside]
                 if active:                                       # SAFETY: hard stops while running
                     hard = []
                     if g and g["temp_c"] >= SAFE["hard_temp_stop"]:
@@ -320,6 +326,15 @@ def main():
                 else:
                     can = (share and all(j.share for j in active) and len(active) < MAX_PARALLEL and g is not None
                            and g["util_pct"] < UTIL_MAX and g["temp_c"] < TEMP_MAX and not outside and not block)
+                    if not can and not block:                  # say WHY it isn't starting beside the others
+                        why = []
+                        if not share: why.append("this job needs the whole GPU (waits for the running jobs)")
+                        elif not all(j.share for j in active): why.append("a whole-GPU job is running")
+                        elif len(active) >= MAX_PARALLEL: why.append(f"{MAX_PARALLEL} jobs already running")
+                        if g is not None and g["util_pct"] >= UTIL_MAX: why.append(f"GPU {g['util_pct']}% busy (limit {UTIL_MAX}%)")
+                        if g is not None and g["temp_c"] >= TEMP_MAX: why.append(f"GPU {g['temp_c']} C (limit {TEMP_MAX} C)")
+                        if outside: why.append(f"other python programs on the GPU {outside}")
+                        waiting = "queued: " + "; ".join(why or ["checking"])
                 if block:
                     waiting = "waiting (safety): " + "; ".join(block)
                     if time.time() - first_seen[key] > SAFE["max_wait_s"]:

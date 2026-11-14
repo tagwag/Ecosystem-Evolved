@@ -220,6 +220,15 @@ competitors red triangles, traps purple), GPU chart (temperature and % busy, wit
 running jobs (including light jobs running side by side and any safety wait), replay player (pick a recorded run;
 play / pause, 1-30x speed, scrub slider), and the settings form with help text and ranges.
 
+## 6d. Filling the GPU (changed 2026-11-13 15:10)
+- `max_parallel = 4`, `util_max = 70` in watcher_settings.toml: up to 4 light jobs at once, and a new one starts only
+  while the GPU is below 70 % busy. That is how "fill the GPU to about 70 %" is done: the watcher never pushes it there
+  by force, it just stops adding jobs once it is there. Heavy (exclusive) jobs still run alone.
+- The safe range for max_parallel was raised from 1-4 to 1-8 in simctl.SETTING_RANGES. The watcher reads that range
+  when it starts, so values above 4 work only after its next restart (it restarts by itself when idle).
+- Job order = oldest job file first. To put a job ahead of others, give its file an older modification time.
+- Parked jobs: remote/held/ is not watched. Move a file from held/ to queue/ to run it.
+
 ## 7. How Claude uses it
 
 Claude reaches the workstation's files through the Claude desktop app link (the "device" tools). Claude cannot
@@ -233,6 +242,12 @@ From a phone: open the same chat and ask Claude to start something; Claude write
 the workstation is on, logged in, and the Claude desktop app is running.
 
 ---
+
+**Deploy rule (learned 2026-11-13 15:20).** When Claude copies files from its cloud workspace to this PC, a reused
+upload path can deliver an OLD cached copy. That happened once: the engine was replaced by an 11:01 version, three
+jobs failed and seven were refused by the safety gate (no harm done, nothing ran on the wrong code). Since then Claude
+(1) stages every deploy under a new, unique folder name and (2) checks the md5 checksum of every file on the PC
+against the cloud copy before queueing anything that uses it.
 
 ## 8. Starting and auto-start
 

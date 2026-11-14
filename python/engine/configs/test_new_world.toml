@@ -1,0 +1,11 @@
+[run]
+name = "test_new_world"
+[world]
+sense_noise = 0.05
+motor_noise = 0.2
+mutation_mode = "sparse"
+mutation_genes = 5
+recombination_rate = 0.5
+recombination_radius = 15.0
+immigration_rate = 5.0
+immigrant_source = "random"

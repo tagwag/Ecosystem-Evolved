@@ -51,6 +51,12 @@ class Opts:
     ash_alarm: float = 0.0        # starvation alarm into ASH (nociceptor) neurons; 0 = off. GPU code only (batch3_fast)
     ash_start: float = 0.2        # alarm starts below this fraction of gut_cap and rises linearly to 1 at zero energy
     rec_mutate: bool = True       # Step 14a: False = hunger-receptor genes never mutate (frozen at their start values)
+    # Step 20 (2026-11-13), GPU code only (gpu_brains.Worm2Brain). Both False = the old model, identical results.
+    reversal: bool = False        # synapses with REVERSAL POTENTIALS: current = |w| x activity x (E_rev - v_post)
+    e_exc: float = 1.0            # reversal potential of excitatory synapses (model units; resting v = 0)
+    e_inh: float = -1.0           # reversal potential of inhibitory synapses (GABA-like, below rest)
+    muscle_out: bool = False      # movement read from the 95 body-wall MUSCLES (+ AVA/AVB for reversals) instead of
+                                  # the evolved decoder over 28 interneurons
 
 
 def readout_names(conn: Connectome, opts: Opts):

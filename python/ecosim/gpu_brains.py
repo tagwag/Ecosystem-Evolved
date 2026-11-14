@@ -12,7 +12,7 @@ step() takes and returns the brain's state as a dict of tensors, so the engine c
 import numpy as np
 import torch
 
-from .connectome import READOUT, SENSORS
+from .connectome import BWD, FWD, HEAD_D, HEAD_V, READOUT, SENSORS, _is_muscle
 from .worm2 import Layout, N_OUT, WormBrains2, readout_names
 
 
@@ -117,6 +117,18 @@ class Worm2Brain(_Base):
         self.D, self.Dl, self.bias = z(B, L.R, N_OUT), z(B, L.R, N_OUT), z(B, N_OUT)
         self.rec = z(B, N) if opts.hunger else None
         self.v, self.rbar = z(B, N), z(B, L.R)
+        # ---- Step 20 options (see worm2.Opts). Off = the lines below change nothing.
+        self.reversal = getattr(opts, 'reversal', False)
+        self.e_exc, self.e_inh = float(getattr(opts, 'e_exc', 1.0)), float(getattr(opts, 'e_inh', -1.0))
+        if self.reversal:
+            self.wabs, self.is_exc = z(B, E), z(B, E)          # |weight| and 1 = excitatory, per brain (sign evolves)
+        self.muscle_out = getattr(opts, 'muscle_out', False)
+        if self.muscle_out:
+            ids = lambda names: torch.as_tensor(conn.ids(names), device=dev)
+            self.m_all = ids([n for n in conn.names if _is_muscle(n)])     # all 95 body-wall muscles
+            self.m_hd, self.m_hv = ids(HEAD_D), ids(HEAD_V)                # dorsal / ventral head muscles (steering)
+            self.c_bwd, self.c_fwd = ids(BWD), ids(FWD)                    # AVA (backward) / AVB (forward) commands
+            self.mk, self.mb = z(B, 3), z(B, 3)                            # 3 output gains + 3 biases (genome)
 
     def load(self, genomes):
         L, opts = self.L, self.opts
@@ -128,12 +140,24 @@ class Worm2Brain(_Base):
         self.bias.copy_(g[:, L.bias])
         if self.rec is not None:
             self.rec.copy_(g[:, L.rec] * opts.receptor_scale)
+        if self.reversal:
+            self.wabs.copy_(self.vals.abs()); self.is_exc.copy_((self.vals > 0).float())
+        if self.muscle_out:            # reuses the first 3 decoder genes (random at start) as gains, the 3 biases as biases
+            self.mk.copy_(g[:, L.dev][:, :3] * 10.0); self.mb.copy_(g[:, L.bias])
         self.v.zero_(); self.rbar.zero_()
 
     def step(self, s, smell, d, H, alarm=None, touch=None, pher=None, nose=None, extra=None, inject=None, tick=None):
         v, rbar = s['v'], s['rbar']
         r = torch.tanh(torch.clamp(v, min=0))
-        I = (r[:, self.pre] * self.vals) @ self.M                       # chemical synapses (sparse as a matmul)
+        if self.reversal:
+            # current through each synapse = |w| x presynaptic activity x (reversal potential - postsynaptic v):
+            # excitation weakens as the target depolarises toward e_exc; inhibition pulls it toward e_inh.
+            a = r[:, self.pre] * self.wabs                               # (B, E) conductance-like drive
+            g_exc = (a * self.is_exc) @ self.M                           # summed excitatory drive per neuron
+            g_all = a @ self.M
+            I = self.e_exc * g_exc + self.e_inh * (g_all - g_exc) - v * g_all
+        else:
+            I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
         I = I + v @ self.G - self.G_deg * v                              # gap junctions
         I = I - self.inhibition * r.mean(1, keepdim=True)
         I[:, self.s_on] += (self.g3[:, 0] * torch.clamp(d, min=0))[:, None]
@@ -153,7 +177,15 @@ class Worm2Brain(_Base):
         x = r[:, self.rd]
         dev = x - rbar
         rbar = rbar + self.adapt * dev
-        o = torch.einsum('pr,pro->po', dev, self.D) + torch.einsum('pr,pro->po', x, self.Dl) + self.bias
+        if self.muscle_out:
+            # movement from the body itself: overall body-wall muscle activation -> speed; AVA minus AVB command
+            # activity -> reversal; dorsal minus ventral head muscles -> steering (worms crawl on their side,
+            # so dorsal/ventral head bending = turning left/right on the plate).
+            m = torch.stack([r[:, self.m_all].mean(1), r[:, self.c_bwd].mean(1) - r[:, self.c_fwd].mean(1),
+                             r[:, self.m_hd].mean(1) - r[:, self.m_hv].mean(1)], 1)
+            o = self.mk * m + self.mb
+        else:
+            o = torch.einsum('pr,pro->po', dev, self.D) + torch.einsum('pr,pro->po', x, self.Dl) + self.bias
         return {'v': v, 'rbar': rbar}, self._outputs(o)
 
 

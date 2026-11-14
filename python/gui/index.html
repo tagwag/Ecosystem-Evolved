@@ -12,6 +12,7 @@
 :root[data-theme="dark"]{--bg:#151614;--panel:#1d1f1c;--ink:#ecebe6;--muted:#9a9a93;--line:#30322e;--accent:#7cc39b;
 --accent2:#22322a;--warn:#f0b35c;--warnbg:#33281a;--bad:#f08a8a;--badbg:#3a1f1f;--chip:#2a2c28}
 *{box-sizing:border-box}
+[hidden]{display:none!important}   /* pages: the hidden attribute must win over display:grid */
 .pages{display:flex;gap:4px;background:var(--chip);padding:3px;border-radius:9px}
 .pages button{border:0;background:transparent;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--ink);font:inherit}
 .pages button.on{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.15);font-weight:600}
@@ -58,12 +59,30 @@ button.b.primary{background:var(--accent);border-color:var(--accent);color:#fff;
 details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .warnbox{background:var(--warnbg);color:var(--warn);padding:8px 10px;border-radius:6px;font-size:13px;margin-bottom:10px}
 .cat{margin-top:14px;font-weight:600;color:var(--muted);text-transform:capitalize}
+/* ---- Analysis page */
+.angrid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;padding:16px 18px;max-width:1500px;margin:auto}
+.angrid>div{min-width:0}
+@media (max-width:900px){.angrid{grid-template-columns:1fr;padding:12px 10px}.angrid .card[style*=sticky]{position:static!important}}
+.antab{border-collapse:collapse;width:100%;font-size:12.5px}.antab th,.antab td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+.antab th{color:var(--muted);font-weight:600;white-space:nowrap}
+/* ---- Builder (step-by-step) */
+.bwrap{max-width:980px;margin:auto;padding:16px 18px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.steps span{padding:5px 11px;border-radius:14px;background:var(--chip);color:var(--muted);font-size:13px;cursor:pointer}
+.steps span.on{background:var(--accent);color:#fff;font-weight:600}.steps span.done{color:var(--accent)}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.choice{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--panel)}
+.choice.on{border-color:var(--accent);background:var(--accent2)}.choice b{display:block;margin-bottom:3px}
+.ctl{display:grid;grid-template-columns:200px minmax(0,1fr) 110px;gap:8px;align-items:center;margin:6px 0}
+@media (max-width:700px){.ctl{grid-template-columns:1fr}}
+.ctl input[type=range]{padding:0}
+.srcrow{display:flex;gap:6px;align-items:center;margin:4px 0}.srcrow select,.srcrow input{width:auto}
 </style>
 </head>
 <body>
 <header>
   <h1>Worm Experiment Lab</h1>
-  <div class="pages" id="pages"><button data-p="exp" class="on">Experiments</button><button data-p="watch">Watcher</button></div>
+  <div class="pages" id="pages"><button data-p="build">Builder</button><button data-p="exp" class="on">Experiments</button><button data-p="watch">Watcher</button><button data-p="an">Analysis</button></div>
   <div class="tabs" id="tabs">
     <button data-m="easy">Easy</button><button data-m="advanced">Advanced</button><button data-m="researcher">Researcher</button>
   </div>
@@ -91,6 +110,17 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
     <div class="card res"><h2>Latest results</h2><div id="results"></div></div>
   </aside>
 </main>
+<div class="bwrap" id="buildpage" hidden>
+  <div class="steps" id="bsteps"></div>
+  <div class="card"><h2 id="btitle"></h2><div id="bbody"></div>
+    <div class="btns" style="margin-top:14px"><button class="b" id="bback">Back</button><button class="b primary" id="bnext">Next</button></div>
+    <div class="msg" id="bmsg"></div></div>
+</div>
+<div class="angrid" id="anpage" hidden>
+  <div><div class="card" style="position:sticky;top:76px"><h2>Analyse a result</h2><div id="an_controls"></div></div></div>
+  <div id="an_out"><div class="card desc">Choose a results file on the left. Every chart and test updates as you change the choices.</div></div>
+  <div class="card" id="an_key" style="grid-column:1/-1"><h2>Key: every experiment on this page</h2><div id="an_keybody" class="desc">loading...</div></div>
+</div>
 <div class="wgrid" id="watchpage" hidden>
   <section>
     <div class="card"><h2>Live view</h2>
@@ -226,7 +256,7 @@ function payload() {
   for (const [n, s] of Object.entries(form.factors)) {
     if (s.mode === "off") continue;
     if (mode !== "researcher" && S.factors.find(f => f.name === n)?.level !== "easy") continue;
-    factors[n] = s.mode === "custom" ? { mode: "custom", ...(s.custom || {}) } : { mode: s.mode };
+    factors[n] = s.mode === "custom" ? customSection(s.custom) : { mode: s.mode };
   }
   const run = {}; for (const r of S.run) { const v = form.run[r.key]; if (v !== undefined && JSON.stringify(v) !== JSON.stringify(r.default)) run[r.key] = v; }
   run.name = form.run.name ?? "my_experiment";
@@ -234,6 +264,9 @@ function payload() {
   return { run, world, factors };
 }
 
+// A factor's own "mode" (e.g. predators: chaser / pristionchus) is written factor_mode in a form, because "mode"
+// there always means off / auto / custom.
+function customSection(custom) { const c = { ...(custom || {}) }; if ("mode" in c) { c.factor_mode = c.mode; delete c.mode; } return { mode: "custom", ...c }; }
 async function post(url, body) { const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.json(); }
 function show(ok, text) { const m = $("#msg"); m.className = "msg " + (ok ? "ok" : "err"); m.textContent = text; }
 $("#bcheck").onclick = async () => { const r = await post("/api/check", { form: payload() }); $("#tomlview").textContent = r.toml || ""; show(r.ok, r.ok ? "Form is valid." : r.errors.join("\n")); };
@@ -267,15 +300,410 @@ function setMode(m) {
   renderRun(); renderFactors();
 }
 for (const b of $("#tabs").children) b.onclick = () => setMode(b.dataset.m);
+// ======================================================================== Builder page (step-by-step form filling)
+// Fills in the same experiment form as the Experiments page, but one question at a time, with dropdowns, sliders
+// and presets instead of typing. Every list of allowed words comes from the server (/api/schema -> choices), so the
+// Builder can only offer values the engine understands. The final step shows the exact form file before anything runs.
+const GOALS = [
+  { id: "one", t: "Effect of one factor", d: "Switch on ONE environmental factor; everything else stays off. Compare with the baseline run." },
+  { id: "compare", t: "Compare levels of one setting", d: "One factor, one setting, 2-4 values (e.g. radiation dose 0.001 / 0.01 / 0.1). One run per value." },
+  { id: "several", t: "Combine several factors", d: "Two or more factors at once, to see how they interact." },
+  { id: "world", t: "Change the world itself", d: "Sense noise, motor noise, mutation style, recombination, immigration. Changes the baseline." },
+  { id: "main", t: "Main Experiment run", d: "The toy-brain experiment: 5 brain types x 30 lineages, with optional interbreeding and a stop time." }];
+const SIZES = [
+  { id: "quick", t: "Quick check (1 world, 3,000 ticks, seconds)", run: {}, quick: true },
+  { id: "small", t: "Small (16 worlds, 50,000 ticks, ~5 min)", run: { replicates: 16, ticks: 50000 } },
+  { id: "standard", t: "Standard (30 worlds, 50,000 ticks, ~8 min) - recommended", run: { replicates: 30, ticks: 50000 } },
+  { id: "long", t: "Long (30 worlds, 200,000 ticks, ~30 min)", run: { replicates: 30, ticks: 200000 } }];
+const ARMS = [
+  { id: "all", t: "frozen + shadow + real (recommended: measures adaptation and checks the code)", v: ["frozen", "shadow", "real"] },
+  { id: "sr", t: "shadow + real (adaptation, no code check)", v: ["shadow", "real"] },
+  { id: "real", t: "real only (fastest, no comparison)", v: ["real"] }];
+const B = { step: 0, goal: "one", factors: [], set: {}, cmpPath: "", cmpVals: "", size: "standard", arms: "all", name: "", world: {},
+            main: { gens: 900, cross_pct: 0, groups: 10, until: "none" }, showAll: false };
+
+function stepsFor() { return B.goal === "main" ? ["Goal", "Main Experiment settings", "Review and run"]
+  : B.goal === "world" ? ["Goal", "World settings", "Run size", "Review and run"]
+  : ["Goal", B.goal === "several" ? "Factors" : "Factor", "Settings", "Run size", "Review and run"]; }
+function sel(options, value, onchange) {      // options: [[value, label], ...]
+  const e = el("select"); for (const [v, t] of options) e.append(el("option", { value: v }, t)); e.value = value;
+  e.onchange = () => onchange(e.value); return e; }
+function bmsg(ok, text) { const m = $("#bmsg"); m.className = text ? "msg " + (ok ? "ok" : "err") : "msg"; m.textContent = text || ""; }
+
+function drawBuilder() {
+  const names = stepsFor(); B.step = Math.min(B.step, names.length - 1);
+  $("#bsteps").innerHTML = "";
+  names.forEach((n, i) => { const sp = el("span", { class: i === B.step ? "on" : i < B.step ? "done" : "" }, `${i + 1}. ${n}`);
+    sp.onclick = () => { if (i <= B.step) { B.step = i; drawBuilder(); } }; $("#bsteps").append(sp); });
+  $("#btitle").textContent = names[B.step]; bmsg(true, "");
+  const body = $("#bbody"); body.innerHTML = "";
+  $("#bback").style.visibility = B.step ? "" : "hidden";
+  $("#bnext").style.display = B.step === names.length - 1 ? "none" : "";
+  const step = names[B.step];
+  if (step === "Goal") return stepGoal(body);
+  if (step === "Factor" || step === "Factors") return stepFactors(body);
+  if (step === "Settings") return stepSettings(body);
+  if (step === "World settings") return stepWorld(body);
+  if (step === "Run size") return stepSize(body);
+  if (step === "Main Experiment settings") return stepMain(body);
+  return stepReview(body);
+}
+$("#bback").onclick = () => { B.step--; drawBuilder(); };
+$("#bnext").onclick = () => { const err = validStep(); if (err) return bmsg(false, err); B.step++; drawBuilder(); };
+function validStep() {
+  const step = stepsFor()[B.step];
+  if ((step === "Factor" || step === "Factors") && !B.factors.length) return "Choose a factor first.";
+  if (step === "Factors" && B.factors.length < 2) return "Choose at least two factors (or pick 'Effect of one factor').";
+  if (step === "Settings" && B.goal === "compare") {
+    if (!B.cmpPath) return "Choose which setting to compare.";
+    const v = B.cmpVals.split(",").map(x => x.trim()).filter(Boolean);
+    if (v.length < 2 || v.length > 4 || v.some(x => isNaN(Number(x)))) return "Enter 2 to 4 numbers separated by commas.";
+  }
+  return "";
+}
+
+function stepGoal(body) {
+  const box = el("div", { class: "choices" });
+  for (const g of GOALS) { const c = el("div", { class: "choice" + (B.goal === g.id ? " on" : "") }, el("b", {}, g.t), el("span", { class: "desc" }, g.d));
+    c.onclick = () => { B.goal = g.id; B.name = ""; if (g.id !== "several") B.factors = B.factors.slice(0, 1); drawBuilder(); }; box.append(c); }
+  body.append(box);
+}
+
+function factorOptions() {
+  const out = [["", "- choose -"]]; let cat = "";
+  for (const f of S.factors) { if (!B.showAll && f.level !== "easy") continue;
+    out.push([f.name, `${f.category}: ${f.name.replaceAll("_", " ")}${f.evidence === "EVO" ? "" : "  (" + f.evidence + ")"}`]); }
+  return out;
+}
+function stepFactors(body) {
+  const all = el("label", { class: "desc" }); const cb = el("input", { type: "checkbox", style: "width:auto" }); cb.checked = B.showAll;
+  cb.onchange = () => { B.showAll = cb.checked; drawBuilder(); }; all.append(cb, " also show contested and untested factors (Researcher level)");
+  body.append(all);
+  const n = B.goal === "several" ? Math.max(2, B.factors.length + 1) : 1;
+  for (let i = 0; i < Math.min(n, 6); i++) {
+    const cur = B.factors[i] || "";
+    const s = sel(factorOptions(), cur, v => { B.name = ""; if (v) B.factors[i] = v; else B.factors.splice(i, 1); B.factors = [...new Set(B.factors.filter(Boolean))]; drawBuilder(); });
+    const f = S.factors.find(x => x.name === cur);
+    body.append(el("div", { class: "row" }, el("span", { class: "k" }, `Factor ${i + 1}`), s, f ? fn(f.tag) : ""),
+      f ? el("div", { class: "desc", style: "margin:-4px 0 10px" }, (f.notes ? f.notes + " " : "") + "Real-world forms: " + f.forms.join(", ") + ".") : "");
+  }
+}
+
+function leafControl(fname, path, def, get, put) {
+  // One setting -> the right input: dropdown for fixed word lists, slider + box for numbers, yes/no for booleans.
+  const key = path.at(-1), C = S.choices, label = path.join(".") === "mode" ? "factor mode" : path.join(".");
+  const row = el("div", { class: "ctl" }, el("span", {}, label));
+  let words = null;
+  if (path.length === 2 && path[0] === "field" && C.field[key]) words = C.field[key];
+  if (path.length === 1 && key === "mode" && C.factor_mode[fname]) words = C.factor_mode[fname];
+  const cur = get() ?? def;
+  if (words) { row.append(sel(words.map(w => [w, w]), cur, put), el("span")); return row; }
+  if (typeof def === "boolean") { row.append(sel([["true", "yes"], ["false", "no"]], String(cur), v => put(v === "true")), el("span")); return row; }
+  if (typeof def === "number") {
+    const hi = def > 0 ? def * 4 : 1, step = def > 0 ? def / 20 : 0.01;
+    const r = el("input", { type: "range", min: 0, max: hi, step }), n = el("input", { type: "number", step: "any" });
+    r.value = n.value = cur; r.oninput = () => { n.value = r.value; put(Number(r.value)); }; n.oninput = () => { if (n.value !== "") { r.value = n.value; put(Number(n.value)); } };
+    row.append(r, n); return row; }
+  const t = el("input", { type: "text" }); t.value = typeof cur === "string" ? cur : JSON.stringify(cur);
+  t.oninput = () => { try { put(typeof def === "string" ? t.value : JSON.parse(t.value)); } catch (e) {} }; row.append(t, el("span")); return row;
+}
+function sourcesEditor(fname, sec) {
+  // radiation / toxins: a list of sources, each picked from a dropdown, with its level.
+  const keys = S.choices.sources[fname]; const box = el("div");
+  const src = sec.custom.sources = sec.custom.sources || {};
+  const draw = () => { box.innerHTML = ""; box.append(el("div", { class: "desc" }, "Sources (pick from the list, then set the level):"));
+    for (const [k, v] of Object.entries(src)) { const n = el("input", { type: "number", step: "any" }); n.value = v; n.oninput = () => { src[k] = Number(n.value); };
+      const x = el("button", { class: "b" }, "remove"); x.onclick = () => { delete src[k]; draw(); };
+      box.append(el("div", { class: "srcrow" }, el("b", {}, k), n, x)); }
+    const free = keys.filter(k => !(k in src));
+    if (free.length) box.append(el("div", { class: "srcrow" }, sel([["", "+ add a source"], ...free.map(k => [k, k])], "", v => { if (v) { src[v] = 0.01; draw(); } }))); };
+  draw(); return box;
+}
+function stepSettings(body) {
+  for (const fname of B.factors) {
+    const f = S.factors.find(x => x.name === fname); const sec = B.set[fname] = B.set[fname] || { mode: "auto" };
+    const card = el("div", { class: "factor on" }); body.append(card);
+    card.append(el("div", { class: "frow" }, el("span", { class: "nm" }, fname.replaceAll("_", " ")), fn(f.tag), el("span", { class: "badge " + f.evidence }, f.evidence),
+      sel([["auto", "Autopilot (realistic values from the research)"], ["custom", "Custom (set the values yourself)"]], sec.mode, v => { sec.mode = v; drawBuilder(); })));
+    if (sec.mode === "auto") { card.append(el("div", { class: "desc" }, "Autopilot changes: " + (Object.keys(f.auto).length ? JSON.stringify(f.auto) : "none (uses the defaults)"))); }
+    else {
+      const base = merged(f.default, f.auto);
+      if (!sec.custom) { sec.custom = {}; if (base.sources) sec.custom.sources = { ...base.sources }; }   // start from the autopilot's sources
+      for (const [path, def] of leaves(base)) {
+        if (path[0] === "sources" && S.choices.sources[fname]) continue;
+        card.append(leafControl(fname, path, def, () => getPath(sec.custom, path), v => setPath(sec.custom, path, v)));
+      }
+      if (S.choices.sources[fname]) card.append(sourcesEditor(fname, sec));
+    }
+    if (B.goal === "compare") {
+      const nums = leaves(merged(f.default, f.auto)).filter(([, v]) => typeof v === "number").map(([p]) => [p.join("."), p.join(".")]);
+      body.append(el("div", { class: "card", style: "margin-top:10px" }, el("h2", {}, "What to compare"),
+        el("div", { class: "row" }, el("span", { class: "k" }, "Setting"), sel([["", "- choose -"], ...nums], B.cmpPath, v => { B.cmpPath = v; }),
+          el("span", { class: "k" }, "Values (2-4, commas)"), (() => { const t = el("input", { type: "text", placeholder: "e.g. 0.001, 0.01, 0.1", style: "width:220px" }); t.value = B.cmpVals; t.oninput = () => { B.cmpVals = t.value; }; return t; })()),
+        el("div", { class: "desc" }, "One run is made per value; everything else is identical (same seed), so differences come from this setting.")));
+    }
+  }
+}
+function stepWorld(body) {
+  body.append(el("div", { class: "warnbox" }, "These change the baseline world itself. Compare only with runs that use the same world settings."));
+  const C = S.choices, show = ["sense_noise", "motor_noise", "mutation_mode", "mutation_genes", "recombination_rate", "recombination_radius", "immigration_rate", "immigrant_source"];
+  for (const r of S.world.filter(r => show.includes(r.key))) {
+    const row = el("div", { class: "ctl", title: r.doc }, el("span", {}, r.key, fn(r.tag)));
+    const cur = B.world[r.key] ?? r.default;
+    if (C.world[r.key]) row.append(sel(C.world[r.key].map(w => [w, w]), cur, v => { B.world[r.key] = v; }), el("span"));
+    else { const [lo, hi] = C.world_ranges[r.key] || [0, 1]; const rg = el("input", { type: "range", min: lo, max: hi, step: (hi - lo) / 200 }), n = el("input", { type: "number", step: "any", min: lo, max: hi });
+      rg.value = n.value = cur; rg.oninput = () => { n.value = rg.value; B.world[r.key] = Number(rg.value); }; n.oninput = () => { rg.value = n.value; B.world[r.key] = Number(n.value); }; row.append(rg, n); }
+    body.append(row, el("div", { class: "desc", style: "margin:-2px 0 8px" }, r.doc));
+  }
+}
+function stepSize(body) {
+  body.append(el("div", { class: "row" }, el("span", { class: "k" }, "Run size"), sel(SIZES.map(z => [z.id, z.t]), B.size, v => { B.size = v; })));
+  body.append(el("div", { class: "row" }, el("span", { class: "k" }, "Arms"), sel(ARMS.map(a => [a.id, a.t]), B.arms, v => { B.arms = v; })));
+  if (!B.name) B.name = (B.goal === "world" ? "world_" + Object.keys(B.world).join("_") : B.factors.join("_")).slice(0, 48) || "my_experiment";
+  const t = el("input", { type: "text", style: "width:280px" }); t.value = B.name; t.oninput = () => { B.name = t.value.replace(/[^A-Za-z0-9_-]/g, "_"); };
+  body.append(el("div", { class: "row" }, el("span", { class: "k" }, "Name (becomes the file name)"), t));
+}
+function stepMain(body) {
+  const A = S.main_experiment || {}, M = B.main;
+  const opt = (k, label, options, help) => body.append(el("div", { class: "ctl" }, el("span", {}, label), sel(options, String(M[k]), v => { M[k] = isNaN(Number(v)) ? v : Number(v); }), el("span")),
+    el("div", { class: "desc", style: "margin:-2px 0 8px" }, help));
+  opt("gens", "Generations", [300, 900, 1500, 2500, 3200, 5000].filter(g => !A.gens || g <= A.gens.max).map(g => [g, `${g} (~${Math.round(g * 5 / 1.5 / 60)} min alone)`]), "How long each of the 5 brain types evolves. Plateaus have appeared by ~300.");
+  opt("cross_pct", "Interbreeding", [[0, "none (reference)"], [10, "10 % of children are crosses"], [25, "25 %"], [50, "50 %"]], "Crosses take each gene 50/50 from their own elite parent or an elite of another lineage.");
+  opt("groups", "Who can interbreed", [[1, "one pool: any lineage with any other"], [10, "10 independent groups of 3"], [5, "5 groups of 6"], [3, "3 groups of 10"]], "Groups never mix, so each group is an independent replicate for statistics.");
+  const times = [["none", "no stop time"]]; for (let h = 16; h <= 23; h++) times.push([`${h}00`, `stop cleanly at ${h}:00`]);
+  opt("until", "Stop time", times, "At this time the run saves a checkpoint and stops. Queueing the same run again resumes it.");
+}
+function buildForms() {
+  // -> list of {run, world, factors} forms (one per compared value), the same shape the Experiments page sends
+  const size = SIZES.find(z => z.id === B.size), arms = ARMS.find(a => a.id === B.arms).v;
+  const factors = {}; for (const f of (B.goal === "world" ? [] : B.factors)) { const s = B.set[f] || { mode: "auto" }; factors[f] = s.mode === "custom" ? customSection(s.custom) : { mode: "auto" }; }
+  const run = { name: B.name || "my_experiment", ...size.run }; if (B.arms !== "all") run.arms = arms;
+  const base = { run, world: { ...B.world }, factors };
+  if (B.goal !== "compare") return [base];
+  const f = B.factors[0], path = B.cmpPath.split(".");
+  return B.cmpVals.split(",").map(x => x.trim()).filter(Boolean).map(v => { const c = structuredClone(base); const sec = c.factors[f];
+    if (sec.mode === "auto") { c.factors[f] = customSection(merged(S.factors.find(x => x.name === f).auto, {})); }
+    setPath(c.factors[f], path[0] === "mode" ? ["factor_mode"] : path, Number(v)); c.run.name = `${run.name}_${path.at(-1)}_${v}`.replace(/[^A-Za-z0-9_-]/g, "_"); return c; });
+}
+async function stepReview(body) {
+  if (B.goal === "main") {
+    const M = B.main; body.append(el("div", {}, `Main Experiment: ${M.gens} generations, interbreeding ${M.cross_pct} %, ${M.cross_pct ? (M.groups === 1 ? "one pool" : M.groups + " groups") : "-"}, stop: ${M.until}.`));
+    const go = el("button", { class: "b primary" }, "Run on the 3080"); go.onclick = async () => { const r = await post("/api/queue_main", { args: M }); bmsg(r.ok, r.ok ? "Queued: " + r.queued : r.errors.join("\n")); };
+    body.append(el("div", { class: "btns", style: "margin-top:10px" }, go)); return;
+  }
+  const forms = buildForms(), quick = SIZES.find(z => z.id === B.size).quick; let allOk = true;
+  for (const fm of forms) { const r = await post("/api/check", { form: fm }); allOk = allOk && r.ok;
+    body.append(el("div", { class: "k" }, fm.run.name + (r.ok ? "  - valid" : "  - NOT valid")), el("pre", { class: "msg " + (r.ok ? "ok" : "err"), style: "display:block" }, r.ok ? r.toml : r.errors.join("\n"))); }
+  const save = el("button", { class: "b" }, "Save form" + (forms.length > 1 ? "s" : "")), run = el("button", { class: "b primary" }, quick ? "Run quick check" : "Run on the 3080");
+  save.onclick = async () => { const out = []; for (const fm of forms) { const r = await post("/api/save", { form: fm }); out.push(r.ok ? "saved " + r.saved : (r.errors || [r.error]).join("; ")); } bmsg(true, out.join("\n")); };
+  run.onclick = async () => { const out = []; for (const fm of forms) { const r = await post("/api/queue", { form: fm, quick }); out.push(r.ok ? "queued " + r.queued : (r.errors || [r.error]).join("; ")); } bmsg(true, out.join("\n") + "\nThe watcher starts them when the GPU has room (Watcher page)."); refresh(); };
+  if (!allOk) { save.disabled = run.disabled = true; bmsg(false, "Fix the errors above (go Back), then run."); }
+  body.append(el("div", { class: "btns", style: "margin-top:10px" }, save, run));
+}
+// ======================================================================== Analysis page
+// In-depth statistics for any results file, the way a published study reports them. All numbers come from the
+// server (gui/analysis.py); this code only draws them. Charts are plain SVG so they work offline and in both themes.
+const AN = { files: [], info: null, res: null, sel: {} };
+const PAL = ["#2f6f4f", "#c0632b", "#3b6fb6", "#9b4dca", "#b8932d", "#d0457a", "#4aa3a2", "#7a7a74", "#5b8c2a", "#a33b3b"];
+const fmt = (x, k = 3) => x === null || x === undefined || Number.isNaN(x) ? "–" : Math.abs(x) >= 1e6 || (Math.abs(x) < 1e-3 && x !== 0) ? x.toExponential(2) : Math.abs(x) >= 1e3 ? Math.round(x).toLocaleString() : Number(x.toPrecision(k)).toString();
+const fp = p => p === null || p === undefined ? "–" : p < 0.001 ? "<0.001" : p.toFixed(3);
+const svgEl = (tag, attrs = {}, ...kids) => { const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); for (const c of kids) e.append(c); return e; };
+const svgText = (x, y, s, attrs = {}) => { const t = svgEl("text", { x, y, fill: "var(--ink)", "font-size": 11, ...attrs }); t.textContent = s; return t; };
+const gcol = g => PAL[(AN.info?.groups || []).indexOf(g) % PAL.length];
+
+async function anInit() {
+  if (!AN.files.length) AN.files = await (await fetch("/api/analysis/files")).json();
+  const box = $("#an_controls"); box.innerHTML = "";
+  const fsel = el("select", { id: "an_file" }); fsel.append(el("option", { value: "" }, "- choose a results file -"));
+  const by = {}; for (const f of AN.files) (by[f.source] = by[f.source] || []).push(f);
+  for (const [src, fs] of Object.entries(by)) { const og = el("optgroup", { label: src });
+    for (const f of fs) og.append(el("option", { value: f.id }, `${f.name}  (${new Date(f.mtime * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })})`)); fsel.append(og); }
+  fsel.value = AN.sel.file || ""; fsel.onchange = async () => { AN.sel = { file: fsel.value }; await anLoadInfo(); };
+  box.append(el("label", { class: "f" }, el("span", {}, "Results file"), fsel), el("div", { id: "an_opts" }));
+  anKey();
+  if (AN.sel.file) await anLoadInfo();
+}
+async function anKey() {
+  // The key at the bottom of the page: what every experiment file is, and what every group label means.
+  const k = await (await fetch("/api/analysis/key")).json(), b = $("#an_keybody"); b.innerHTML = ""; b.className = "";
+  const by = {}; for (const f of k.files) (by[f.source] = by[f.source] || []).push(f);
+  for (const [src, fs] of Object.entries(by)) {
+    b.append(el("div", { class: "cat" }, src));
+    b.append(table(["experiment (file)", "what it is"], fs.map(f => { const a = el("a", { href: "#" }, f.name);
+      a.onclick = e => { e.preventDefault(); AN.sel = { file: f.id }; $("#an_file").value = f.id; anLoadInfo(); window.scrollTo({ top: 0, behavior: "smooth" }); }; return [a, f.what]; })));
+  }
+  b.append(el("div", { class: "cat" }, "Group labels"));
+  b.append(table(["label", "meaning"], Object.entries(k.groups)));
+}
+async function anLoadInfo() {
+  const o = $("#an_opts"); o.innerHTML = ""; $("#an_out").innerHTML = "";
+  if (!AN.sel.file) return;
+  AN.info = await (await fetch("/api/analysis/info?file=" + encodeURIComponent(AN.sel.file))).json();
+  if (AN.info.error) { o.append(el("div", { class: "msg err", style: "display:block" }, AN.info.error)); return; }
+  const I = AN.info, S = AN.sel;
+  S.measure = S.measure && I.measures.includes(S.measure) ? S.measure : I.measures[0];
+  S.ref = S.ref && I.groups.includes(S.ref) ? S.ref : (I.groups.includes("shadow") ? "shadow" : I.groups[0]);
+  S.groups = S.groups || I.groups.slice(); S.ti = S.ti ?? -1; S.correction = S.correction || "holm"; S.paired = S.paired ?? "auto";
+  const lab = (t, c, help) => el("label", { class: "f", style: "margin-top:8px", title: help || "" }, el("span", {}, t), c);
+  o.append(el("div", { class: "desc", style: "margin:6px 0" }, `${I.kind}. ${I.note}.`));
+  o.append(lab("Measure", sel(I.measures.map(m => [m, m + (I.series_measures.includes(m) ? "  (over time)" : "")]), S.measure, v => { S.measure = v; anLoadInfo(); })));
+  if (I.n_times > 1 && I.series_measures.includes(S.measure)) {
+    const r = el("input", { type: "range", min: 0, max: I.n_times - 1, value: S.ti < 0 ? I.n_times - 1 : S.ti, style: "padding:0" });
+    const tl = el("span", { class: "desc" });
+    const upd = () => { tl.textContent = `${I.unit_time} ${I.times[r.value]}${+r.value === I.n_times - 1 ? " (end)" : ""}`; };
+    r.oninput = upd; r.onchange = () => { S.ti = +r.value === I.n_times - 1 ? -1 : +r.value; anRun(); }; upd();
+    o.append(lab("Time point to compare", el("div", {}, r, tl), "Compare the groups at this moment of the run (default: the end)"));
+  }
+  o.append(lab("Reference group (everything is compared with it)", sel(I.groups.map(g => [g, g]), S.ref, v => { S.ref = v; anRun(); })));
+  const gb = el("div", { class: "desc" });
+  for (const g of I.groups) { const cb = el("input", { type: "checkbox", style: "width:auto" }); cb.checked = S.groups.includes(g);
+    cb.onchange = () => { S.groups = I.groups.filter(x => x === g ? cb.checked : S.groups.includes(x)); anRun(); };
+    gb.append(el("label", { style: "display:inline-flex;gap:4px;margin-right:10px;align-items:center" }, cb, el("span", { class: "dot", style: `background:${gcol(g)}` }), g)); }
+  o.append(lab("Groups to include", gb));
+  o.append(lab("Pairing", sel([["auto", `automatic (${I.paired ? "paired: same seeds" : "independent groups"})`], ["paired", "paired (same seed in every group)"], ["unpaired", "independent groups"]], S.paired, v => { S.paired = v; anRun(); }),
+    "Paired tests compare replicate i of one group with replicate i of the other. Only valid when they share a seed / world."));
+  o.append(lab("Multiple-comparison correction", sel([["holm", "Holm (controls false positives; default)"], ["bh", "Benjamini-Hochberg (false discovery rate; for screens)"], ["none", "none (single planned comparison only)"]], S.correction, v => { S.correction = v; anRun(); })));
+  o.append(el("div", { class: "btns", style: "margin-top:12px" },
+    el("a", { class: "b", href: "#", onclick: e => { e.preventDefault(); location.href = `/api/analysis/csv?file=${encodeURIComponent(S.file)}&ti=${S.ti}`; } }, "Download data (CSV)")));
+  anRun();
+}
+let anTimer = null;
+function anRun() { clearTimeout(anTimer); anTimer = setTimeout(anRunNow, 120); }
+async function anRunNow() {
+  const S = AN.sel, out = $("#an_out");
+  out.innerHTML = ""; out.append(el("div", { class: "card desc" }, "Calculating..."));
+  const r = await post("/api/analysis/run", { file: S.file, measure: S.measure, ref: S.ref, groups: S.groups, ti: S.ti,
+    correction: S.correction, paired: S.paired === "auto" ? null : S.paired === "paired", corr_group: S.corr_group });
+  out.innerHTML = "";
+  if (!r.ok) { out.append(el("div", { class: "card" }, el("div", { class: "msg err", style: "display:block" }, r.error))); return; }
+  AN.res = r; anDraw(r, out);
+}
+
+function card(title, ...kids) { return el("div", { class: "card" }, el("h2", {}, title), ...kids); }
+function table(head, rows) {
+  const t = el("table", { class: "antab" }); const tr = el("tr"); head.forEach(h => tr.append(el("th", {}, h))); t.append(tr);
+  rows.forEach(r => { const x = el("tr"); r.forEach(c => x.append(el("td", {}, c instanceof Node ? c : String(c)))); t.append(x); }); return el("div", { style: "overflow-x:auto" }, t);
+}
+function anDraw(r, out) {
+  const comps = r.comparisons, sig = comps.filter(c => c.p_adjusted < r.alpha);
+  // 1. headline
+  out.append(card("Summary", el("div", {}, `${r.measure} at ${r.at}: ${comps.length} group(s) compared with '${r.ref}' (${r.paired ? "paired by seed" : "independent groups"}, ${{ holm: "Holm", bh: "Benjamini-Hochberg", none: "no" }[r.correction]} correction).`),
+    el("div", { style: "margin-top:6px" }, sig.length ? `Detectable differences: ${sig.map(c => `${c.group} ${c.diff > 0 ? "higher" : "lower"} (adjusted p ${fp(c.p_adjusted)})`).join("; ")}.` : "No group differs detectably from the reference after correction."),
+    r.omnibus ? el("div", { class: "desc", style: "margin-top:4px" }, `All groups together: ANOVA p ${fp(r.omnibus["one-way ANOVA"])}, Kruskal-Wallis p ${fp(r.omnibus["Kruskal-Wallis"])}` + (r.omnibus["Levene (equal spread?)"] !== undefined ? `, equal-spread test (Levene) p ${fp(r.omnibus["Levene (equal spread?)"])}` + (r.omnibus["Levene (equal spread?)"] < 0.05 ? " - spreads differ, prefer the Welch-type ANOVA p " + fp(r.omnibus["Alexander-Govern (Welch-type ANOVA)"]) : "") : "") + ".") : ""));
+  // 2. descriptive table
+  out.append(card("Descriptive statistics", table(["group", "n", "mean", "SD", "95 % CI (t)", "95 % CI (bootstrap)", "median [IQR]", "min - max", "normal? (Shapiro p)"],
+    r.groups.map(g => { const d = r.describe[g]; return [el("span", {}, el("span", { class: "dot", style: `background:${gcol(g)};margin-right:5px` }), g + (g === r.ref ? " (ref)" : "")), d.n, fmt(d.mean), fmt(d.sd), `${fmt(d.ci95_t[0])} to ${fmt(d.ci95_t[1])}`, `${fmt(d.ci95_boot[0])} to ${fmt(d.ci95_boot[1])}`, `${fmt(d.median)} [${fmt(d.q1)}, ${fmt(d.q3)}]`, `${fmt(d.min)} - ${fmt(d.max)}`, d.shapiro_p === null ? "–" : fp(d.shapiro_p) + (d.shapiro_p < 0.05 ? " (no)" : "")]; })),
+    el("div", { class: "desc", style: "margin-top:6px" }, "95 % CI = the range that would contain the true mean in 95 of 100 repeats of this experiment. Shapiro p < 0.05 means the values are not normally distributed, so trust the rank-based / permutation tests over the t-test.")));
+  // 3. distribution plot
+  out.append(card("Distribution per group (box = middle 50 %, line = median, dots = replicates, diamond = mean)", distPlot(r)));
+  // 4. comparisons + forest
+  if (comps.length) {
+    out.append(card(`Effect sizes vs '${r.ref}' (${comps[0].effect_name}, 95 % CI)`, forestPlot(r),
+      el("div", { class: "desc" }, "Rule of thumb for effect size: 0.2 small, 0.5 medium, 0.8 large. A CI that crosses 0 means the direction is not certain.")));
+    out.append(card("Comparisons with the reference", table(["group", "difference [95 % CI]", "effect [95 % CI]", "main test", "p", "adjusted p", "other tests", "power", "n for 80 % power", "verdict"],
+      comps.map(c => [c.group, `${fmt(c.diff)} [${fmt(c.diff_ci95[0])}, ${fmt(c.diff_ci95[1])}]` + (c.wins !== undefined ? ` (higher in ${c.wins}/${c.n})` : ""),
+        `${fmt(c.effect, 2)} [${fmt(c.effect_ci95[0], 2)}, ${fmt(c.effect_ci95[1], 2)}]`, c.primary, fp(c.p_primary), el("b", {}, fp(c.p_adjusted)),
+        Object.entries(c.tests).filter(([k]) => k !== c.primary).map(([k, v]) => `${k} ${fp(v)}`).join("; "),
+        c.power === null ? "–" : Math.round(c.power * 100) + " %", c.n_for_80pct_power ?? "–", c.verdict])),
+      el("div", { class: "desc", style: "margin-top:6px" }, "Power = the chance this design detects an effect of the size seen. Below 80 %, a 'no detectable difference' may just mean too few replicates; 'n for 80 % power' says how many would be needed.")));
+  }
+  // 5. time course
+  if (Object.keys(r.timecourse).length) {
+    out.append(card(`Time course of ${r.measure} (line = mean, band = 95 % CI)`, timePlot(r)));
+    const tr = Object.entries(r.trends).filter(([, t]) => t);
+    if (tr.length) out.append(card("Trend at the end of the run (is it still changing?)", table(["group", "window", "slope", "95 % CI", "rising replicates", "p", "verdict"],
+      tr.map(([g, t]) => [g, t.window, `${fmt(t.slope)} per ${t.per.toLocaleString()} ${r.unit_time}s`, `${fmt(t.ci95[0])} to ${fmt(t.ci95[1])}`, `${t.rising}/${t.n}`, fp(t.p), t.verdict]))));
+  }
+  // 6. correlations
+  if (r.correlations) {
+    const cg = sel(r.groups.map(g => [g, g]), r.correlations.group, v => { AN.sel.corr_group = v; anRun(); });
+    out.append(card("Which measures move together? (Spearman rank correlation inside one group)", el("div", { class: "row" }, el("span", { class: "k" }, "Group"), cg), heatmap(r.correlations),
+      el("div", { class: "desc" }, "Colour = correlation from -1 (blue, opposite) to +1 (orange, together). * = Benjamini-Hochberg adjusted p < 0.05. Correlation is not causation.")));
+  }
+  // 7. write-up
+  const ta = el("textarea", { style: "min-height:180px;font-family:inherit;font-size:13px" }); ta.value = r.text;
+  const cp = el("button", { class: "b" }, "Copy"); cp.onclick = () => { ta.select(); navigator.clipboard?.writeText(ta.value); cp.textContent = "Copied"; };
+  out.append(card("Methods and results (ready to paste into a report)", ta, el("div", { class: "btns", style: "margin-top:8px" }, cp)));
+}
+
+function distPlot(r) {
+  const gs = r.groups, W = 760, H = 300, L = 64, B = 250, T = 16;
+  const all = gs.flatMap(g => r.values[g].filter(v => v !== null));
+  let lo = Math.min(...all), hi = Math.max(...all); if (lo === hi) { lo -= 1; hi += 1; } const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const y = v => B - (v - lo) / (hi - lo) * (B - T), bw = (W - L - 10) / gs.length;
+  const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "distribution per group", style: "width:100%;height:auto" });
+  for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; s.append(svgEl("line", { x1: L, x2: W - 10, y1: y(v), y2: y(v), stroke: "var(--line)" }), svgText(L - 6, y(v) + 4, fmt(v), { "text-anchor": "end", fill: "var(--muted)" })); }
+  gs.forEach((g, i) => {
+    const d = r.describe[g], cx = L + bw * (i + 0.5), c = gcol(g), w = Math.min(60, bw * 0.5);
+    s.append(svgEl("rect", { x: cx - w / 2, y: y(d.q3), width: w, height: Math.max(1, y(d.q1) - y(d.q3)), fill: c, "fill-opacity": 0.15, stroke: c }));
+    s.append(svgEl("line", { x1: cx - w / 2, x2: cx + w / 2, y1: y(d.median), y2: y(d.median), stroke: c, "stroke-width": 2 }));
+    s.append(svgEl("line", { x1: cx, x2: cx, y1: y(d.max), y2: y(d.q3), stroke: c }), svgEl("line", { x1: cx, x2: cx, y1: y(d.q1), y2: y(d.min), stroke: c }));
+    r.values[g].forEach((v, j) => { if (v === null) return; const jx = cx + (((j * 37) % 17) / 17 - 0.5) * w * 0.9;
+      const dot = svgEl("circle", { cx: jx, cy: y(v), r: 2.6, fill: c, "fill-opacity": 0.75 }); dot.append(svgEl("title", {}, document.createTextNode(`${g} replicate ${j}: ${fmt(v)}`))); s.append(dot); });
+    s.append(svgEl("path", { d: `M${cx} ${y(d.mean) - 6} l6 6 l-6 6 l-6 -6 z`, fill: "var(--panel)", stroke: "var(--ink)" }));
+    s.append(svgText(cx, B + 18, g.length > 18 ? g.slice(0, 17) + "…" : g, { "text-anchor": "middle", "font-weight": g === r.ref ? 700 : 400 }));
+  });
+  s.append(svgText(L, H - 8, r.measure, { fill: "var(--muted)" }));
+  return s;
+}
+function forestPlot(r) {
+  const cs = r.comparisons, W = 760, rh = 30, H = 40 + cs.length * rh, L = 190, R = W - 70;
+  const xs = cs.flatMap(c => [c.effect_ci95[0], c.effect_ci95[1], c.effect]).filter(v => v !== null && isFinite(v));
+  let lo = Math.min(0, ...xs), hi = Math.max(0, ...xs); if (lo === hi) { lo -= 1; hi += 1; } const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const x = v => L + (v - lo) / (hi - lo) * (R - L);
+  const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "forest plot of effect sizes", style: "width:100%;height:auto" });
+  s.append(svgEl("line", { x1: x(0), x2: x(0), y1: 6, y2: H - 22, stroke: "var(--muted)", "stroke-dasharray": "4 3" }), svgText(x(0), H - 8, "0 = same as reference", { "text-anchor": "middle", fill: "var(--muted)" }));
+  cs.forEach((c, i) => { const yy = 20 + i * rh, col = gcol(c.group);
+    s.append(svgText(L - 10, yy + 4, c.group, { "text-anchor": "end" }));
+    if (c.effect_ci95[0] !== null) s.append(svgEl("line", { x1: x(c.effect_ci95[0]), x2: x(c.effect_ci95[1]), y1: yy, y2: yy, stroke: col, "stroke-width": 2 }));
+    const m = svgEl("rect", { x: x(c.effect) - 5, y: yy - 5, width: 10, height: 10, fill: c.p_adjusted < r.alpha ? col : "var(--panel)", stroke: col, "stroke-width": 2 });
+    m.append(svgEl("title", {}, document.createTextNode(`${c.group}: ${c.effect_name} ${fmt(c.effect, 2)} [${fmt(c.effect_ci95[0], 2)}, ${fmt(c.effect_ci95[1], 2)}], adjusted p ${fp(c.p_adjusted)}`))); s.append(m);
+    s.append(svgText(R + 8, yy + 4, fmt(c.effect, 2), { fill: "var(--muted)" })); });
+  return el("div", {}, s, el("div", { class: "desc" }, "Filled square = detectable after correction; open square = not."));
+}
+function timePlot(r) {
+  const W = 760, H = 320, L = 64, Rr = W - 12, T = 12, B = 270, tc = r.timecourse, gs = Object.keys(tc);
+  const ts = gs.flatMap(g => tc[g].t), vs = gs.flatMap(g => [...tc[g].lo, ...tc[g].hi]).filter(v => v !== null);
+  let t0 = Math.min(...ts), t1 = Math.max(...ts); if (t0 === t1) t1 = t0 + 1;
+  let lo = Math.min(...vs), hi = Math.max(...vs); if (lo === hi) { lo -= 1; hi += 1; } const pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
+  const x = t => L + (t - t0) / (t1 - t0) * (Rr - L), y = v => B - (v - lo) / (hi - lo) * (B - T);
+  const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "time course", style: "width:100%;height:auto" });
+  for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; s.append(svgEl("line", { x1: L, x2: Rr, y1: y(v), y2: y(v), stroke: "var(--line)" }), svgText(L - 6, y(v) + 4, fmt(v), { "text-anchor": "end", fill: "var(--muted)" })); }
+  for (let k = 0; k <= 4; k++) { const t = t0 + (t1 - t0) * k / 4; s.append(svgText(x(t), B + 16, fmt(t), { "text-anchor": "middle", fill: "var(--muted)" })); }
+  s.append(svgText((L + Rr) / 2, B + 34, r.unit_time, { "text-anchor": "middle", fill: "var(--muted)" }));
+  for (const g of gs) { const d = tc[g], c = gcol(g), pts = d.t.map((t, i) => [t, d.mean[i], d.lo[i], d.hi[i]]).filter(p => p[1] !== null);
+    if (pts.length < 2) continue;
+    s.append(svgEl("path", { d: "M" + pts.map(p => `${x(p[0])},${y(p[3] ?? p[1])}`).join("L") + "L" + pts.slice().reverse().map(p => `${x(p[0])},${y(p[2] ?? p[1])}`).join("L") + "Z", fill: c, "fill-opacity": 0.14, stroke: "none" }));
+    s.append(svgEl("path", { d: "M" + pts.map(p => `${x(p[0])},${y(p[1])}`).join("L"), fill: "none", stroke: c, "stroke-width": g === r.ref ? 2.5 : 1.6 })); }
+  const I = AN.info; if (I && I.n_times > 1) { const tt = I.times[AN.sel.ti < 0 ? I.n_times - 1 : AN.sel.ti];
+    s.append(svgEl("line", { x1: x(tt), x2: x(tt), y1: T, y2: B, stroke: "var(--ink)", "stroke-dasharray": "3 3", "stroke-opacity": 0.6 }), svgText(x(tt) - 4, T + 10, "compared here", { "text-anchor": "end", fill: "var(--muted)" })); }
+  const leg = el("div", { class: "legend" }); gs.forEach(g => leg.append(el("span", {}, el("span", { class: "dot", style: `background:${gcol(g)}` }), g)));
+  return el("div", {}, s, leg);
+}
+function heatmap(c) {
+  const k = c.measures.length, cell = Math.min(44, Math.floor(560 / k)), L = 170, T = 10, W = L + k * cell + 10, H = T + k * cell + 120;
+  const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "correlation heatmap", style: `width:100%;max-width:${W}px;height:auto` });
+  const col = v => v === null ? "var(--chip)" : v >= 0 ? `rgba(214,110,40,${Math.abs(v)})` : `rgba(59,111,182,${Math.abs(v)})`;
+  c.measures.forEach((m, i) => { s.append(svgText(L - 6, T + i * cell + cell / 2 + 4, m.length > 24 ? m.slice(0, 23) + "…" : m, { "text-anchor": "end" }));
+    const tx = svgText(0, 0, m.length > 22 ? m.slice(0, 21) + "…" : m, { transform: `translate(${L + i * cell + cell / 2 + 4},${T + k * cell + 6}) rotate(60)` }); s.append(tx);
+    c.measures.forEach((_, j) => { const v = c.rho[i][j], p = c.p_bh[i][j];
+      const rc = svgEl("rect", { x: L + j * cell, y: T + i * cell, width: cell - 1, height: cell - 1, fill: col(v) });
+      rc.append(svgEl("title", {}, document.createTextNode(`${c.measures[i]} vs ${c.measures[j]}: rho ${fmt(v, 2)}, BH p ${fp(p)}`))); s.append(rc);
+      if (i !== j && p !== null && p < 0.05) s.append(svgText(L + j * cell + cell / 2, T + i * cell + cell / 2 + 4, "*", { "text-anchor": "middle" })); }); });
+  return s;
+}
 // ======================================================================== Watcher page
 let page = "exp", SET = null, refreshMs = 5000, refreshTimer = null, rep = { frames: [], i: 0, playing: false, job: null, timer: null };
 function applyTheme(t) { if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
 function setPage(p) {
   page = p; for (const b of $("#pages").children) b.classList.toggle("on", b.dataset.p === p);
-  $("#exppage").hidden = p !== "exp"; $("#watchpage").hidden = p !== "watch";
-  $("#tabs").style.display = p === "exp" ? "" : "none"; $("#modehelp").style.display = p === "exp" ? "" : "none";
+  $("#exppage").hidden = p !== "exp"; $("#watchpage").hidden = p !== "watch"; $("#buildpage").hidden = p !== "build"; $("#anpage").hidden = p !== "an";
+  $("#tabs").style.display = p === "exp" ? "" : "none";  /* modes only apply to the Experiments page */ $("#modehelp").style.display = p === "exp" ? "" : "none";
   try { localStorage.setItem("labpage", p); } catch (e) {}
   if (p === "watch") { loadSettings(); loadReplays(); watchRefresh(); }
+  if (p === "build") drawBuilder();
+  if (p === "an") anInit();
 }
 for (const b of $("#pages").children) b.onclick = () => setPage(b.dataset.p);
 

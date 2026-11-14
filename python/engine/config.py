@@ -24,7 +24,15 @@ RUN_DEFAULTS = dict(name="unnamed", replicates=30, ticks=50000, arms=["frozen", 
                     founders="toybrain_fair", every=500, checkpoint_every=10000, record_tree=True)
 WORLD_DEFAULTS = dict(size=400.0, patches=80, patch_r=4.0, food_max=20.0, regrow=0.01, bite=0.5, sig_smell=25.0,
                       sig_taste=5.0, e_start=10.0, e_split=20.0, cost_base=0.02, cost_move=0.02, max_age=6000,
-                      mut_sigma=0.1, slots=640, start_fill=0.25, trait_cost=0.005, dauer_cost=0.002)
+                      mut_sigma=0.1, slots=640, start_fill=0.25, trait_cost=0.005, dauer_cost=0.002,
+                      # added 2026-11-13 (defaults = the old built-in behaviour, so old forms give the same results)
+                      sense_noise=0.01, motor_noise=0.1, mutation_mode="all", mutation_genes=10,
+                      recombination_rate=0.0, recombination_radius=10.0, immigration_rate=0.0,
+                      immigrant_source="founders")
+# Allowed values / safe ranges for the [world] settings above that are not plain positive numbers.
+WORLD_CHOICES = dict(mutation_mode=("all", "sparse"), immigrant_source=("founders", "random"))
+WORLD_RANGES = dict(sense_noise=(0.0, 1.0), motor_noise=(0.0, 2.0), mutation_genes=(1, 1000),
+                    recombination_rate=(0.0, 1.0), recombination_radius=(0.0, 400.0), immigration_rate=(0.0, 100.0))
 
 
 def band(lo, hi, below=None, above=None):
@@ -168,10 +176,44 @@ def check_catalog():
     return cat
 
 
+# ------------------------------------------------------------------ fixed lists of allowed values (GUI dropdowns)
+# Every text setting that only accepts certain words is listed here, so the form checker can refuse a typo with the
+# list of allowed words, and the GUI can show a dropdown. Keep in sync with the factor code (fields.py, factors_*.py).
+FIELD_CHOICES = dict(space=("uniform", "gradient", "spots", "hotspot", "patches"),
+                     time=("constant", "cycle", "random", "shock"))
+FACTOR_MODE_CHOICES = dict(food_layout=("fixed", "moving", "seasonal", "uniform"),
+                           pathogen_bacteria=("fixed", "coevolving"),
+                           predators=("chaser", "pristionchus"),
+                           mating_system=("androdioecy", "selfing"),
+                           variability=("regular", "irregular"))
+SOURCE_CHOICES = dict(radiation=tuple(E.RAD_WEIGHT), toxins=tuple(E.TOXIN_EFFECTS))
+
+
+def check_choices(name, prm):
+    """Refuse words that the factor code would not understand (it would otherwise silently ignore them)."""
+    if name in FACTOR_MODE_CHOICES and prm.get("mode") not in FACTOR_MODE_CHOICES[name]:
+        raise ValueError(f"[factors.{name}] factor_mode = {prm.get('mode')!r} is not allowed; choose one of "
+                         f"{list(FACTOR_MODE_CHOICES[name])}")
+    fld = prm.get("field")
+    if isinstance(fld, dict):
+        for k, opts in FIELD_CHOICES.items():
+            if k in fld and fld[k] not in opts:
+                raise ValueError(f"[factors.{name}] field.{k} = {fld[k]!r} is not allowed; choose one of {list(opts)}")
+    if name in SOURCE_CHOICES:
+        bad = set(prm.get("sources") or {}) - set(SOURCE_CHOICES[name])
+        if bad:
+            raise ValueError(f"[factors.{name}] unknown sources {sorted(bad)}; allowed: {list(SOURCE_CHOICES[name])}")
+
+
 def factor_params(name, section):
-    """Return the params the factor will run with, or None if off."""
+    """Return the params the factor will run with, or None if off.
+    NOTE on the word 'mode': in a form, `mode` is always off / auto / custom. Some factors also have their OWN mode
+    (predators: chaser / pristionchus, food_layout: fixed / moving / ...). In a form that one is written
+    `factor_mode = "pristionchus"`; it is passed to the factor as its `mode`."""
     section = dict(section or {})
     mode = section.pop("mode", "off")
+    if "factor_mode" in section:
+        section["mode"] = section.pop("factor_mode")
     if mode not in ("off", "auto", "custom"):
         raise ValueError(f"[factors.{name}] mode must be off, auto or custom (got {mode!r})")
     _, default, auto = REGISTRY[name]
@@ -182,11 +224,12 @@ def factor_params(name, section):
     if mode == "auto":
         if section:
             raise ValueError(f"[factors.{name}] auto mode takes no settings (got {sorted(section)}); use custom")
-        return deep_merge(default, auto)
+        prm = deep_merge(default, auto); check_choices(name, prm); return prm
     unknown = set(section) - set(default)
     if unknown:
-        raise ValueError(f"[factors.{name}] unknown settings {sorted(unknown)}; allowed: {sorted(default)}")
-    return deep_merge(default, section)
+        allowed = sorted("factor_mode" if k == "mode" else k for k in default)
+        raise ValueError(f"[factors.{name}] unknown settings {sorted(unknown)}; allowed: {allowed}")
+    prm = deep_merge(default, section); check_choices(name, prm); return prm
 
 
 def load(path):
@@ -203,6 +246,12 @@ def load(path):
     if set(raw.get("world", {})) - set(WORLD_DEFAULTS):
         raise ValueError(f"unknown [world] keys {sorted(set(raw['world']) - set(WORLD_DEFAULTS))}")
     world.update(raw.get("world", {}))
+    for k, opts in WORLD_CHOICES.items():                 # named choices: clear error listing the allowed values
+        if world[k] not in opts:
+            raise ValueError(f"[world] {k} = {world[k]!r} is not allowed; choose one of {list(opts)}")
+    for k, (lo, hi) in WORLD_RANGES.items():              # numbers with a safe range
+        if not isinstance(world[k], (int, float)) or not lo <= world[k] <= hi:
+            raise ValueError(f"[world] {k} = {world[k]!r} must be a number from {lo} to {hi}")
     fsec = raw.get("factors", {})
     unknown = set(fsec) - set(REGISTRY)
     if unknown:

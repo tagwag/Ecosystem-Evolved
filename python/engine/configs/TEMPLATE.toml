@@ -3,6 +3,7 @@
 # Every setting has a footnote tag like [F7]; look it up in FACTOR_GUIDE.md (same folder) for what it
 # means, how it is modelled, the research behind it and the sources.
 # Factors: mode = "off" (not in the world) | "auto" (realistic autopilot) | "custom" (your values).
+# Some factors have their own mode (e.g. predators chaser/pristionchus): write it as factor_mode = "...".
 # To ISOLATE one trait/factor: set that one to custom, leave the rest off (or auto for a natural background).
 # ============================================================================================
 
@@ -36,6 +37,14 @@ record_tree = true                            # [R9]
 # start_fill = 0.25                           # [W16]
 # trait_cost = 0.005                          # [W17]
 # dauer_cost = 0.002                          # [W18]
+# sense_noise = 0.01                          # [W19]
+# motor_noise = 0.1                           # [W20]
+# mutation_mode = "all"                       # [W21]
+# mutation_genes = 10                         # [W22]
+# recombination_rate = 0.0                    # [W23]
+# recombination_radius = 10.0                 # [W24]
+# immigration_rate = 0.0                      # [W25]
+# immigrant_source = "founders"               # [W26]
 
 # ------------------------------------------------------------------ PHYSICAL
 [factors.temperature]                         # [F1] EVO, implemented
@@ -139,7 +148,7 @@ mode = "off"                                  # off | auto | custom
 # famine_mult = 0.1
 [factors.food_layout]                         # [F17] EVO, implemented
 mode = "off"                                  # off | auto | custom
-# mode = "fixed"
+# factor_mode = "fixed"
 # drift = 0.05
 # relocate_every = 10000
 [factors.food_quality]                        # [F18] EFFECT, implemented
@@ -166,7 +175,7 @@ mode = "off"                                  # off | auto | custom
 # ------------------------------------------------------------------ BIOLOGICAL
 [factors.pathogen_bacteria]                   # [F21] EVO, implemented
 mode = "off"                                  # off | auto | custom
-# mode = "fixed"
+# factor_mode = "fixed"
 # frac_patches = 0.3
 # infect = 0.02
 # cost = 0.02
@@ -211,7 +220,7 @@ mode = "off"                                  # off | auto | custom
 # lure = 0.0
 [factors.predators]                           # [F26] EFFECT, implemented
 mode = "off"                                  # off | auto | custom
-# mode = "chaser"
+# factor_mode = "chaser"
 # count = 3
 # speed = 0.8
 # sense_r = 60.0
@@ -250,7 +259,7 @@ mode = "off"                                  # off | auto | custom
 # survive = 0.1
 [factors.mating_system]                       # [F32] EVO, implemented
 mode = "off"                                  # off | auto | custom
-# mode = "androdioecy"
+# factor_mode = "androdioecy"
 # radius = 10.0
 # male_scale = 1.0
 [factors.migration]                           # [F33] EVO, implemented
@@ -286,6 +295,6 @@ mode = "off"                                  # off | auto | custom
 # ------------------------------------------------------------------ META
 [factors.variability]                         # [F38] EVO, implemented
 mode = "off"                                  # off | auto | custom
-# mode = "regular"
+# factor_mode = "regular"
 # every = 5000
 # step = 0.2

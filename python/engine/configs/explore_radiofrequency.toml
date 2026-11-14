@@ -1,0 +1,10 @@
+# EXPLORATION RUN (queued 2026-11-13 to fill spare GPU). Radiofrequency is UNTESTED in C. elegans: its autopilot is
+# level 0 (= no effect, because there is no evidence). This run instead ASSUMES a weak effect to see whether it would
+# matter if it existed: field level 1.0 -> extra energy cost 0.001/tick and 5 % fertility loss (the custom defaults).
+# A null result here means "even if RF did this, evolution would barely notice".
+[run]
+name = "explore_radiofrequency"     # [R1]
+
+[factors.radiofrequency]
+mode = "custom"
+field = { space = "uniform", level = 1.0 }

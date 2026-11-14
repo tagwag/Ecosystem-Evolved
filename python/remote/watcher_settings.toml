@@ -5,9 +5,9 @@ theme = "system"                 # GUI look: follow Windows, or force light / da
 refresh_seconds = 5             # How often the GUI refreshes status, charts and the live view.
 
 [jobs]
-max_parallel = 3                # Light jobs allowed at the same time (heavy jobs always run alone).
-util_max = 50                   # A light job only starts beside others while the GPU is below this % busy.
-max_wait_minutes = 60           # A job that can't start safely for this long fails with the reason.
+max_parallel = 4                # Light jobs allowed at the same time (heavy jobs always run alone).
+util_max = 70                   # A light job only starts beside others while the GPU is below this % busy.
+max_wait_minutes = 600          # A job that can't start safely for this long fails with the reason.
 
 [safety]
 start_temp_max = 80             # No job starts at or above this GPU temperature (C).

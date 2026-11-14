@@ -19,6 +19,16 @@ API (all JSON):
   GET  /api/live              running simulations' latest live frames (?job=<name> for one)
   GET  /api/gpu?n=300         recent GPU temperature / load / memory / power samples (from gpu_temps.csv)
   GET  /api/replays           recorded runs;  GET /api/replay?job=<name>&start=0&n=200  frames for playback
+  GET  /api/analysis/files     every analysable results file (engine, equilibrium, 2nd Experiment, connectome steps)
+  GET  /api/analysis/key        the key: one plain-language line per experiment file + what each group label means
+  GET  /api/analysis/info?file=<id>             groups, measures, time axis of one file
+  POST /api/analysis/run {file, measure, ref, groups, ti, correction, paired, corr_group}  -> full statistics
+       (see gui/analysis.py: describe, compare, omnibus, trend, correlations, write-up)
+  GET  /api/analysis/csv?file=<id>&ti=<index>   tidy CSV download of every measure
+  POST /api/queue_main {args} -> queues a Main Experiment run (watcher entry main_experiment); args are checked
+                                 against the ranges in remote/experiments.toml before the job file is written
+The schema also carries `choices` (every setting with a fixed list of allowed words -> a dropdown in the Builder)
+and `main_experiment` (the Main Experiment's settings and their ranges).
 """
 import html, json, re, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -27,6 +37,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PY = HERE.parent
 ENGINE = PY / "engine"; REMOTE = PY / "remote"; CATALOG = PY / "factors" / "catalog.toml"
+sys.path.insert(0, str(HERE))      # gui/analysis.py
 sys.path.insert(0, str(ENGINE))
 import config as C          # noqa: E402  (engine registry; importing it is cheap, no GPU work)
 sys.path.insert(0, str(REMOTE))
@@ -47,7 +58,12 @@ def schema():
         facs.append(dict(name=name, category=c["category"], evidence=c["evidence"], level=LEVEL[c["evidence"]],
                          forms=c["forms"], notes=c.get("notes", ""), default=default, auto=auto,
                          tag=tag_of.get(name, "")))
-    return dict(factors=facs,
+    reg = tomllib.loads((REMOTE / "experiments.toml").read_text())
+    main_args = (reg.get("main_experiment") or {}).get("args", {})
+    return dict(choices=dict(field=C.FIELD_CHOICES, factor_mode=C.FACTOR_MODE_CHOICES, sources=C.SOURCE_CHOICES,
+                             world=C.WORLD_CHOICES, world_ranges=C.WORLD_RANGES),
+                main_experiment=main_args,
+                factors=facs,
                 run=[dict(key=k, default=v, doc=RUN_DOCS.get(k, ""), tag=f"R{i}") for i, (k, v) in enumerate(C.RUN_DEFAULTS.items(), 1)],
                 world=[dict(key=k, default=v, doc=WORLD_DOCS.get(k, ""), tag=f"W{i}") for i, (k, v) in enumerate(C.WORLD_DEFAULTS.items(), 1)])
 
@@ -83,6 +99,35 @@ def check(form):
     except Exception as e:
         errs.append(str(e))
     return dict(ok=not errs, errors=errs, toml=text)
+
+
+def queue_main(args):
+    """Queue a Main Experiment run. Only the settings listed in experiments.toml [main_experiment] are accepted, each
+    inside its range; the watcher checks them again (whitelist + ranges + safety gate) before anything runs."""
+    spec = tomllib.loads((REMOTE / "experiments.toml").read_text()).get("main_experiment")
+    if not spec:
+        return dict(ok=False, errors=["this watcher has no main_experiment entry"])
+    errs, clean = [], {}
+    for k, v in args.items():
+        rule = spec["args"].get(k)
+        if rule is None:
+            errs.append(f"unknown setting {k}"); continue
+        if rule["type"] == "int":
+            try:
+                v = int(v)
+            except (TypeError, ValueError):
+                errs.append(f"{k} must be a whole number"); continue
+            if not rule.get("min", v) <= v <= rule.get("max", v):
+                errs.append(f"{k}={v} outside {rule.get('min')}..{rule.get('max')}"); continue
+        elif not NAME_RE.match(str(v)):
+            errs.append(f"{k} must be letters or digits (time as HHMM, e.g. 1900, or none)"); continue
+        clean[k] = v
+    if errs:
+        return dict(ok=False, errors=errs)
+    tag = f"cross{clean.get('cross_pct', 0)}_g{clean.get('groups', 0)}_{clean.get('gens', 'd')}g"
+    job = f"{time.strftime('%Y%m%d_%H%M%S')}_main_{tag}.json"
+    (REMOTE / "queue" / job).write_text(json.dumps(dict(experiment="main_experiment", args=clean, by="gui")))
+    return dict(ok=True, queued=job)
 
 
 def status():
@@ -291,6 +336,22 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, replays())
             if p == "/api/replay":
                 return self._send(200, replay(q.get("job"), int(q.get("start", 0)), min(int(q.get("n", 200)), 1000)))
+            if p == "/api/analysis/files":
+                import analysis as AN
+                return self._send(200, AN.list_files())
+            if p == "/api/analysis/key":
+                import analysis as AN
+                return self._send(200, AN.key())
+            if p == "/api/analysis/info":
+                import analysis as AN
+                return self._send(200, AN.clean(AN.info(q.get("file", ""))))
+            if p == "/api/analysis/csv":
+                import analysis as AN
+                body = AN.tidy_csv(q.get("file", ""), ti=int(q.get("ti", -1))).encode()
+                self.send_response(200); self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", f'attachment; filename="{Path(q.get("file", "data")).stem}_tidy.csv"')
+                self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+                return
             if p == "/guide":
                 return self._send(200, md_to_html((ENGINE / "FACTOR_GUIDE.md").read_text()), "text/html; charset=utf-8")
             if p.startswith("/results/"):
@@ -306,6 +367,18 @@ class H(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
             if self.path == "/api/settings":
                 r = save_settings(data.get("settings") or {})
+                return self._send(200 if r["ok"] else 400, r)
+            if self.path == "/api/analysis/run":
+                import analysis as AN
+                try:
+                    r = AN.analyse(data["file"], data["measure"], ref=data.get("ref"), groups=data.get("groups"),
+                                   ti=int(data.get("ti", -1)), correction=data.get("correction", "holm"),
+                                   paired=data.get("paired"), corr_group=data.get("corr_group"))
+                    return self._send(200, AN.clean(dict(ok=True, **r)))
+                except (ValueError, KeyError) as e:
+                    return self._send(400, dict(ok=False, error=str(e)))
+            if self.path == "/api/queue_main":
+                r = queue_main(data.get("args") or {})
                 return self._send(200 if r["ok"] else 400, r)
             form = data.get("form") or {}
             if self.path == "/api/check":

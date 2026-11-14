@@ -93,6 +93,30 @@ Default: `0.005`. Energy per tick per unit of each resistance/ability trait (abi
 ### [W18] world.dauer_cost
 Default: `0.002`. Energy per tick while in the dauer resting stage.
 
+### [W19] world.sense_noise
+Default: `0.01`. Random noise added to every smell and taste reading each tick (0 = perfect senses). Higher = senses are less reliable, which favours brains that average over time.
+
+### [W20] world.motor_noise
+Default: `0.1`. Random wobble added to every turn each tick (0 = perfect steering). Higher = movement less precise.
+
+### [W21] world.mutation_mode
+Default: `"all"`. How a child's mutations are spread: "all" = every gene changes a little (default, the old behaviour); "sparse" = only about mutation_genes genes change, each by a bigger step, so the expected total change is the same. Real mutations are sparse (few sites per genome per generation).
+
+### [W22] world.mutation_genes
+Default: `10`. In sparse mode: the average number of genes changed per child.
+
+### [W23] world.recombination_rate
+Default: `0.0`. Chance per birth that the child's genes are mixed 50/50 with the NEAREST other living worm (within recombination_radius). 0 = clonal reproduction (default). A simple stand-in for mating that needs no male worms; for real males and hermaphrodites use the mating_system factor. Never applied in the frozen arm.
+
+### [W24] world.recombination_radius
+Default: `10.0`. How close (units) the other worm must be for recombination.
+
+### [W25] world.immigration_rate
+Default: `0.0`. Newcomer worms arriving per 1000 ticks per world (0 = closed world, default). Each starts a new family (parent id -1 in the family tree). Not in the frozen arm. Shadow and real arms receive immigrants independently, so their populations can differ slightly.
+
+### [W26] world.immigrant_source
+Default: `"founders"`. "founders" = newcomers carry the world's founder genome (brings back lost old variety); "random" = unevolved random genomes (brings brand-new variety, usually poor foragers).
+
 ## Factors
 
 ### Category: physical

@@ -2,12 +2,16 @@
 evolves at once on the 3080 (seeds x population x 3 arenas = thousands of worms per step).
 Not number-for-number identical to sim.py (different random streams, float32) -> compare statistically.
 
-Usage: python sim_gpu.py [seeds] [gens] [conds comma-list or 'all'] [--fair] [--resume RESULTS.json]
+2nd EXPERIMENT (the toy brain; "Main Experiment" is now the connectome brain, ecosim/step20.py).
+Usage: python sim_gpu.py [seeds] [gens] [conds comma-list or 'all'] [--fair] [--resume RESULTS.json] [--until HH:MM]
                           [--from-gen G [--as NAME] [--seed S]]
   Checkpoints: the whole population of every lineage is saved every 50 generations to checkpoints/. An interrupted run
   RESUMES from its latest checkpoint automatically (finished brain types are skipped as before).
   --from-gen G : BRANCH a new run from generation G of the same run (same settings), e.g. a Lenski-style replay;
                  --seed S gives it new luck (otherwise it repeats exactly).
+  --cross F --groups K : INTERBREEDING. A fraction F of each lineage's children are crosses with elites of other
+                 lineages in the same group (K groups; e.g. 30 lineages, --groups 10 = 10 independent groups of 3).
+                 Output name gets _cross<F>_g<K>. Analyse per GROUP (group means), not per lineage.
 Writes results_gpu_<gens>g_<seeds>s.json (+ best genomes, learning curves) and a progress log run_gpu_log.txt.
 SAFE TO INTERRUPT: each condition's results are saved when it finishes; a rerun skips finished conditions.
 """
@@ -108,6 +112,11 @@ def mut_sigma(c):
 CKPT_EVERY = 50          # save the WHOLE population of every lineage every 50 generations (checkpoints/)
 
 
+CROSS = 0.0             # fraction of each lineage's non-elite children made by crossing with ANOTHER lineage's elite
+DEADLINE = None         # --until HH:MM: at this clock time save a checkpoint and stop cleanly (re-run the same command to finish)
+GROUPS = 0              # lineages interbreed only inside their group (0 = no grouping: any lineage with any other)
+
+
 def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start=None):
     """All S lineages (seeds) at once.
     init: optional (S, L) starting champions (continuation): each lineage starts as its champion + pop-1 mutants of it.
@@ -115,6 +124,10 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start
     MUTATION EVENTS on its line of descent (one per child birth; elites copied unchanged add none) and the total SIZE
     of those changes (sum of mutation vector lengths).
     ckpt: file-name prefix for checkpoints (Path); start: a checkpoint dict to continue from (resume / branch).
+    INTERBREEDING (CROSS > 0): each generation, a fraction CROSS of every lineage's children are crosses: each gene
+    comes with chance 1/2 from the lineage's own elite parent, otherwise from a random elite of another lineage in the
+    same group (GROUPS groups of S/GROUPS lineages; groups never mix, so each group is an independent replicate).
+    Crosses are then mutated like any child. Their ancestor label stays the own-lineage parent's.
     Returns dict: best (S, L), curve (S, gens), and for the best: nmut, mutsize, ancestor share of the final population."""
     L = glen(c)
     sig = mut_sigma(c)
@@ -136,6 +149,12 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start
             gen.set_state(start["rng"])
         log(f"  continuing from generation {g0}")
     for g in range(g0, gens):
+        if DEADLINE is not None and time.time() >= DEADLINE and ckpt is not None:   # --until: stop cleanly, resumable
+            ckpt.parent.mkdir(exist_ok=True)
+            torch.save(dict(g=g, G=G.cpu(), nmut=nmut.cpu(), msize=msize.cpu(), anc=anc.cpu(), curve=curve.clone(),
+                            rng=gen.get_state()), f"{ckpt}_g{g}.pt")
+            log(f"  DEADLINE reached at generation {g}: checkpoint saved. Run the same command again to finish.")
+            log("STOPPED_AT_DEADLINE"); sys.exit(0)
         if ckpt is not None and g > 0 and g % CKPT_EVERY == 0:
             ckpt.parent.mkdir(exist_ok=True)
             torch.save(dict(g=g, G=G.cpu(), nmut=nmut.cpu(), msize=msize.cpu(), anc=anc.cpu(), curve=curve.clone(),
@@ -150,7 +169,19 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start
         eN, eS, eA = (torch.gather(x, 1, idx) for x in (nmut, msize, anc))
         par = torch.randint(0, elite, (S, pop - elite), generator=gen, device=DEV)
         d = sig * torch.randn(S, pop - elite, L, generator=gen, device=DEV)
-        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L)) + d
+        kids = torch.gather(E, 1, par[:, :, None].expand(S, pop - elite, L))
+        if CROSS > 0 and S > 1:                                     # interbreed with other successful lineages
+            n_x = int(round(CROSS * (pop - elite)))
+            gsz = S // GROUPS if GROUPS else S
+            grp = torch.arange(S, device=DEV) // gsz
+            # partner lineage: another lineage of the same group, picked at random for every cross child
+            off = torch.randint(1, max(gsz, 2), (S, n_x), generator=gen, device=DEV)
+            mate_lin = grp[:, None] * gsz + ((torch.arange(S, device=DEV)[:, None] % gsz) + off) % gsz
+            mate_el = torch.randint(0, elite, (S, n_x), generator=gen, device=DEV)
+            mates = E[mate_lin, mate_el]                            # (S, n_x, L)
+            mask = torch.rand(S, n_x, L, generator=gen, device=DEV) < 0.5
+            kids[:, :n_x] = torch.where(mask, mates, kids[:, :n_x])
+        kids = kids + d
         G = torch.cat([E, kids], 1)
         nmut = torch.cat([eN, torch.gather(eN, 1, par) + 1], 1)
         msize = torch.cat([eS, torch.gather(eS, 1, par) + d.norm(dim=-1)], 1)
@@ -164,7 +195,9 @@ def evolve(c, S, gens, gen, pop=48, elite=8, reps=3, init=None, ckpt=None, start
     j = f.argmax(1); ar = torch.arange(S, device=DEV)
     best_anc = anc[ar, j]
     share = (anc == best_anc[:, None]).float().mean(1)               # reproductive success of the best's founder line
-    return dict(best=E[ar, j], curve=curve, nmut=nmut[ar, j].cpu(), mutsize=msize[ar, j].cpu(), share=share.cpu())
+    variety = G.var(1).mean(1)                                      # population variety: mean gene variance per lineage
+    return dict(best=E[ar, j], curve=curve, nmut=nmut[ar, j].cpu(), mutsize=msize[ar, j].cpu(), share=share.cpu(),
+                variety=variety.cpu())
 
 
 def combined_score(fair, share, curve, slope_window=100):
@@ -193,11 +226,25 @@ if __name__ == "__main__":
     resume = opt("--resume")                       # continue from the champions saved in a results file
     from_gen = opt("--from-gen"); branch_as = opt("--as"); bseed = opt("--seed")   # branch from a checkpoint
     FAIR = "--fair" in argv; argv = [a for a in argv if a != "--fair"]
+    CROSS = float(opt("--cross", 0.0)); GROUPS = int(opt("--groups", 0))
+    until = opt("--until")                                 # e.g. 19:00 (today, local time; tomorrow if already past)
+    if until and until != "none":
+        import datetime as _dt
+        u = until.replace(":", ""); hh, mm = int(u[:-2]), int(u[-2:]); now = _dt.datetime.now()   # 19:00 or 1900
+        dl = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if dl <= now:
+            dl += _dt.timedelta(days=1)
+        DEADLINE = dl.timestamp()
+    cp = opt("--cross-pct")                                # same as --cross, as a whole-number percent (watcher form)
+    if cp is not None:
+        CROSS = int(cp) / 100
     S = int(argv[0]) if len(argv) > 0 else 30
     gens = int(argv[1]) if len(argv) > 1 else 300
     names = list(CONDS) if len(argv) <= 2 or argv[2] == "all" else argv[2].split(",")
     prev = json.loads(Path(resume).read_text()) if resume else None
     tag = f"_cont{gens}_from_{Path(resume).stem.replace('results_gpu_', '')}" if resume else ""
+    if CROSS > 0:
+        tag += f"_cross{CROSS:g}_g{GROUPS}"
     out = Path(f"results_gpu_{gens}g_{S}s{'_fair' if FAIR else ''}{tag}.json")
     src_out = out
     if from_gen:
@@ -237,7 +284,8 @@ if __name__ == "__main__":
                  genomes=ev["best"].cpu().tolist(), sec=time.time() - t0,
                  mutations=ev["nmut"].tolist(), mutation_size=ev["mutsize"].tolist(), repro_share=ev["share"].tolist(),
                  combined=score.tolist(), slope_last100=slope.tolist(),
-                 previous_normal=prev_n, mutations_counted_from=("continuation start" if prev else "generation 0"))
+                 previous_normal=prev_n, mutations_counted_from=("continuation start" if prev else "generation 0"),
+                 variety=ev["variety"].tolist(), cross=CROSS, groups=GROUPS, group_of_lineage=[(i // (S // GROUPS)) if GROUPS else 0 for i in range(S)])
         res[name] = r
         out.write_text(json.dumps(res))
         k = int(np.lexsort((-slope, -score))[0])

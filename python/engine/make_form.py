@@ -53,6 +53,23 @@ WORLD_DOCS = {
     "start_fill": "Fraction of slots filled with founders at the start.",
     "trait_cost": "Energy per tick per unit of each resistance/ability trait (abilities aren't free).",
     "dauer_cost": "Energy per tick while in the dauer resting stage.",
+    "sense_noise": "Random noise added to every smell and taste reading each tick (0 = perfect senses). Higher = senses "
+                   "are less reliable, which favours brains that average over time.",
+    "motor_noise": "Random wobble added to every turn each tick (0 = perfect steering). Higher = movement less precise.",
+    "mutation_mode": "How a child's mutations are spread: \"all\" = every gene changes a little (default, the old "
+                     "behaviour); \"sparse\" = only about mutation_genes genes change, each by a bigger step, so the "
+                     "expected total change is the same. Real mutations are sparse (few sites per genome per generation).",
+    "mutation_genes": "In sparse mode: the average number of genes changed per child.",
+    "recombination_rate": "Chance per birth that the child's genes are mixed 50/50 with the NEAREST other living worm "
+                          "(within recombination_radius). 0 = clonal reproduction (default). A simple stand-in for "
+                          "mating that needs no male worms; for real males and hermaphrodites use the mating_system factor. "
+                          "Never applied in the frozen arm.",
+    "recombination_radius": "How close (units) the other worm must be for recombination.",
+    "immigration_rate": "Newcomer worms arriving per 1000 ticks per world (0 = closed world, default). Each starts a new "
+                        "family (parent id -1 in the family tree). Not in the frozen arm. Shadow and real arms receive "
+                        "immigrants independently, so their populations can differ slightly.",
+    "immigrant_source": "\"founders\" = newcomers carry the world's founder genome (brings back lost old variety); "
+                        "\"random\" = unevolved random genomes (brings brand-new variety, usually poor foragers).",
 }
 LEVEL = {"EVO": "easy", "EFFECT": "easy", "CONTESTED": "researcher", "UNTESTED": "researcher"}
 
@@ -80,6 +97,7 @@ def main():
             "# Every setting has a footnote tag like [F7]; look it up in FACTOR_GUIDE.md (same folder) for what it",
             "# means, how it is modelled, the research behind it and the sources.",
             "# Factors: mode = \"off\" (not in the world) | \"auto\" (realistic autopilot) | \"custom\" (your values).",
+            "# Some factors have their own mode (e.g. predators chaser/pristionchus): write it as factor_mode = \"...\".",
             "# To ISOLATE one trait/factor: set that one to custom, leave the rest off (or auto for a natural background).",
             "# ============================================================================================", "", "[run]"]
     guide = ["# Factor guide: footnotes for the experiment form", "",
@@ -116,8 +134,8 @@ def main():
             doc = inspect.getdoc(type(obj)) or ""
             form += [f"[factors.{name}]".ljust(46) + f"# [{tag}] {c['evidence']}, {c['status']}",
                      'mode = "off"'.ljust(46) + "# off | auto | custom"]
-            for k, v in default.items():
-                form.append(f"# {k} = {toml_val(v)}")
+            for k, v in default.items():                 # a factor's own 'mode' is written factor_mode in forms
+                form.append(f"# {'factor_mode' if k == 'mode' else k} = {toml_val(v)}")
             guide += [f"#### [{tag}] {name}  ({c['evidence']}; GUI level: {LEVEL[c['evidence']]})", "",
                       f"**Real-world forms:** {', '.join(c['forms'])}.", ""]
             if c.get("notes"):

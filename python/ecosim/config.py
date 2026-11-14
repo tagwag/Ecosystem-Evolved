@@ -110,6 +110,40 @@ class Config:
     # Zones per 1,000,000 square units (normal world ~2.07M), at least 1 of each.
     senses: bool = False
     sense_gain: float = 3.0
+    # ---- Step 22 (2026-11-13): RED LIGHT / GREEN LIGHT, the "Reward Hacking experiment" (off by default). GPU only.
+    # Time is split into red and green phases of random length (red_min..red_max blocks of 10 ticks, per world).
+    #   red phase    moving is punished: energy per tick - red_cost x speed command (0..1). Standing still is free.
+    #   green phase  nothing special: the worm should forage as usual.
+    # The worm cannot see the phase. The ONLY cue is the peptide channel: with redlight on, the broadcast peptide
+    # level is set from OUTSIDE (it no longer follows the worm's own hunger): red_signal =
+    #   'true'       peptide = 1 during red, 0 during green (an honest command)
+    #   'scrambled'  peptide follows a different random schedule with the same statistics (an uninformative signal)
+    # A brain with no peptide receptors (hunger=False) gets no signal at all.
+    redlight: bool = False
+    red_cost: float = 3.0           # per tick at full speed command (base_cost is 0.6): moving on red is very costly
+    red_min: int = 3                # phase length in blocks of 10 ticks: 30..100 ticks by default
+    red_max: int = 10
+    red_signal: str = 'true'
+    # ---- Step 21 (2026-11-13): gravity pattern (off by default). GPU code only (batch3_fast.FastSim).
+    # Local gravity = 1 g + strength x pattern. The PATTERN is made the way the original Java game made its cave
+    # walls (java-original/src/Enviroment/Obstacle.java): simplex noise sampled at a feature size, "wall" where the
+    # noise is above a threshold. Here the walls are HEAVY-gravity regions, the open ground is light, and the hard wall
+    # edge is replaced by a soft ramp (feathered, like blending paint). Values -1..+1 with mean 0. The pattern is
+    # the same in every world and every generation; the STRENGTH is set per world (FastSim.grav_s), so one run can
+    # hold worlds from "almost uniform Earth gravity" to "0 g to 2 g". dg below = local gravity - 1.
+    #   sensed   dg is fed (x grav_gain) into the PVD neurons, the mechanosensory neurons implicated in C. elegans
+    #            gravity sensing (Ackley et al., negative gravitaxis needs MEC-7 / MEC-12 / TRPA-1 and PVD)
+    #   slowed   speed x (1 - grav_slow x dg): heavier ground is slower, lighter ground faster (limits 0.25x - 1.75x)
+    #   paid     energy per tick + grav_cost x dg: heavier ground costs more, lighter ground less (base_cost is 0.6)
+    # These effects are MODEL ASSUMPTIONS (heavier = slower and costlier), not measured worm physiology.
+    gravity: bool = False
+    grav_gain: float = 3.0
+    grav_slow: float = 0.5
+    grav_cost: float = 0.3
+    grav_feature: float = 220.0     # size of the cave-like features in world units (the Java game used 14 pixels)
+    grav_wall: float = 0.25         # noise level (noise scaled to -1..1) above which ground is "wall" = heavy
+    grav_feather: float = 0.25      # half-width of the soft edge in noise units; 0 = hard cave-wall edge
+    grav_seed: int = 20261113       # fixes the pattern's layout (same pattern for every world and run)
     temp_cost: float = 0.4          # per tick at the hottest/coldest spot (base_cost is 0.6)
     light_cost: float = 0.3
     toxic_cost: float = 1.5

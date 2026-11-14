@@ -3,17 +3,36 @@
 **Every session: read this file and PROJECT_NOTES.txt before starting, update both when you finish something.**
 Sessions can't see each other's chats; this file and the git history are how they stay in sync.
 
+## RULE (owner, 2026-11-13 21:40): everything runs on the workstation
+Unless the owner explicitly says otherwise, ALL experiments AND all code tests run on this workstation (RTX 3080),
+through the watcher (python/remote). Nothing is run in the cloud - not even tiny code checks. Every experiment has a
+`*_check` watcher job for that (e.g. `gravity_check`, `reward_hacking_check`). Cloud sessions may edit code, read
+results and write documents only.
+
 ## GPU (the user's RTX 3080 desktop) — one experiment at a time
 Before launching anything on the GPU, check this section. If a run is listed as RUNNING, queue behind it
 (or ask the user) instead of starting a second run: two runs at once both slow down.
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| idle | (last: toy brain 300 gens, finished 2026-11-13 10:33 MT) | | | | |
+| finishing | 2nd Experiment (toy brain) m1 reference / m2 one-pool cross / m3 10-group cross, 3200 gens | 2026-11-13 19:00 MT | watcher | remote/logs/m*_2nd_*.txt | ~21:45 |
+| queued 1 | code checks k1 gravity_check, k2 reward_hacking_check (minutes) | - | watcher | remote/logs/k*.txt | - |
+| queued 2 | GRAVITY EXPERIMENT g1 (ecosim/step21.py, doc STEP21_GRAVITY_EXPERIMENT.md): 100 seeds x 300 gens, then analysis | ~21:50 | watcher | remote/logs/g1_*.txt | ~04:00 |
+| queued 3 | engine batch v3 f4-f6 + explorations x1-x9, alongside gravity while GPU < 70 % | - | watcher | remote/logs/ | overnight |
+| queued 4 | REWARD HACKING EXPERIMENT r1 (ecosim/step22.py, doc STEP22_REWARD_HACKING_EXPERIMENT.md): whole GPU ~3 h, then analysis | after the above | watcher | remote/logs/r1_*.txt | morning |
+| DONE | MAIN EXPERIMENT (connectome Step 20), ran 15:52-19:00 | 2026-11-13 | watcher | results/step20_stats.txt | done |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-13 MAIN EXPERIMENT (ecosim/step20.py, doc ecosim/STEP20_MAIN_EXPERIMENT.md): at gen 190, 16 paired seeds, 12 unseen
+  worlds: reversal potentials NO detectable effect (-0.003, Holm p 0.97); muscle output HURTS (-0.63, 0/16 seeds, Holm
+  p 0.0001). Not proof muscles are worse: the readout has 3 gains vs 168 decoder weights and starts with little drive.
+- NAMES since 2026-11-13 15:50: Main Experiment = connectome brain (step20); 2nd Experiment = toy brain (toybrain/).
+- GUI: new Builder tab (step-by-step forms) and Analysis tab (study-grade statistics + experiment key). gui/README.md.
+- 2026-11-13: FINDINGS BOOK (Claude Doc "Ecosystem-Evolved: Findings Book") = the readable summary of everything.
+- World 19 x 10 copies, 600 gens: frozen steady within 5.5 % (equilibrium PASS); real worms 3x slower than frozen, pop 566
+  vs 384, 36 families alive vs 2 under chance (shadow). Head-start test NOT supported (fresh 900 >= 300+600).
 - Steps 3d-8c (GPU, 32 seeds): peptide = movement "off switch", never a clear fitness gain; in 8c it traps 2/3 of seeds in a freeze.
 - Step 4g: growth neutral (p=0.99). Step 3f: ASH alarm null. Step 8: predators costly, touch gives no escape.
 - Step 6b (12 seeds): curriculum hint was noise, memory null. Step 9: see PROJECT_NOTES.

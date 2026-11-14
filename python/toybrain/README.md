@@ -1,4 +1,5 @@
-# Toy brain experiment — handbook
+# 2nd Experiment (folder: toybrain) — small evolvable worm brains on the GPU
+(Called "Main Experiment" on 13 Nov 2026 15:10-15:50; since then "Main Experiment" = the connectome brain, ecosim/step20.py.)
 
 **Question:** in a simple simulated worm, what happens to foraging if you (a) remove long-range smell, (b) add more
 "thinking" neurons, (c) add neurons that are born during life and learn? It is a *toy model*: worms have no frontal
@@ -78,3 +79,40 @@ See `PROJECT_NOTES.txt` (section 2026-11-11..13) and the `*_stats.txt` files.
   generation 300 of the same run (same settings), with new luck if `--seed` is given. Output gets `_replayA` added.
 - Runs started before this feature (the first fair run, and the continuation that was running when it was added)
   have no checkpoints.
+
+## Interbreeding between lineages (added 2026-11-13)
+Why: in the toy brain every population ends up descended from one ancestor within a few hundred generations
+(reproductive share = 1.00 everywhere), so variety collapses and progress plateaus (300 -> 900 generations added
+only 0-3 food). Interbreeding brings in genes from other successful lineages every generation.
+
+- `sim_gpu.py 30 900 all --fair --cross-pct 25 --groups 10` (watcher: `toybrain_interbreed`): 25 % of each lineage's
+  non-elite children are crosses (each gene 50/50 from the own elite parent or a random elite of another lineage in the
+  same group), then mutated. 30 lineages in 10 groups of 3: groups never mix, so there are 10 independent replicates.
+  **Analyse group means, not lineages** (lineages in a group share genes).
+- Extra cost: one gene-mixing step per generation, negligible on the GPU.
+- New measure for every run: `variety` = mean gene variance inside each lineage's final population (higher = more
+  variety kept).
+- Pre-registered test (2026-11-13): interbreeding helps if the 10 group means of the fair-test score beat the fresh
+  900-generation run's lineages grouped the same way (10 groups of 3), Welch t-test p < 0.05.
+
+## 2nd Experiment: the 7pm stop and the three-way interbreeding comparison (added 2026-11-13)
+**Name.** From 2026-11-13 15:50 the toy brain is called the **2nd Experiment** (briefly "Main Experiment" before that) in the GUI, the watcher and the docs. The
+folder stays `toybrain/` on purpose: old results, checkpoints and the factor engine's founder files point at it.
+
+**`--until HHMM`** (or `HH:MM`): at that clock time the run saves a checkpoint of the lineage it is working on and exits
+cleanly with `STOPPED_AT_DEADLINE` in the log. Nothing is lost: queue the exact same job again and it RESUMES from that
+checkpoint (finished brain types are skipped). A time already past today means tomorrow. `none` = no limit.
+
+**Watcher entry `main_experiment`** (remote/experiments.toml): args `gens` (default 2500), `cross_pct` (0 = no
+interbreeding), `groups` (1 = one shared pool, 10 = ten independent groups of 3), `until` (HHMM or none).
+
+**The 2026-11-13 comparison** (all 2,500 generations, same seeds, 5 brain types, stop at 19:00):
+| Job | cross_pct | groups | What it tests |
+|---|---|---|---|
+| m1_main_reference | 0 | - | the shared reference: no interbreeding |
+| m2_main_cross_pool | 25 | 1 | any lineage may cross with any other (most variety; only 1 independent replicate) |
+| m3_main_cross_10groups | 25 | 10 | crosses only inside groups of 3 (10 independent replicates) |
+Output files: `results_gpu_2500g_30s_fair.json`, `..._cross0.25_g1.json`, `..._cross0.25_g10.json`.
+Pre-registered rule: interbreeding helps if m3's 10 group means beat m1's lineages grouped the same way (Welch p < 0.05).
+m2 is judged by level and kept variety only (its lineages share genes, so they are not independent).
+If a run was stopped by the deadline, compare all three at the same generation (curves are saved per generation).

@@ -29,3 +29,5 @@ python/remote/watcher_log.txt
 python/engine/results/*_ckpt/
 python/engine/results/*_tree/
 python/toybrain/checkpoints/
+python/_ecosim_snap_*.tgz
+python/toybrain/*.bak_*

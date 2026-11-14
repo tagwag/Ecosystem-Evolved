@@ -132,3 +132,34 @@ descent since its founder) and `msize` (their total size). Measured every sample
 | `... family --world W --uid U` | one family's size over time + a drawing of its tree (PNG) |
 | `... report --world W` | all of the above in one text file + PNGs (`results/<run>_w<W>_genealogy.txt`) |
 Watcher: `{"experiment": "genealogy_report", "args": {"run": "baseline", "world": 60}}` (CPU only, seconds).
+
+## 10. New world settings: noise, mutation style, recombination, immigration (added 2026-11-13)
+All are in the `[world]` section of a form, footnotes [W19]-[W26] in FACTOR_GUIDE.md. **The defaults reproduce the old
+behaviour exactly** (same random numbers), so older forms and results stay comparable.
+
+| setting | default | allowed | what it does |
+|---|---|---|---|
+| `sense_noise` | 0.01 | 0-1 | noise on smell and taste readings each tick |
+| `motor_noise` | 0.1 | 0-2 | random wobble on every turn |
+| `mutation_mode` | "all" | "all", "sparse" | all genes change a little, or ~`mutation_genes` genes change by bigger steps (same expected total) |
+| `mutation_genes` | 10 | 1-1000 | genes changed per child in sparse mode |
+| `recombination_rate` | 0.0 | 0-1 | chance per birth of a 50/50 gene mix with the nearest worm within `recombination_radius` |
+| `recombination_radius` | 10.0 | 0-400 | how near that worm must be |
+| `immigration_rate` | 0.0 | 0-100 | newcomers per 1000 ticks per world; each starts a new family (parent id -1) |
+| `immigrant_source` | "founders" | "founders", "random" | newcomers carry the founder genome, or a random unevolved one |
+
+Rules that keep the controls honest:
+- The **frozen arm never gets recombination or immigrants**, so its zero-change check (genetic distance 0) still holds.
+- Shadow and real arms get immigrants at the same rate but independently, so their populations can differ by a few worms.
+- Out-of-range or unknown values are refused with a message naming the allowed values (also in `--preflight`).
+- New measurements: `immigrants` and `recombinations` (counts per sample, per world) appear in results when used.
+Test: `configs/test_new_world.toml --quick` (all switched on) passes the zero point. Code: engine.py `_immigrate`,
+the recombination block in `_birth`, the noise lines in `tick`.
+
+## 11. Allowed-word lists and `factor_mode` (added 2026-11-13)
+- Every text setting with a fixed set of words is listed in config.py: `FIELD_CHOICES` (field.space, field.time),
+  `FACTOR_MODE_CHOICES` (a factor's own mode), `SOURCE_CHOICES` (radiation / toxin sources), `WORLD_CHOICES`.
+  `check_choices()` refuses anything else with the allowed list. Before this, a typo was silently ignored by the factor
+  code (e.g. `space = "gradiant"` quietly behaved like a flat field). If you add a word to the factor code, add it here.
+- In a form, a factor's own mode is written `factor_mode = "pristionchus"` because `mode` is off / auto / custom.
+  The template (configs/TEMPLATE.toml) shows it that way.

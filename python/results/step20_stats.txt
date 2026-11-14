@@ -1,0 +1,9 @@
+Step 20 / Main Experiment: yardstick at generation 190 (common to all arms), 16 seeds
+arm         skill    food   bites
+s20_old     2.652    7.60    1.22
+s20_rev     2.791    7.52    1.22
+s20_mus     2.164    7.06    0.82
+s20_both    2.019    7.05    0.77
+reversal  effect -0.003  (positive in 8/16 seeds)  p=0.968  Holm p=0.968  -> no detectable effect
+muscles   effect -0.630  (positive in 0/16 seeds)  p=5e-05  Holm p=0.0001  -> HURTS
+interaction -0.284  p=0.0284 (secondary, not in the rule)

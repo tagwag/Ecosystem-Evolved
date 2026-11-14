@@ -183,7 +183,8 @@ class World:
         frac = (self.food / self.food_max.clamp(min=1e-9))[:, None, :]
         sm = (frac * torch.exp(-d2 / (2 * float(e["sig_smell"]) ** 2))).sum(-1) * m["smell_food"] + m["smell_add"]
         ta = (frac * torch.exp(-d2 / (2 * float(e["sig_taste"]) ** 2))).sum(-1)
-        cur = torch.stack([sm + 0.01 * self.randn(N, S), ta + 0.01 * self.randn(N, S)], -1)
+        sn = float(e.get("sense_noise", 0.01))                         # sensory noise (world.sense_noise)
+        cur = torch.stack([sm + sn * self.randn(N, S), ta + sn * self.randn(N, S)], -1)
         dcur = (cur - self.prev) * 10; self.prev = cur
         # eating (shared when crowded); food type B only digestible with the digest_b trait
         inside = (d2 < float(e["patch_r"]) ** 2).float() * a[:, :, None]
@@ -206,7 +207,7 @@ class World:
         self.h = torch.tanh(torch.einsum("nshi,nsi->nsh", p["Win"], x) + torch.einsum("nshj,nsj->nsh", p["Wrec"], self.h)
                             + p["b"]) * a[..., None]
         o = torch.tanh(torch.einsum("nskh,nsh->nsk", p["Wout"], self.h) + p["bout"])
-        turn = o[..., 0] * 0.6 + 0.1 * self.randn(N, S)
+        turn = o[..., 0] * 0.6 + float(e.get("motor_noise", 0.1)) * self.randn(N, S)   # motor noise (world.motor_noise)
         self.hd = self.hd + turn * a
         sp = (0.3 + 0.7 * (o[..., 1] + 1) / 2) * m["speed"] * a
         self.xy = self.xy + sp[..., None] * torch.stack([torch.cos(self.hd), torch.sin(self.hd)], -1)
@@ -249,6 +250,33 @@ class World:
             nb[sw] = ready[rw].sum()
         ready = ready | self.pick(self.alive & shadow[:, None], nb)
         self._birth(ready, m["mut"])
+        self._immigrate()
+
+    def _immigrate(self):
+        """IMMIGRATION (world.immigration_rate worms per 1000 ticks per world): a newcomer appears in a free slot at a
+        random spot, with energy e_start and the world's founder genome ('founders') or a random genome ('random').
+        It starts a new family (lineage label = its slot) and is logged in the family tree with parent id -1.
+        Shadow and real arms both receive immigrants at the same rate (independently drawn); frozen receives none."""
+        e = self.cfg["world"]; rate = float(e.get("immigration_rate", 0.0)) / 1000
+        if rate <= 0:
+            return
+        # not in the frozen arm: it is the no-change control and must keep genetic distance exactly 0
+        arrive = (self.rand(self.N) < rate) & (~self.alive).any(1) & ~self.is_frozen
+        if not bool(arrive.any()):
+            return
+        wi = arrive.nonzero(as_tuple=True)[0]
+        ci = (~self.alive[wi]).float().argmax(1)                         # first free slot
+        g = self.founder[wi].clone() if e.get("immigrant_source", "founders") == "founders" else 0.5 * self.randn(len(wi), self.G.shape[-1])
+        self.G[wi, ci] = g; self.energy[wi, ci] = float(e["e_start"]); self.age[wi, ci] = 0
+        self.xy[wi, ci] = self.size * self.rand(len(wi), 2); self.hd[wi, ci] = 2 * math.pi * self.rand(len(wi))
+        self.h[wi, ci] = 0; self.dauer[wi, ci] = False; self.alive[wi, ci] = True
+        self.lineage[wi, ci] = ci; self.nmut[wi, ci] = 0; self.msize[wi, ci] = 0
+        new_uid = self.next_uid[wi]; self.next_uid[wi] += 1; self.uid[wi, ci] = new_uid
+        self.stats["immigrants"] = self.stats.get("immigrants", torch.zeros(self.N, device=DEV)); self.stats["immigrants"][wi] += 1
+        if self.record_tree:
+            self.tree_log["births"].append(torch.stack([torch.full_like(wi, self.t), wi, torch.full_like(wi, -1), new_uid,
+                                                        torch.zeros_like(wi)], 1).cpu())
+        self.p = unpack(self.G)
 
     def _birth(self, parent, mut_mult):
         free = ~self.alive
@@ -272,11 +300,26 @@ class World:
             rate = torch.ones(len(wi), device=DEV)
         mult = (~self.is_frozen[wi]).float() * rate * mut_mult[wi, pi]
         dg = (sigma * mult)[:, None] * self.randn(*g.shape)
+        if e.get("mutation_mode", "all") == "sparse":                  # MUTATION STYLE: a few genes, bigger steps
+            k = max(1, int(e.get("mutation_genes", 10))); L = g.shape[1]
+            dg = dg * (self.rand(*g.shape) < k / L).float() * (L / k) ** 0.5   # same expected total size as "all"
         self._last_dsize = dg.norm(dim=-1)
         g = g + dg
         frac = self.p["traits"][wi, pi, TRAIT_NAMES.index("maternal")].clamp(0.05, 0.95)
         child_e = self.energy[wi, pi] * frac
         self.energy[wi, pi] = self.energy[wi, pi] - child_e
+        rr = float(e.get("recombination_rate", 0.0))
+        if rr > 0:                                                     # RECOMBINATION with a nearby worm (no males needed)
+            rad = float(e.get("recombination_radius", 10.0))
+            d2 = ((self.xy[wi] - self.xy[wi, pi][:, None, :]) ** 2).sum(-1) + (~self.alive[wi]).float() * 1e9
+            d2[torch.arange(len(wi), device=DEV), pi] = 1e9                 # not with itself
+            dmin, mate = d2.min(-1)
+            do = (dmin < rad * rad) & (self.rand(len(wi)) < rr) & ~self.is_frozen[wi]   # frozen: no gene change
+            if bool(do.any()):
+                mix = self.rand(int(do.sum()), g.shape[1]) < 0.5
+                g[do] = torch.where(mix, self.G[wi[do], mate[do]], g[do])
+                self.stats["recombinations"] = self.stats.get("recombinations", torch.zeros(self.N, device=DEV))
+                self.stats["recombinations"] += torch.bincount(wi[do], minlength=self.N).float()
         if not self.mut_evolvable:
             g[:, self._trait_offset + mi] = 0.0
         self.G[wi, ci] = g
@@ -353,6 +396,9 @@ class World:
             row["deaths_" + cause] = c.clone(); c.zero_()
         for f in self.factors:
             row.update(f.measure(self))
+        for k in ("immigrants", "recombinations"):
+            if k in st:
+                row[k] = st[k].clone()
         for v in st.values():
             v.zero_()
         return {k: v.cpu().tolist() for k, v in row.items()}
