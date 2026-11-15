@@ -1,0 +1,54 @@
+Run: 30 replicates x ['frozen', 'shadow', 'real'], 50000 ticks, founders: toybrain_fair; factors on: ['predatory_fungi']
+
+EQUILIBRIUM rule (frozen within +-10% of its mean, last 75%, every replicate): FAIL
+  frozen population mean 294.1 (replicates 249.3-396.5); worst swing 12.6% (median 7.4%)
+ZERO POINT (frozen genetic distance == 0): PASS (max 0)
+
+End of run, mean over replicates (frozen / shadow / real):
+  population                           293.7     403.1     403.1
+  genetic distance from founder            0     6.487     6.801
+  genetic diversity                1.949e-12     39.75     47.28
+  founder lineages alive                8.99     12.64     32.78
+  eating rate (food/worm/tick)        0.0474   0.03285   0.03926
+  speed                               0.9555    0.9127    0.7097
+  turning                             0.4396     0.499    0.5701
+  births per sample                    215.5     88.37     88.37
+
+Extra measures at the end (frozen / shadow / real):
+  deaths_fungus_trap                   124.2     867.9     4.757
+  trait_dauer                              0  -0.01374 -0.001772
+  trait_digest_b                           0   0.02995  -0.08348
+  trait_escape                             0    0.0187  -0.05542
+  trait_heat_tol                           0 0.0008052  -0.01505
+  trait_male                               0 -0.002436  -0.01495
+  trait_maternal                         0.5    0.4852    0.4698
+  trait_mut_rate                           0         0         0
+  trait_nictation                          0   0.03536  -0.02258
+  trait_repair                             0 -0.002538  -0.05435
+  trait_resist_pathogen                    0  -0.04647  -0.07793
+  trait_resist_toxin                       0  0.007486  -0.05623
+  trait_resist_virus                       0  -0.01869  -0.06528
+  wire_co2                                 0    0.3118    0.3286
+  wire_dtemperature                        0    0.3181    0.3305
+  wire_efield                              0     0.321    0.3335
+  wire_light                               0    0.3238    0.3285
+  wire_mfield                              0    0.3136    0.3268
+  wire_nociception                         0    0.3114    0.3279
+  wire_oxygen                              0     0.317    0.3288
+  wire_pathogen                            0    0.3152    0.3343
+  wire_ph                                  0    0.3131    0.3293
+  wire_pheromone                           0    0.3189    0.3312
+  wire_predator                            0    0.3058    0.3291
+  wire_salt                                0    0.3183    0.3267
+  wire_temperature                         0     0.321    0.3275
+  wire_touch                               0    0.3241    0.3304
+  wire_toxin                               0    0.3124    0.3276
+  wire_vibration                           0    0.3148    0.3287
+
+ADAPTATION = real minus shadow (paired by replicate, sign-flip test):
+  genetic distance from founder      +0.3136   real higher in 22/30   p=0.0028
+  genetic diversity                   +7.526   real higher in 28/30   p=5e-05
+  founder lineages alive              +20.14   real higher in 30/30   p=5e-05
+  eating rate (food/worm/tick)     +0.006411   real higher in 30/30   p=5e-05
+  speed                               -0.203   real higher in 1/30   p=5e-05
+  turning                           +0.07107   real higher in 30/30   p=5e-05

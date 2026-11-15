@@ -69,4 +69,13 @@ it cannot say anything about one level, only about the trend, and it needs many 
 the graded setting is a separate number that happens to be tied to the seed's position in the series.
 
 ## 7. Results
-(filled in after the run.)
+Finished 2026-11-14 04:05 (382 minutes, sharing the GPU with engine runs). 100 seeds, best brains at generation 300.
+
+1. BEHAVIOUR: Spearman rho(log10 strength, STRONG avoidance) = +0.099, p = 0.327 -> no detectable trend.
+2. COST: rho(log10 strength, FLAT skill) = +0.034, p = 0.733 -> no detectable trend. (OWN skill: rho +0.006.)
+3. Threshold strength: none found.
+All 10 bins show NEGATIVE avoidance (-0.05 .. -0.19): worms spend slightly more time on heavy ground than chance,
+the passive "slower there, so they linger" bias predicted in section 4. Skill 2.72-2.91 in every bin.
+Reading: with these rules gravity is invisible to selection in 300 generations. Not shown: that gravity cannot
+matter. Follow-up written but NOT run: `ecosim/step24.py` (harsher cost, with / without sensing, 16 seeds).
+A slowly changing ("eroding") pattern was proposed 2026-11-14 and not run for the same reason.

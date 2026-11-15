@@ -116,3 +116,17 @@ Output files: `results_gpu_2500g_30s_fair.json`, `..._cross0.25_g1.json`, `..._c
 Pre-registered rule: interbreeding helps if m3's 10 group means beat m1's lineages grouped the same way (Welch p < 0.05).
 m2 is judged by level and kept variety only (its lineages share genes, so they are not independent).
 If a run was stopped by the deadline, compare all three at the same generation (curves are saved per generation).
+
+### Result of the 2026-11-13 interbreeding comparison (3,200 generations, all three runs complete)
+| brain type | m1 reference | m2 one pool | m3 10 groups | m3 - m1 (10 group means, Welch) | Holm p (5 tests) |
+|---|---|---|---|---|---|
+| normal | 107.7 | 108.3 | 108.3 | +0.6 | 1 |
+| no_smell | 60.4 | 62.9 | 62.7 | +2.3 | 0.55 |
+| no_smell+frontal | 61.7 | 60.4 | 59.3 | -2.4 | 0.55 |
+| no_smell+frontal+hippo | 31.7 | 66.0 | 49.9 | +18.2 | 0.00004 |
+| normal+frontal+hippo | 90.7 | 89.7 | 91.6 | +0.9 | 1 |
+By the pre-registered rule interbreeding HELPS one brain type (the weakest, whose reference lineages were stuck) and
+makes no detectable difference to the other four. Variety (gene variance inside a lineage) was about 80x higher with
+interbreeding. The plateau was not broken: slopes over the last 100 generations stayed within -0.9..+1.4 food per 100
+generations, and the 3,200-generation reference equals the 900-generation run. m2 (one pool) is a single replicate.
+Known gap: `repro_share` follows the own-lineage parent, so it stays 1.00 and cannot measure gene flow.

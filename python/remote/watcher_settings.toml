@@ -6,7 +6,7 @@ refresh_seconds = 5             # How often the GUI refreshes status, charts and
 
 [jobs]
 max_parallel = 4                # Light jobs allowed at the same time (heavy jobs always run alone).
-util_max = 70                   # A light job only starts beside others while the GPU is below this % busy.
+util_max = 50                   # A light job only starts beside others while the GPU is below this % busy.
 max_wait_minutes = 600          # A job that can't start safely for this long fails with the reason.
 
 [safety]

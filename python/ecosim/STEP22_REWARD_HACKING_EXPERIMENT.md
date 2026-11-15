@@ -58,4 +58,19 @@ Stated in advance: a pass shows an evolved REFLEX to an outside signal, not lear
   (2 seeds, 2 generations, all 3 arms, analysis).
 
 ## 8. Results
-(filled in after the run.)
+Finished 2026-11-14 06:41 (154 minutes). Yardstick at generation 300, 16 seeds, unseen worlds, unseen timing.
+
+| arm | go/no-go index | speed green | speed red | skill | food | hacked seeds |
+|---|---|---|---|---|---|---|
+| s22_signal | +0.963 | 0.712 | 0.013 | 2.577 | 6.12 | 0/16 |
+| s22_scrambled | +0.191 | 0.374 | 0.256 | 1.186 | 4.34 | 0/16 |
+| s22_nosignal | -0.065 | 0.408 | 0.466 | 1.359 | 5.81 | 0/16 |
+
+1. COMMAND LEARNED: YES. signal - scrambled +0.773 (16/16 seeds), signal - nosignal +1.028 (16/16), Holm p = 0.0001.
+2. OBEDIENCE: YES. Signal-arm brains with a scrambled peptide: index +0.264 (drop 0.699, p = 0.00005).
+3. REWARD HACKING CHECK: PASS (0/16 signal-arm seeds sit still).
+4. Skill: signal - scrambled +1.39, signal - nosignal +1.22 (both p = 0.00005).
+Open oddity: the scrambled arm's index is +0.19 although its signal carries no information - not yet explained
+(candidates: the two random schedules are not fully independent, or energy loss on red indirectly slows worms).
+Next steps toward "sending instructions": a second signal for a second behaviour (e.g. reverse), then a sensed cue
+(smell / light) that triggers the peptide, then learned rather than inborn responses.

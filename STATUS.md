@@ -15,16 +15,23 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| finishing | 2nd Experiment (toy brain) m1 reference / m2 one-pool cross / m3 10-group cross, 3200 gens | 2026-11-13 19:00 MT | watcher | remote/logs/m*_2nd_*.txt | ~21:45 |
-| queued 1 | code checks k1 gravity_check, k2 reward_hacking_check (minutes) | - | watcher | remote/logs/k*.txt | - |
-| queued 2 | GRAVITY EXPERIMENT g1 (ecosim/step21.py, doc STEP21_GRAVITY_EXPERIMENT.md): 100 seeds x 300 gens, then analysis | ~21:50 | watcher | remote/logs/g1_*.txt | ~04:00 |
-| queued 3 | engine batch v3 f4-f6 + explorations x1-x9, alongside gravity while GPU < 70 % | - | watcher | remote/logs/ | overnight |
-| queued 4 | REWARD HACKING EXPERIMENT r1 (ecosim/step22.py, doc STEP22_REWARD_HACKING_EXPERIMENT.md): whole GPU ~3 h, then analysis | after the above | watcher | remote/logs/r1_*.txt | morning |
-| DONE | MAIN EXPERIMENT (connectome Step 20), ran 15:52-19:00 | 2026-11-13 | watcher | results/step20_stats.txt | done |
+| IDLE | nothing running, queue empty since 2026-11-14 06:41. Watcher util_max is now 50 %. | - | - | - | - |
+| ready, NOT queued | gravity bite test (ecosim/step24.py, watcher gravity_bite_test, ~2.5 h); code check passed 12:19; waiting for the owner's go-ahead | - | - | - | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-14 REWARD HACKING EXPERIMENT (step22): command LEARNED. go/no-go index 0.96 (true signal) vs 0.19 scrambled /
+  -0.07 none, 16/16 seeds, Holm p 0.0001; obedience test passed; 0/16 seeds hacked. Evolved reflex, not learning.
+- 2026-11-14 GRAVITY EXPERIMENT (step21, 100 graded seeds): NO trend (rho +0.10, p 0.33). Gravity as modelled is ignored.
+- 2026-11-14 ENGINE: all 15 worlds show the same thrift adaptation; no factor changed the kind of evolution in 50k ticks.
+  Equilibrium rule (10 %) fails in 10/15 worlds incl. a no-effect world -> the rule is too tight, re-base before reuse.
+- 2026-11-14 PREDICTION (analysis/predict_outcomes.py, 544 runs): arm ranking predictable after 20-50 gens (rho 0.95+);
+  single seeds are not (noise ~ seed spread); no model beats persistence.
+- 2026-11-13 2nd EXPERIMENT interbreeding (3200 gens, fair test, 10 group means vs reference, Holm over 5 brain types):
+  helps ONLY the weakest brain (no_smell+frontal+hippo 31.7 -> 49.9, Holm p 4e-05; one pool 66.0 = 1 replicate, hint).
+  Other 4 brain types: no detectable difference. Variety kept ~80x higher, plateau NOT broken (3200 gens = 900 gens).
+  repro_share cannot see gene flow (stays 1.00) -> needs a new measure for interbreeding runs.
 - 2026-11-13 MAIN EXPERIMENT (ecosim/step20.py, doc ecosim/STEP20_MAIN_EXPERIMENT.md): at gen 190, 16 paired seeds, 12 unseen
   worlds: reversal potentials NO detectable effect (-0.003, Holm p 0.97); muscle output HURTS (-0.63, 0/16 seeds, Holm
   p 0.0001). Not proof muscles are worse: the readout has 3 gains vs 168 decoder weights and starts with little drive.

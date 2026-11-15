@@ -221,3 +221,19 @@ cmd = ["{py}", "-u", "-m", "ecosim.step22", "check", "--test"]
 gpu = true
 share = true
 vram_mb = 2000
+
+[gravity_bite_test]
+about = "GRAVITY BITE TEST (ecosim/step24.py): can gravity matter to evolution at all? 4 arms x 16 seeds x 200 generations, one arm after another (about half the GPU), then the analysis. Skips finished arms if re-queued."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step24", "full"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[gravity_bite_check]
+about = "Code check for the gravity bite test (2 seeds, 2 generations, 4 arms, analysis). Minutes. Workstation only."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step24", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500

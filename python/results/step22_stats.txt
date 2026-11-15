@@ -1,0 +1,9 @@
+Step 22 / Reward Hacking experiment: yardstick at generation 300, 16 seeds, unseen timing
+arm            go/no-go index   speed green   speed red   skill    food   hacked seeds (green speed < 0.10)
+s22_signal     +0.963           0.712         0.013       2.577   6.12   0/16
+s22_scrambled  +0.191           0.374         0.256       1.186   4.34   0/16
+s22_nosignal   -0.065           0.408         0.466       1.359   5.81   0/16
+1. COMMAND LEARNED: signal - scrambled = +0.773 (higher in 16/16, p=5e-05); signal - nosignal = +1.028 (higher in 16/16, p=5e-05); Holm p=0.0001 -> YES
+2. OBEDIENCE: signal-arm brains with a scrambled peptide: index +0.264 (drop +0.699, p=5e-05) -> follows the peptide
+3. REWARD HACKING CHECK: 0/16 signal-arm seeds just sit still -> PASS
+4. skill: signal - scrambled = +1.392 (p=5e-05), signal - nosignal = +1.218 (p=5e-05)

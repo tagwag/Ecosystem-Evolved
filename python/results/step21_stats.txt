@@ -1,0 +1,16 @@
+Step 21 / Gravity experiment: 100 seeds, strengths 0.001 .. 1, best brains at generation 300
+1. BEHAVIOUR  avoidance of heavy ground (STRONG test, strength 1.0) vs log10(training strength): Spearman rho = +0.099, p = 0.327 -> no detectable trend
+2. COST       FLAT skill (no gravity) vs log10(strength): rho = +0.034, p = 0.733 -> no detectable trend
+   (reported) OWN-world skill vs log10(strength): rho = +0.006, p = 0.954
+3. threshold strength (avoidance leaves the weakest-fifth range for 2 bins in a row): none found
+bin  strength range        avoidance (STRONG)   skill OWN   skill FLAT
+  1-10  0.0010-0.0019   -0.1899 +- 0.0831   2.813       2.847
+ 11-20  0.0020-0.0038   -0.1067 +- 0.0838   2.802       2.789
+ 21-30  0.0040-0.0076   -0.0817 +- 0.0436   2.840       2.833
+ 31-40  0.0081-0.0152   -0.1050 +- 0.0511   2.847       2.879
+ 41-50  0.0163-0.0305   -0.0858 +- 0.0483   2.888       2.924
+ 51-60  0.0327-0.0614   -0.1576 +- 0.0694   2.913       2.947
+ 61-70  0.0658-0.1233   -0.1201 +- 0.0495   2.845       2.803
+ 71-80  0.1322-0.2477   -0.1528 +- 0.0599   2.911       2.973
+ 81-90  0.2656-0.4977   -0.0951 +- 0.0637   2.891       2.899
+ 91-100 0.5337-1.0000   -0.0510 +- 0.0723   2.720       2.815

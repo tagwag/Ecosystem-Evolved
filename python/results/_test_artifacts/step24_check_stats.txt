@@ -1,0 +1,9 @@
+Step 23 / Gravity bite test: best brains at generation 2, 2 seeds, tested at strength 1.0 with the bite rules
+arm         avoidance   skill    food   speed
+s23_flat    -0.1391    0.326   2.41   0.674
+s23_base    -0.2121    0.561   3.33   0.716
+s23_bite    -0.2121    0.561   3.33   0.716
+s23_blind   -0.1557    0.397   2.73   0.738
+s23_base - s23_flat: avoidance -0.0731 (higher in 0/2 seeds), p=1, Holm p=1 -> no detectable response
+s23_bite - s23_flat: avoidance -0.0731 (higher in 0/2 seeds), p=1, Holm p=1 -> no detectable response
+s23_blind - s23_flat: avoidance -0.0167 (higher in 1/2 seeds), p=1, Holm p=1 -> no detectable response

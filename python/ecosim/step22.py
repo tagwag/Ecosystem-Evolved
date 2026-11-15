@@ -145,6 +145,36 @@ def test(arm, genomes, conn, dev, signal=None, worlds=None):
     return r
 
 
+def wiring_test():
+    """Code check: does the outside signal really reach the brain, and does the red penalty really bite?
+    Takes 4 random brains, gives them strong random peptide receptors (they start at 0 in evolution, so a fresh
+    brain cannot show this), and tests them twice on the same worlds: peptide = true phase vs peptide = scrambled.
+    If the signal is wired through, the two tests MUST differ. Also re-tests with the red penalty switched off:
+    fitness must differ. Raises an error (so the watcher marks the check failed) if either comes out identical."""
+    from .connectome import Connectome
+    from .worm2_gpu import pick_device
+    from . import worm2 as w
+    dev, conn = pick_device('cuda'), Connectome()
+    opts = CONDITIONS['s22_signal']; L = w.Layout(conn, opts); rng = np.random.default_rng(0)
+    g = w.random_genomes(conn, 4, rng, opts)
+    g[:, L.rec] = rng.normal(0, 1.0, (4, L.rec.stop - L.rec.start))
+    G = [x for x in g]
+    a = test('s22_signal', G, conn, dev, signal='true', worlds=TEST_WORLDS[:2])
+    b = test('s22_signal', G, conn, dev, signal='scrambled', worlds=TEST_WORLDS[:2])
+    d_sig = float(np.abs(a['speed_red'] - b['speed_red']).max() + np.abs(a['speed_green'] - b['speed_green']).max())
+    keep = CFG_OVERRIDES['s22_signal']
+    CFG_OVERRIDES['s22_signal'] = dict(keep, red_cost=0.0)
+    c = test('s22_signal', G, conn, dev, signal='true', worlds=TEST_WORLDS[:2])
+    CFG_OVERRIDES['s22_signal'] = keep
+    d_cost = float(np.abs(a['fitness'] - c['fitness']).max())
+    print(f'wiring test: true vs scrambled peptide changes speeds by {d_sig:.4f} (must be > 0.001); '
+          f'penalty on vs off changes fitness by {d_cost:.4f} (must be > 0.001)', flush=True)
+    print('  index with true signal', np.round(a['index'], 3).tolist(), ' with scrambled', np.round(b['index'], 3).tolist(), flush=True)
+    if d_sig <= 1e-3 or d_cost <= 1e-3:
+        raise SystemExit('WIRING TEST FAILED: the signal or the penalty has no effect - do not run the experiment')
+    print('WIRING_TEST_OK', flush=True)
+
+
 def analyze():
     import matplotlib
     matplotlib.use('Agg')
@@ -207,7 +237,7 @@ if __name__ == '__main__':
     if a[:1] == ['full']:                       # the watcher job: the 3 arms, then the analysis
         run_all(gens=int(opt('--gens', GENS)), until=opt('--until')); analyze(); print('REWARD_HACKING_FULL_DONE', flush=True)
     elif a[:1] == ['check']:                      # workstation code check: tiny run of all arms + the analysis
-        run_all(gens=2); analyze()
+        wiring_test(); run_all(gens=2); analyze()
         print('REWARD_HACKING_CHECK_OK', flush=True)
     elif a[:1] == ['all']:
         run_all(gens=int(opt('--gens', GENS)), until=opt('--until'))
