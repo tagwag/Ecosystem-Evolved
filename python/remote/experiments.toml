@@ -237,3 +237,43 @@ cmd = ["{py}", "-u", "-m", "ecosim.step24", "check", "--test"]
 gpu = true
 share = true
 vram_mb = 1500
+
+[food_circles_experiment]
+about = "FOOD-CIRCLE GRAVITY & MAGNETISM EXPERIMENTS (ecosim/step23.py, doc ecosim/STEP23_FOOD_CIRCLES_EXPERIMENT.md): large feathered gravity or magnetic circles with food at each centre; 5 arms (control / gravity on food / gravity decoy / magnetism on food / magnetism decoy) x 16 seeds x 300 gens, then the analysis. Skips finished arms, so it is safe to re-queue after an interruption."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "full"]
+gpu = true
+share = true                 # 16 seeds x 12 brains at a time leaves room for light jobs
+vram_mb = 3500
+
+[food_circles_analyze]
+about = "Food-circle experiments analysis only: skill, occupancy and sense-cut tests on 12 unseen worlds -> results/step23_*"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "analyze"]
+gpu = true
+share = true
+vram_mb = 2500
+
+[food_circles_check]
+about = "Code check for the food-circle experiments (2 seeds, 2 generations, all 5 arms, analysis, circle picture). Minutes. All code checks run here on the workstation, never in the cloud."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[muscle_fair]
+about = "FAIR MUSCLE-OUTPUT RE-TEST of the Main Experiment (ecosim/step20b.py): same evolvable decoder reading interneurons vs reading the 95 muscles + AVA/AVB; 2 arms x 16 seeds x 300 gens, then the analysis. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20b", "full"]
+gpu = true
+share = true
+vram_mb = 3000
+
+[muscle_fair_check]
+about = "Code check for the fair muscle re-test (2 seeds, 2 generations, both arms, analysis). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20b", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500

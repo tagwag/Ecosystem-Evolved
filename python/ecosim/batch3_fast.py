@@ -134,6 +134,44 @@ def make_gravity_pattern(cfg, gw, gh):
     return (G / max(np.abs(G).max(), 1e-9)).astype(np.float32)
 
 
+def circle_centres(cfg, food_centres):
+    """Step 23: where the field circles go in one world.
+    'food'  -> exactly on the food patch centres.
+    'decoy' -> the same number of circles, each placed as far as possible from every food patch (best of 200 random
+               tries, distance measured on the wrap-around world). The random tries use a generator seeded from the
+               food layout itself, so the world's own random stream (food, worm starts) is untouched: a decoy world
+               has the SAME food as the matching 'food' world."""
+    fc = np.asarray(food_centres, float)
+    if cfg.circle_place == 'food':
+        return fc
+    if cfg.circle_place != 'decoy':
+        raise ValueError(f"circle_place must be 'food' or 'decoy', not {cfg.circle_place!r}")
+    rng = np.random.default_rng(int(abs(fc).sum() * 1000) % 2**32 + 23)
+    W, H = cfg.width, cfg.height
+    out = []
+    for _ in range(len(fc)):
+        cand = np.column_stack([rng.uniform(0, W, 200), rng.uniform(0, H, 200)])
+        dx = np.abs(cand[:, None, 0] - fc[None, :, 0]); dx = np.minimum(dx, W - dx)
+        dy = np.abs(cand[:, None, 1] - fc[None, :, 1]); dy = np.minimum(dy, H - dy)
+        out.append(cand[np.argmax(np.sqrt(dx ** 2 + dy ** 2).min(1))])
+    return np.array(out)
+
+
+def make_circle_field(cfg, centres, gw, gh):
+    """Step 23: the feathered-circle field on the smell grid, values 0..1 (gw x gh).
+    1 within circle_r of a centre, smoothstep fade to 0 at circle_r + circle_feather, 0 beyond. Distances wrap
+    around the world edges (the world is a torus). Overlapping circles: the larger value wins."""
+    c = cfg.smell_cell
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * c, (np.arange(gh) + 0.5) * c, indexing='ij')
+    F = np.zeros((gw, gh))
+    for cx, cy in centres:
+        dx = np.abs(X - cx); dx = np.minimum(dx, cfg.width - dx)
+        dy = np.abs(Y - cy); dy = np.minimum(dy, cfg.height - dy)
+        u = np.clip((np.sqrt(dx ** 2 + dy ** 2) - cfg.circle_r) / max(cfg.circle_feather, 1e-9), 0.0, 1.0)
+        F = np.maximum(F, 1 - u * u * (3 - 2 * u))           # 1 inside, smooth fade, 0 outside
+    return F.astype(np.float32)
+
+
 def make_obstacles(cfg, rng):
     """Step 18: random pillars, walls and caves rasterised on an obs_cell grid. Returns bool (gw, gh), True = solid."""
     c = cfg.obs_cell
@@ -231,6 +269,17 @@ class FastSim:
         if self.grav_on:
             gm[torch.as_tensor(conn.ids(['PVDL', 'PVDR']), device=dev)] = cfg.grav_gain
         self.gmap = gm
+        # Step 23 food circles + magnetism (see config.py). circ_on: gravity pattern and/or magnetic field are rebuilt
+        # from each world's food layout in load(). Magnetic field (K, cells) 0..1, strength mag_s (K,1), sensed by AFD.
+        self.circ_on = getattr(cfg, 'field_circles', False)
+        self.mag_on = getattr(cfg, 'magnetism', False)
+        self.mpat = z(K, self.gw * self.gh) if self.mag_on else z(K, 1)
+        self.mag_s = z(K, 1)
+        self.mexp = z(K, 2)                    # sums over living worm-ticks: field value under the worm, count
+        mm = torch.zeros(conn.N, **f)
+        if self.mag_on:
+            mm[torch.as_tensor(conn.ids(['AFDL', 'AFDR']), device=dev)] = cfg.mag_gain
+        self.mmap = mm
         # Step 22 red light / green light (see config.py): per-world phase schedule and the signal the peptide carries
         self.red_on = getattr(cfg, 'redlight', False)
         nb = cfg.ticks_per_generation // BLOCK
@@ -311,7 +360,14 @@ class FastSim:
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_(); self.spd.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
-        self.gexp.zero_(); self.rexp.zero_()
+        self.gexp.zero_(); self.rexp.zero_(); self.mexp.zero_()
+        if self.circ_on:                       # Step 23: one feathered circle per food patch (or decoy), this world
+            fld = np.stack([make_circle_field(cfg, circle_centres(cfg, x.patch_centers), self.gw, self.gh).reshape(-1)
+                            for x in ws])
+            if self.grav_on:
+                self.gpat.copy_(torch.as_tensor(cfg.circle_sign * fld, **f))
+            if self.mag_on:
+                self.mpat.copy_(torch.as_tensor(fld, **f))
         if self.red_on:                        # new random phases every generation, per world (drawn last: the
             nb = cfg.ticks_per_generation // BLOCK   # world layouts above use the same random numbers as without it)
             rr = [np.random.default_rng(r.integers(2**62)) for r in rngs]
@@ -449,6 +505,7 @@ class FastSim:
         SENSE, onfood = self.sense_on, self.onfood
         FORM = self.form is not None
         GRAV = self.grav_on
+        MAG = self.mag_on
         RED = self.red_on
         if RED:                                  # this block's phase (K,1) and the peptide command, graph-safe lookup
             red = self.red_sched.index_select(1, self.bi.view(1))
@@ -494,6 +551,14 @@ class FastSim:
                 dg = self.grav_s * gpv                                                           # gravity - 1 g
                 ginj = dg.reshape(K * P, 1) * self.gmap[None, :]
                 inject = ginj if inject is None else inject + ginj
+            if MAG:                                  # Step 23: magnetic field at each worm, sensed by AFD (pure cue)
+                mix = (torch.clamp((pos[..., 0] / cfg.smell_cell).long(), 0, self.gw - 1) * self.gh
+                       + torch.clamp((pos[..., 1] / cfg.smell_cell).long(), 0, self.gh - 1))
+                mfv = self.mpat.gather(1, mix)                                                   # field, 0..1
+                minj = (self.mag_s * mfv).reshape(K * P, 1) * self.mmap[None, :]
+                inject = minj if inject is None else inject + minj
+                maf = alive.float()
+                self.mexp += torch.stack([(mfv * maf).sum(1), maf.sum(1)], 1)
             Hin = Hcmd if RED else H                 # Step 22: the peptide carries the outside command, not hunger
             bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), Hin.reshape(-1), alarm, touch, pher,
                                                                bump.view(-1) if OBS else None, extra,
@@ -722,6 +787,7 @@ class FastSim:
         scost = self.sense_cost.cpu().numpy()
         gexp = self.gexp.cpu().numpy()
         rexp = self.rexp.cpu().numpy()
+        mexp = self.mexp.cpu().numpy()
         spd = self.spd.cpu().numpy()
         fexp = self.form['exp'].cpu().numpy() if self.form is not None else None
         fpaid = self.form['paid'].cpu().numpy() if self.form is not None else None
@@ -744,6 +810,8 @@ class FastSim:
                       speed_green=float(rexp[k, 2] / max(rexp[k, 3], 1.0)) if self.red_on else float('nan'),
                       grav_offset=float(gexp[k, 0] / max(gexp[k, 2], 1.0)) if self.grav_on else float('nan'),
                       grav_pattern=float(gexp[k, 1] / max(gexp[k, 2], 1.0)) if self.grav_on else float('nan'),
+                      # Step 23: mean magnetic-field value (0..1) under living worms = time spent inside the circles
+                      mag_field=float(mexp[k, 0] / max(mexp[k, 1], 1.0)) if self.mag_on else float('nan'),
                       feature_exposure=(fexp[k] / (self.P * T)).tolist() if fexp is not None else None,
                       feature_cost=(fpaid[k] / self.P).tolist() if fexp is not None else None)
                  for k in range(self.K)]

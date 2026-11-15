@@ -230,6 +230,19 @@ Remote watcher (python/remote; watcher.py + experiments.toml): starts experiment
 - Owner rules: document everything for a new hire; status line at the end of every message; after an interruption
   answer then "Resuming Queue: <task>"; never run anything dangerous for the computer.
 
+=== 2026-11-14: STEP 20b (FAIR MUSCLE RE-TEST) + STEP 23 (FOOD-CIRCLE GRAVITY & MAGNETISM), code only, not run yet ===
+- Step 20 muscle result (-0.63, 0/16) was an unfair test: muscle arm moved by 3 gains, decoder arm by 168 weights.
+  Step 20b (ecosim/step20b.py): both arms use the same evolvable decoder; s20b_inter reads the 28 interneurons,
+  s20b_body reads the 95 body-wall muscles + AVA/AVB (worm2 readout='muscles'). Start strength + mutation already
+  scaled by readout size. 16 seeds x 300 gens, test worlds 4000-4011, one sign-flip test. Watcher: muscle_fair(_check).
+- Step 23 (ecosim/step23.py, ecosim/STEP23_FOOD_CIRCLES_EXPERIMENT.md): owner asked for gravity and magnetism
+  experiments with large feathered circles and a bunch of food at each centre. One circle per food patch (1 inside
+  100 units, smoothstep to 0 at 240), rebuilt every generation. Gravity: 2 g heavy well at the centre at strength 1
+  (slows + costs, PVD). Magnetism: pure cue into AFD (Vidal-Gadea 2015; disputed, Landler 2018). Arms ctrl / grav_food /
+  grav_decoy / mag_food / mag_decoy, 16 seeds x 300 gens; H1-H4 pre-registered (food-circle arm vs ctrl, own vs
+  sense-cut), Holm over 4. Watcher: food_circles_check, food_circles_experiment, food_circles_analyze.
+- Choice made without asking: heavy (not light) gravity at the food (config circle_sign = +1; -1 flips it).
+
 === KNOWN ISSUES / FIXES ===
 - 2026-11-01 FIXED: food-tie bias. world.eat() let agents eat in list order and evolution puts elites first,
   so parents won food ties. Now random order each tick (own RNG, layouts unchanged). Steps 1-4 + 3b/3c were

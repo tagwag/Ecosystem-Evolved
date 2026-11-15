@@ -15,12 +15,16 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| IDLE | nothing running, queue empty since 2026-11-14 06:41. Watcher util_max is now 50 %. | - | - | - | - |
+| QUEUED 2026-11-14 22:50 | code checks `food_circles_check`, `muscle_fair_check`; then `muscle_fair` (Step 20b, ~2-3 h) and `food_circles_experiment` (Step 23, ~5 h) | 22:50 | watcher | remote/logs/ | ~07:00 |
 | ready, NOT queued | gravity bite test (ecosim/step24.py, watcher gravity_bite_test, ~2.5 h); code check passed 12:19; waiting for the owner's go-ahead | - | - | - | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-14 NEW, not run yet: Step 20b FAIR MUSCLE RE-TEST (ecosim/step20b.py): same evolvable decoder reading 28 interneurons
+  vs the 95 muscles + AVA/AVB (Step 20's muscle arm had 3 gains vs 168 decoder weights = unfair). Step 23 FOOD-CIRCLE
+  GRAVITY & MAGNETISM (ecosim/step23.py, doc STEP23_FOOD_CIRCLES_EXPERIMENT.md): big feathered field circles with food at
+  each centre; 5 arms (ctrl / grav food / grav decoy / mag food / mag decoy) x 16 seeds x 300 gens; rules pre-registered.
 - 2026-11-14 REWARD HACKING EXPERIMENT (step22): command LEARNED. go/no-go index 0.96 (true signal) vs 0.19 scrambled /
   -0.07 none, 16/16 seeds, Holm p 0.0001; obedience test passed; 0/16 seeds hacked. Evolved reflex, not learning.
 - 2026-11-14 GRAVITY EXPERIMENT (step21, 100 graded seeds): NO trend (rho +0.10, p 0.33). Gravity as modelled is ignored.
