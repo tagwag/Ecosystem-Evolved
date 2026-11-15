@@ -246,7 +246,7 @@ Smell is by far the most valuable sense. Adding frontal or hippocampus layers ne
 
 ### 3.1 Smell, frontal and hippocampus layers
 
-&#91;embedded content: toybrain/results\_gpu\_300g\_30s\_fair.json and results\_gpu\_900g\_30s\_fair.json, fair mode, 30 lineages each\]
+![Food eaten on unseen arenas by brain type: bar = 900 generations, tick = 300 generations](img/findings_brain_types.png)
 
 - **Fair mode matters.** In the first run, mutation size was per gene, so big brains (6x more genes) got about 2.5x larger mutations. The frontal layer looked harmful (-16.7 food). With mutation scaled by genome size (fair mode), frontal is level with no-smell (55.3 vs 57.9, p=0.3).
 - **Hippocampus still hurts** after the fix: -21.6 food (p=8e-13) without smell, -19.1 (p=3e-12) with smell. Its neurons start off and switch on during life, so they mostly add noise.
@@ -286,7 +286,7 @@ Rule set before (13 November): interbreeding helps if m3's 10 group means beat m
 
 Interbreeding kept about 80 times more variety, but final skill changed for only one of five brain types. For that one, the weakest brain, it helped a lot.
 
-&#91;embedded content: toybrain/results\_gpu\_3200g\_30s\_fair.json (reference), ...\_cross0.25\_g1.json (one pool), ...\_cross0.25\_g10.json (10 groups); finished 13 Nov 21:44\]
+(Chart in the online book; data: toybrain/results_gpu_3200g_30s_fair*.json)
 
 - **By the rule (10 groups vs reference, group means, Welch test, Holm over 5 brain types):** no smell + frontal + hippo +18.2 food (31.7 to 49.9), Holm p = 0.00004: **helps**. The other four: +0.6, +2.3, -2.4, +0.9, all Holm p above 0.5: no detectable difference.
 - **One pool** reached 66.0 on that brain, above every other no-smell brain. Its 30 lineages share genes, so this is one replicate: a strong hint, not a test.

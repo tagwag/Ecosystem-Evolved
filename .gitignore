@@ -32,3 +32,6 @@ python/toybrain/checkpoints/
 python/_ecosim_snap_*.tgz
 python/toybrain/*.bak_*
 _push_*.bundle
+
+# git bundles used to carry commits from the workstation to GitHub
+.bundles/
