@@ -246,9 +246,18 @@ def main():
     active, my_mtime, last_g, g = [], Path(__file__).stat().st_mtime, 0, None
     outside, need_cache, first_seen, known_outside = [], {}, {}, set()
     apply_settings()
+    reg, reg_bad = None, False
     try:
         while True:
-            reg = tomllib.loads((HERE / "experiments.toml").read_text())   # re-read: new experiments need no restart
+            try:                                         # re-read: new experiments need no restart
+                reg = tomllib.loads((HERE / "experiments.toml").read_text())
+                reg_bad = False
+            except Exception as e:                       # half-saved or broken file (e.g. mid git merge): keep the
+                if not reg_bad:                          # last good list and keep running, never crash (2026-11-14)
+                    say(f"experiments.toml unreadable, keeping the previous list: {e}")
+                reg_bad = True
+                if reg is None:
+                    time.sleep(5); continue
             apply_settings()                                                 # watcher_settings.toml, applied live
             # ---- running jobs: cancel, finish, temperature guard
             if (Q / "CANCEL").exists():

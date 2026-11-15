@@ -1,0 +1,5 @@
+Step 20b / fair muscle-output re-test: 16 seeds, yardstick at generation 300
+arm          skill    food   bites   (skill at g50, g100, g150, g200, g250, g300)
+s20b_inter    2.638    7.48    1.21   (2.469, 2.617, 2.602, 2.622, 2.606, 2.638)
+s20b_body     2.030    7.34    0.81   (1.808, 1.988, 1.967, 2.094, 2.014, 2.030)
+body - inter = -0.608  (+ in 2/16 seeds)  p = 0.0014  -> body readout HURTS

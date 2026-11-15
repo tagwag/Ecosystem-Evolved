@@ -15,16 +15,17 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| QUEUED 2026-11-14 22:50 | code checks `food_circles_check`, `muscle_fair_check`; then `muscle_fair` (Step 20b, ~2-3 h) and `food_circles_experiment` (Step 23, ~5 h) | 22:50 | watcher | remote/logs/ | ~07:00 |
+| IDLE since 2026-11-15 05:16 | queue empty; last runs: muscle_fair (done 02:29), food_circles_experiment (done 05:16) | - | - | - | - |
 | ready, NOT queued | gravity bite test (ecosim/step24.py, watcher gravity_bite_test, ~2.5 h); code check passed 12:19; waiting for the owner's go-ahead | - | - | - | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
-- 2026-11-14 NEW, not run yet: Step 20b FAIR MUSCLE RE-TEST (ecosim/step20b.py): same evolvable decoder reading 28 interneurons
-  vs the 95 muscles + AVA/AVB (Step 20's muscle arm had 3 gains vs 168 decoder weights = unfair). Step 23 FOOD-CIRCLE
-  GRAVITY & MAGNETISM (ecosim/step23.py, doc STEP23_FOOD_CIRCLES_EXPERIMENT.md): big feathered field circles with food at
-  each centre; 5 arms (ctrl / grav food / grav decoy / mag food / mag decoy) x 16 seeds x 300 gens; rules pre-registered.
+- 2026-11-15 FOOD CIRCLES (step23, 16 seeds x 300 gens): gravity wells at food HURT skill (-0.78, 0/16, Holm p 0.0002)
+  but those brains USE the gravity sense (sense cut -0.36, 13/16, Holm p 0.003) = first evolved use of a gravity cue.
+  Magnetic circles: no detectable effect, sense not used. Decoys: neither sought nor avoided.
+- 2026-11-15 STEP 20b FAIR MUSCLE RE-TEST (same decoder, read muscles vs interneurons, 16 seeds x 300 gens): muscles
+  still HURT (-0.61, 2/16 seeds, p 0.0014). Step 20's result was not just the knob count.
 - 2026-11-14 REWARD HACKING EXPERIMENT (step22): command LEARNED. go/no-go index 0.96 (true signal) vs 0.19 scrambled /
   -0.07 none, 16/16 seeds, Holm p 0.0001; obedience test passed; 0/16 seeds hacked. Evolved reflex, not learning.
 - 2026-11-14 GRAVITY EXPERIMENT (step21, 100 graded seeds): NO trend (rho +0.10, p 0.33). Gravity as modelled is ignored.

@@ -81,3 +81,51 @@ python -m ecosim.step23 picture        # the circle picture only
 ```
 Results: `runs/step23/<arm>_s<seed>/` (ckpt_g50..300.npy, best_genome.npy, history.json),
 `results/step23_stats.txt`, `step23_stats.json`, `step23.png`, `step23_circles.png`.
+
+## 6. Results (run 2026-11-14 22:53 to 2026-11-15 05:16 MT on the workstation, 16 seeds x 300 generations)
+Files: `results/step23_stats.txt`, `step23_stats.json`, `step23.png` (skill / occupancy / learning curves),
+`step23_circles.png` (what the circles look like).
+
+| Arm | Skill (own) | Skill (sense cut) | Food | Occupancy (own) |
+|---|---|---|---|---|
+| ctrl (no field) | 2.607 | - | 7.64 | 0.569 |
+| gravity circles at food | **1.829** | **1.467** | 7.05 | 0.612 |
+| gravity circles at decoy | 2.779 | 2.768 | 7.48 | 0.060 |
+| magnetic circles at food | 2.730 | 2.665 | 7.60 | 0.580 |
+| magnetic circles at decoy | 2.686 | 2.661 | 7.56 | 0.052 |
+
+Pre-registered tests (paired sign-flip, Holm over 4):
+- **H1 gravity circles vs control: -0.778, 0/16 seeds, Holm p 0.0002 -> PASS: HURTS.**
+- H2 magnetic circles vs control: +0.123, 7/16 seeds, Holm p 0.74 -> no detectable effect.
+- **H3 gravity brains use the sense: +0.362, 13/16 seeds, Holm p 0.0033 -> PASS: the sense HELPS them.**
+- H4 magnetic brains use the sense: +0.065, 10/16 seeds, Holm p 0.74 -> no detectable effect.
+
+Reported, not tested: gravity decoy vs control +0.172 (11/16, p 0.095, a hint only); gravity food vs decoy -0.950
+(0/16, p 0.00005); magnetic food vs decoy +0.044 (p 0.72); decoy arms own vs sense-cut +0.012 / +0.025 (no use).
+
+### What it means (plain words)
+1. **Gravity at the food is a cost, not a help.** Food sitting in heavy wells (2 g at the centre) slows the worms and
+   costs energy exactly where they need to eat, so those worms ended 30 % below control in skill. The decoy arm (same
+   heavy circles, away from food) did not suffer, so the loss comes from where the heavy ground is, not from gravity
+   existing.
+2. **But the gravity-at-food worms DID learn to use the gravity sense.** Same brains, only the gravity sensor (PVD
+   input) unplugged: skill falls from 1.83 to 1.47 in 13/16 seeds. This is the first result in this project where
+   evolved brains measurably rely on a gravity cue. Earlier (Step 21) gravity was a pattern with no link to food and
+   it was ignored. The difference: here the field predicts where food is.
+3. **Magnetism did nothing detectable.** Magnetic circles at food neither helped nor hurt, and unplugging the
+   magnetic input (AFD) did not change skill. Likely reason: the circles carry no cost and food is already found by
+   smell, so a second food cue adds little; 300 generations may also be too short.
+4. Occupancy (time inside circles) is about 0.57-0.61 whenever circles sit on food, including control (control is
+   measured against the same circle positions): worms are in the circles because the food is there, not because of
+   the field. Decoy circles: about 0.05-0.06 in both gravity and magnetism, own vs sense-cut nearly equal, so the
+   worms neither seek nor avoid empty circles.
+
+### Open question this answers for the owner
+Whether gravity at the food should be heavy (current, `circle_sign = +1`) or light (`circle_sign = -1`): heavy wells
+punish exactly the behaviour being rewarded. A light-at-food version (food on easy ground) would test the cue without
+the cost; one extra arm, about 1.5 h. Not queued; owner's call.
+
+### Limits
+16 seeds x 300 generations; skill was still creeping up at 300. Gravity and magnetism effects are model rules (PVD
+gravity input, AFD magnetic input, invented speed and energy costs), so this says how evolution responds to these
+rules, not what real C. elegans would do.

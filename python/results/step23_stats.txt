@@ -1,0 +1,19 @@
+Step 23 / Food-circle gravity & magnetism experiments: 16 seeds, best brains at generation 300, 12 unseen worlds x 60 clones
+arm              skill   food   occupancy | sense-cut: skill  occupancy
+s23_ctrl          2.607   7.64   0.569   |    -
+s23_grav_food     1.829   7.05   0.612   |  1.467   0.586
+s23_grav_decoy    2.779   7.48   0.060   |  2.768   0.052
+s23_mag_food      2.730   7.60   0.580   |  2.665   0.569
+s23_mag_decoy     2.686   7.56   0.052   |  2.661   0.049
+PRE-REGISTERED TESTS (paired sign-flip, Holm over 4):
+  H1 gravity circles vs control      -0.778  (+ in 0/16 seeds)  p=5e-05  Holm p=0.0002  -> PASS: hurts
+  H2 magnetic circles vs control     +0.123  (+ in 7/16 seeds)  p=0.38  Holm p=0.742  -> no detectable effect
+  H3 gravity brains use the sense    +0.362  (+ in 13/16 seeds)  p=0.0011  Holm p=0.0033  -> PASS: helps
+  H4 magnetic brains use the sense   +0.065  (+ in 10/16 seeds)  p=0.371  Holm p=0.742  -> no detectable effect
+REPORTED (not tested):
+  gravity decoy vs control           +0.172  (+ in 11/16 seeds)  p=0.0953 (uncorrected)
+  magnetic decoy vs control          +0.079  (+ in 7/16 seeds)  p=0.451 (uncorrected)
+  gravity: food circles vs decoy     -0.950  (+ in 0/16 seeds)  p=5e-05 (uncorrected)
+  magnetic: food circles vs decoy    +0.044  (+ in 9/16 seeds)  p=0.721 (uncorrected)
+  gravity decoy: own vs sense-cut    +0.012  (+ in 8/16 seeds)  p=0.444 (uncorrected)
+  magnetic decoy: own vs sense-cut   +0.025  (+ in 10/16 seeds)  p=0.123 (uncorrected)

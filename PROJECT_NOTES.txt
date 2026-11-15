@@ -309,3 +309,14 @@ PINNED (user, 2026-11-02): IDE-like experiment app to cut Claude usage. Stage 1:
 OpenWorm; BAAIWorm/MetaWorm (2024); Izquierdo & Beer 2013 (evolved klinotaxis circuits); Polyworld (Yaeger);
 GasNets (Husbands/Philippides, diffusing neuromodulator); Shiu et al. 2024 fly brain model; NeuroMechFly v2.
 Combination here (full connectome + ecosystem evolution + neuromodulation) looks uncommon, NOT proven new.
+
+2026-11-15 (cloud session, results of the 2026-11-14 night queue)
+- Branch step23-food-circles merged into main (21268a8). The earlier gravity bite test is now ecosim/step24.py
+  (watcher gravity_bite_test / gravity_bite_check); its code check passed again 22:51; NOT run (owner's call).
+- Watcher crashed at 22:45 on a half-merged experiments.toml; fixed: an unreadable experiments.toml now keeps the last
+  good list and logs a warning instead of crashing (watcher.py main loop).
+- Step 20b fair muscle re-test: body - inter = -0.608 (2/16 seeds, p 0.0014): muscle readout still hurts.
+- Step 23 food circles: H1 gravity at food hurts (-0.778, Holm p 0.0002); H3 gravity sense used (+0.362, Holm p 0.0033);
+  H2/H4 magnetism no detectable effect. Details in ecosim/STEP23_FOOD_CIRCLES_EXPERIMENT.md section 6.
+- Both experiments ran in parallel; GPU sat near 99 % utilisation (watcher util_max 50 only gates job starts, both
+  started before load rose). Temperature stayed safe (max 69 C, mean utilisation 94 %). For a true ~50 % load, queue one at a time.

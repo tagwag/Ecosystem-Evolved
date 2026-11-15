@@ -68,3 +68,22 @@ How to read it: this does NOT show that real muscles are worse than a decoder. I
 decoder with 168 weights reading 28 interneurons, and ~190 generations was not enough to build drive through the
 motor circuit. Next steps worth testing: longer runs; start muscle synapses stronger; a body model where alternating
 dorsal/ventral activation produces thrust.
+
+## 7. Fair muscle re-test (Step 20b, ecosim/step20b.py), run 2026-11-14 22:53 to 2026-11-15 02:29 MT
+Why: in Step 20 the muscle arm had only 3 evolvable gains while the normal arm had a 168-weight decoder, so "muscles
+hurt" might just mean "fewer knobs". Step 20b gives both arms the same evolvable decoder; the only difference is what
+it reads: 28 interneurons (`s20b_inter`) or the 95 muscles + AVA/AVB (`s20b_body`). 16 paired seeds x 300 generations.
+
+| Arm | Skill at g50 | g100 | g200 | **g300** | Food | Bites |
+|---|---|---|---|---|---|---|
+| s20b_inter | 2.469 | 2.617 | 2.622 | **2.638** | 7.48 | 1.21 |
+| s20b_body | 1.808 | 1.988 | 2.094 | **2.030** | 7.34 | 0.81 |
+
+**Pre-registered result: body - inter = -0.608, higher in only 2/16 seeds, p = 0.0014 -> reading the muscles HURTS.**
+The gap appeared by generation 50 and did not close by 300 (`results/step20b.png`).
+
+Plain words: even with a fair number of knobs, steering the worm from its muscle activity works worse than steering
+from interneurons, at least over 300 generations. Likely reason: in this model the muscles sit at the end of the
+chain, so their activity is a delayed, mixed copy of what the interneurons already decide; the decoder has to undo
+that mixing. Limit (stated before the run): reading muscles is still not a body. The muscles drive a point worm
+through the same speed / reversal / turn outputs; a segment-bending body would be a separate, larger experiment.

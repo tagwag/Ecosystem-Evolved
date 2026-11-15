@@ -1,6 +1,6 @@
 # Ecosystem-Evolved: Findings Book
 
-*Copy of the Claude Doc "Ecosystem-Evolved: Findings Book", exported 13 November 2026 21:45 MT. The Doc is the working copy; this file is refreshed from it when it changes.*
+Nov 13, 2026 · @tag
 
 ## Title page
 
@@ -15,7 +15,7 @@ A research notebook in book form: every finding so far, the bugs that were found
 | Project | Ecosystem-Evolved (github.com/tagwag/Ecosystem-Evolved) |
 | Owner | Tag (tagwag) |
 | Written by | Claude, from the project notes, status board and result files |
-| Edition | 1st edition, 13 November 2026 |
+| Edition | 1st edition, 13 November 2026; updated 15 November 2026 |
 | Covers | 1 November to 13 November 2026 (Steps 1-19, sweep, teacher, Main Experiment, equilibrium world, factor engine) |
 | Hardware | Desktop: i9-10900K, 32 GB RAM, RTX 3080 (10 GB) |
 
@@ -33,7 +33,7 @@ How honest this book is: every number below comes from a saved results file or t
 3. Part II: the 2nd Experiment (toy brain)
    1. Smell, frontal and hippocampus layers
    2. Longer runs and the head-start test
-   3. Interbreeding and the 7pm runs (in progress)
+   3. Interbreeding: 3,200-generation runs (done)
 4. Part III: the equilibrium world
    1. The 50,000-tick test
    2. World 19 replayed and run for 600 generations
@@ -102,6 +102,91 @@ Muscle output hurt, and reversal potentials made no detectable difference. All a
 
 What this does and does not show: it does not show real muscles are worse than a decoder. This muscle readout gives evolution 3 gains to tune, against 168 decoder weights, and the muscle pathway starts with very little drive. About 190 generations was not enough to build it. Worth testing next: longer runs, stronger starting muscle synapses, and a body model where alternating dorsal and ventral activation produces thrust.
 
+## Reward Hacking experiment: red light / green light (14 November, finished 06:41)
+
+The command was learned. Worms evolved to stop when the peptide signal says red and go when it says green, in all 16 seeds, without the sit-still cheat. Method: python/ecosim/STEP22\_REWARD\_HACKING\_EXPERIMENT.md.
+
+| Arm (generation 300, unseen worlds, unseen timing) | Go/no-go index | Speed on green | Speed on red | Skill | Seeds that just sit still |
+| --- | --- | --- | --- | --- | --- |
+| true signal | +0.963 | 0.712 | 0.013 | 2.577 | 0 of 16 |
+| scrambled signal | +0.191 | 0.374 | 0.256 | 1.186 | 0 of 16 |
+| no signal (no receptors) | -0.065 | 0.408 | 0.466 | 1.359 | 0 of 16 |
+
+- **Rule 1, command learned: YES.** Signal beats scrambled by +0.77 and no-signal by +1.03, each in 16 of 16 seeds (Holm p = 0.0001).
+- **Rule 2, obedience: YES.** The same brains given a scrambled peptide drop from 0.96 to 0.26 (p = 0.00005). They follow the peptide, not another cue.
+- **Rule 3, reward-hacking check: PASS.** No seed won by never moving.
+- An honest signal doubled skill (2.58 vs 1.19 and 1.36).
+- What it is: an evolved reflex to an outside broadcast signal. What it is not: learning within a lifetime, or a hunger signal (the peptide level was set from outside).
+- Open oddity: the scrambled arm shows a small positive index (+0.19) although its signal carries no information. Not yet explained.
+
+## Gravity experiment: 100 graded seeds (13-14 November, finished 04:05)
+
+No effect found. Across a 1000-fold range of gravity pattern strength, evolved behaviour and skill did not change. Method: python/ecosim/STEP21\_GRAVITY\_EXPERIMENT.md.
+
+- **Rule 1, behaviour:** avoidance of heavy ground (all brains tested at full strength) vs log strength evolved under: Spearman rho = +0.10, p = 0.33. No detectable trend.
+- **Rule 2, cost of specialising:** skill with no gravity vs log strength: rho = +0.03, p = 0.73. No trend.
+- Every tenth of the series sat slightly MORE on heavy ground than chance (avoidance -0.05 to -0.19). Worms move slower there, so they linger: the passive bias predicted before the run.
+- Reading: with these rules (energy cost up to 0.3 per tick against 0.6 for living), gravity is invisible to selection within 300 generations. It does not show gravity cannot matter, only that this version did not.
+- Decision that follows: a slowly changing ("eroding") gravity pattern was proposed on 14 November and NOT run, because worms ignored even a constant strong pattern. A short test of harsher gravity rules (python/ecosim/step24.py, renamed from step23 on 14 November) is written and checked but not queued.
+
+## Can evolution here be predicted? (analysis of all saved runs, 14 November)
+
+The average outcome of a condition can be predicted early; the fate of a single seed cannot. Data: 544 runs with per-generation histories (connectome Steps 19-22 and toy-brain runs), predicting each run's level at generation 190 from its first k generations. Every model was tested on an experiment family it had never seen.
+
+| Generations seen | Typical error in a run's final level | Which condition ends higher (rank agreement, 1 = perfect) | Which seed ends higher inside a condition |
+| --- | --- | --- | --- |
+| 10 | 29-43% | 0.82 | 0.24 |
+| 20 | 22-25% | 0.82-0.95 | 0.22 |
+| 50 | 11-14% | 0.95-1.00 | 0.39 |
+| 100 | 7-8% | 1.00 | 0.56-0.58 |
+
+- **Conditions are predictable.** After 20-50 generations the ranking of arms already matches the final ranking (0.95-1.00). Practical rule: a 50-generation pilot of all arms tells which arm will win; long runs are needed only to measure by how much.
+- **Seeds are not.** Within one condition, early standing says little about final standing, and no model beat chance at placing seeds until generation 100.
+- **No model beat the simplest one.** "It stays where it is now" was matched but not clearly beaten by a trained linear model (7% vs 8% error at 100 generations) or by fitting a saturating curve. There is no hidden regularity for a cleverer algorithm to find in these curves.
+- **Why seeds resist prediction:** a finished run's score wobbles by about 11% from generation to generation, while seeds of one condition differ by only about 10%. Seed differences are mostly measurement noise plus luck.
+- So: evolution in these closed worlds can be MEASURED (the frozen / shadow / real arms separate selection from chance) and its average course FORECAST, but individual lineages are not forecastable from their early history. That matches long-term experimental evolution in bacteria, where mean fitness follows a smooth curve while the mutations behind it differ run to run (Wiser, Ribeck & Lenski 2013, Science 342).
+- Limits: training scores only (not the unseen-world test), horizon 190 generations, five experiment families. Script: python/analysis/predict\_outcomes.py.
+
+## Fair muscle re-test, Step 20b (14-15 November, finished 02:29)
+
+Confirmed: reading the muscles still hurts. In the Main Experiment the muscle arm had only 3 evolvable gains against a 168-weight **decoder**, so its loss could have been a knob-count artefact. Step 20b gives both arms the same evolvable decoder; the only difference is what it reads: 28 interneurons, or the 95 muscles plus the AVA/AVB command neurons. 16 paired seeds x 300 generations, tested on 12 unseen worlds. Method: python/ecosim/step20b.py and STEP20\_MAIN\_EXPERIMENT.md section 7.
+
+| Arm | Skill at gen 50 | gen 100 | gen 200 | gen 300 | Food | Bites |
+| --- | --- | --- | --- | --- | --- | --- |
+| Decoder reads interneurons | 2.469 | 2.617 | 2.622 | **2.638** | 7.48 | 1.21 |
+| Decoder reads muscles | 1.808 | 1.988 | 2.094 | **2.030** | 7.34 | 0.81 |
+
+- **Rule set before the run:** muscles - interneurons, paired sign-flip test, one test. Result: **-0.608, higher in only 2 of 16 seeds, p = 0.0014. Verdict: confirmed, muscle readout hurts.**
+- The gap was there by generation 50 and did not close by 300.
+- Likely reason: in this model the muscles sit at the end of the chain, so their activity is a delayed, mixed copy of what the interneurons already decide; the decoder must undo that mixing.
+- Limit: reading muscles is still not a body. The muscles steer a point worm through the same speed, reversal and turn outputs. A body that bends segments would be a separate, larger experiment.
+
+## Food-circle gravity and magnetism, Step 23 (14-15 November, finished 05:16)
+
+First evolved use of a gravity cue: worms whose food sits in heavy gravity wells learned to rely on their gravity sense, even though the wells cost them. Magnetism showed nothing. Design (written by the other Claude session in this project): large feathered circles of gravity or magnetic field, either centred on the food patches or on empty decoy spots; 5 arms x 16 seeds x 300 generations; each best brain tested on 12 unseen worlds with its sense connected and with it cut (**sense-cut test**). Method: python/ecosim/STEP23\_FOOD\_CIRCLES\_EXPERIMENT.md.
+
+| Arm | Skill, sense connected | Skill, sense cut | Food | Time inside circles |
+| --- | --- | --- | --- | --- |
+| Control (no field) | 2.607 | - | 7.64 | 0.569 |
+| Gravity circles at food | **1.829** | **1.467** | 7.05 | 0.612 |
+| Gravity circles at decoy | 2.779 | 2.768 | 7.48 | 0.060 |
+| Magnetic circles at food | 2.730 | 2.665 | 7.60 | 0.580 |
+| Magnetic circles at decoy | 2.686 | 2.661 | 7.56 | 0.052 |
+
+Rules set before the run (paired sign-flip, Holm over 4):
+
+- **H1 gravity circles vs control: -0.778, 0/16 seeds, Holm p 0.0002. Confirmed: hurts.** Heavy ground slows the worms and costs energy exactly where they eat.
+- H2 magnetic circles vs control: +0.123, 7/16 seeds, Holm p 0.74. Null.
+- **H3 gravity brains use the sense: +0.362 (1.83 vs 1.47 with the PVD gravity input cut), 13/16 seeds, Holm p 0.003. Confirmed: helps.**
+- H4 magnetic brains use the sense: +0.065, 10/16 seeds, Holm p 0.74. Null.
+
+Reported, not tested: gravity decoy vs control +0.17 (11/16, p 0.095, a hint only); gravity at food vs decoy -0.95 (0/16); decoy arms barely change when the sense is cut, so empty circles are neither sought nor avoided.
+
+- Why this differs from the 100-seed Gravity experiment: there, the gravity pattern had no link to food and was ignored. Here the field predicts where food is, and selection used it. A cue matters when it carries information about something the worm needs.
+- Open choice for the owner: food on heavy ground (current) punishes the very behaviour being rewarded. A light-at-food arm (circle\_sign = -1) would test the cue without its cost; about 1.5 h. Not queued.
+- Limits: 16 seeds x 300 generations, skill still creeping up. Gravity (PVD input) and magnetism (AFD input) and their costs are model rules, so this describes how evolution responds to these rules, not what real C. elegans would do.
+- Run note: Step 20b and Step 23 ran side by side; the GPU averaged 94% use (peak 69 C, safe), above the 50% target. The watcher's 50% limit only gates job starts. One job at a time keeps the load near half.
+
 ## 2. Part I: the connectome platform (1 to 12 November)
 
 Evolution tuned the real worm wiring to forage 4.4 times better than a random walk, but almost every brain feature added on top did nothing. The world never demanded them. Brain: Cook 2019 connectome via OpenWorm c302, one strength gene per synapse. Fair test: one genome copied to 40 worms on unseen worlds.
@@ -161,9 +246,7 @@ Smell is by far the most valuable sense. Adding frontal or hippocampus layers ne
 
 ### 3.1 Smell, frontal and hippocampus layers
 
-![Food eaten on unseen arenas by brain type: bar = 900 generations, tick = 300 generations](img/findings_brain_types.png)
-
-*Source: toybrain/results_gpu_300g_30s_fair.json and results_gpu_900g_30s_fair.json, fair mode, 30 lineages each.*
+&#91;embedded content: toybrain/results\_gpu\_300g\_30s\_fair.json and results\_gpu\_900g\_30s\_fair.json, fair mode, 30 lineages each\]
 
 - **Fair mode matters.** In the first run, mutation size was per gene, so big brains (6x more genes) got about 2.5x larger mutations. The frontal layer looked harmful (-16.7 food). With mutation scaled by genome size (fair mode), frontal is level with no-smell (55.3 vs 57.9, p=0.3).
 - **Hippocampus still hurts** after the fix: -21.6 food (p=8e-13) without smell, -19.1 (p=3e-12) with smell. Its neurons start off and switch on during life, so they mostly add noise.
@@ -187,7 +270,7 @@ Why it stalls: the **reproductive share** of the winning ancestor is 1.00 in eve
 
 Best single lineages so far: normal #24 (116.2 food, 377 mutations on its line) and normal+frontal+hippo #12 (97.2, 373 mutations), from the continuation run.
 
-### 3.3 Interbreeding and the 7pm runs (in progress)
+### 3.3 Interbreeding: 3,200-generation runs (done)
 
 To keep variety, 25% of each lineage's children are now crosses: each gene comes 50/50 from its own elite parent or from an elite of another lineage. Three runs started 13 November at 15:21, all 3,200 generations (about 1.5 generations a second, so done near 18:20), same seeds, with a hard stop at 19:00:
 
@@ -198,6 +281,20 @@ To keep variety, 25% of each lineage's children are now crosses: each gene comes
 | m3 10 groups | only inside groups of 3 | 10 groups |
 
 Rule set before (13 November): interbreeding helps if m3's 10 group means beat m1's lineages grouped the same way (Welch p < 0.05). m2 can only be judged by its level and its kept variety, since its lineages are not independent. Results will be added here.
+
+#### Result (13 November 21:44, all three runs completed 3,200 generations)
+
+Interbreeding kept about 80 times more variety, but final skill changed for only one of five brain types. For that one, the weakest brain, it helped a lot.
+
+&#91;embedded content: toybrain/results\_gpu\_3200g\_30s\_fair.json (reference), ...\_cross0.25\_g1.json (one pool), ...\_cross0.25\_g10.json (10 groups); finished 13 Nov 21:44\]
+
+- **By the rule (10 groups vs reference, group means, Welch test, Holm over 5 brain types):** no smell + frontal + hippo +18.2 food (31.7 to 49.9), Holm p = 0.00004: **helps**. The other four: +0.6, +2.3, -2.4, +0.9, all Holm p above 0.5: no detectable difference.
+- **One pool** reached 66.0 on that brain, above every other no-smell brain. Its 30 lineages share genes, so this is one replicate: a strong hint, not a test.
+- **Variety kept:** gene variance inside a lineage was 0.047 (reference) vs 3.7-4.1 (interbreeding) for the normal brain, and higher in every brain type.
+- **It did not break the plateau.** Slopes over the last 100 generations stayed between -0.9 and +1.4 food per 100 generations in every run. The reference at 3,200 generations (107.7) equals the 900-generation run (107.5).
+- **Why the weakest brain gained:** its reference lineages were stuck at 31.7, half of what the same brain without the hippocampus layer reaches (61.7). A lineage cannot escape that alone; with gene flow, a fix found once spreads to its neighbours. Where lineages were not stuck, extra variety bought nothing.
+- Training curves of the interbreeding runs sit lower (84 vs 103 for normal) because a quarter of each population are fresh crosses, many of them poor. The fair test of the best brain is the number that counts.
+- Reproductive share stayed 1.00 everywhere: the ancestor label follows the own-lineage parent, so this measure cannot see gene flow. It needs replacing for interbreeding runs.
 
 ## 4. Part III: the equilibrium world
 
@@ -287,6 +384,35 @@ The clean baseline passes both rules: zero point (distance 0) and equilibrium (w
 - **Scarce food makes selection conservative.** Real worms stayed closer to their founders than chance would put them (p=5e-05). Many changes were harmful, so selection removed them.
 - Caveat: one run per world, 50,000 ticks (about 18 worm generations). Longer runs are needed before calling the pain result a null.
 
+**Pristionchus predator world (finished 15:47):** both rules pass (worst frozen swing 9.3%). The predator lowered the steady population only slightly (369 vs 385). Selection again made worms slower (-0.18, p=5e-05) and better eaters (+0.0045, 30/30). No escape response evolved: the escape trait fell below chance (-0.07 vs +0.02) and wiring to the predator and touch senses (0.30) matched chance (0.29-0.30). Same caveat: about 18 generations.
+
+### 5.2 All 15 engine worlds (finished 14 November 04:07)
+
+Every world shows the same adaptation: selected worms end slower and eat more than chance-only worms (all p = 0.00005 or 0.0006). No factor produced a different kind of evolution in 50,000 ticks. The differences are in size and in a few side effects.
+
+| World | Frozen population | Worst frozen swing (rule: under 10%) | Eating gain, real - shadow | Speed change, real - shadow | Notable |
+| --- | --- | --- | --- | --- | --- |
+| baseline (no factors) | 385 | 8.8% pass | +0.0031 | -0.20 | reference |
+| ASH pain (half food + cadmium + alarm) | 190 | 8.4% pass | +0.0118 | -0.10 | real stays closer to founders than chance |
+| Pristionchus predator | 369 | 9.3% pass | +0.0045 | -0.18 | no escape response evolved |
+| virus with gene transfer | 372 | 15.0% fail | +0.0040 | -0.18 |  |
+| evolvable mutation rate + radiation | 385 | 13.3% fail | +0.0037 | -0.21 | genetic distance doubles (12 vs 6) in both arms |
+| temperature gradient | 384 | 10.9% fail | +0.0040 | -0.20 |  |
+| magnetic field (contested) | 385 | 14.7% fail | +0.0071 | -0.17 | chance-only worms eat less (0.032 vs 0.035) |
+| radiofrequency (assumed weak cost) | 375 | 12.5% fail | +0.0043 | -0.19 |  |
+| radiation | 385 | 12.4% fail | +0.0039 | -0.22 |  |
+| gravity 0.38 g | 381 | 12.4% fail | +0.0045 | -0.16 | everyone slower (frozen speed 0.86) |
+| electric field | 385 | 10.7% fail | +0.0087 | -0.17 | chance-only worms eat less (0.030) |
+| predatory fungi | 294 | 12.6% fail | +0.0064 | -0.20 | population -24%; selected worms recover to 403 |
+| microsporidia | 374 | 7.8% pass | +0.0042 | -0.19 |  |
+| mating system (males) | 385 | 13.4% fail | +0.0029 | -0.19 | fewer family lines survive (33 vs 41) |
+| migration | 377 | 7.0% pass | +0.0151 | -0.12 | real stays far closer to founders than chance (-4.3) |
+
+- **The equilibrium rule is too tight.** 10 of 15 worlds fail the 10% limit, including the magnetic-field world, whose frozen arm is the baseline world in everything but random numbers. The frozen population's natural swing over 50,000 ticks is 7-15%, so a 10% limit fails by chance. It should be re-based (for example 15%, or the median swing) before it is used as a pass/fail gate again.
+- **Useless senses act as noise.** Magnetic and electric fields carry no information about food, yet chance-only worms eat less in those worlds while selected worms do not. Selection is spending effort keeping brains from reacting to a meaningless input. A hint, not tested.
+- **Predatory fungi** is the only factor that clearly lowers the population, and the only one where selection wins a large share back.
+- Same caveat throughout: one run per world, about 18 worm generations.
+
 ## 6. Bugs found and fixed, open questions
 
 Nine flaws have changed results so far. Each was fixed, and the affected results were archived, not deleted.
@@ -305,7 +431,7 @@ Nine flaws have changed results so far. Each was fixed, and the affected results
 
 **Open questions**
 
-- Does interbreeding keep variety and break the Main Experiment plateau? (m1-m3, tonight)
+- Does interbreeding keep variety and break the 2nd Experiment plateau? Answered 13 Nov: variety yes, plateau no
 - Which of the 38 factors change evolution in the equilibrium world? (batch v3 + explorations)
 - Does an environment ever make a new brain part worth having? So far: no.
 - Why does selection keep many families alive (36) while chance lets one take over (79%)?
@@ -322,6 +448,7 @@ Nine flaws have changed results so far. Each was fixed, and the affected results
 | Combined score | Owner's definition of best: reproductive share x fair-test score; tie-break = recent slope |
 | Connectome | The full wiring diagram of a nervous system (here C. elegans: 300 neurons) |
 | Crossover (interbreeding) | A child's genes taken partly from one parent and partly from another |
+| Decoder (readout) | The evolvable set of weights that turns brain activity into movement (speed, reverse, turn) |
 | Drift (genetic drift) | Change in a population caused by chance, not by fitness |
 | Elite | One of the best worms of a generation, copied unchanged into the next |
 | Equilibrium | A steady state: births balance deaths and population stays level |
@@ -344,6 +471,7 @@ Nine flaws have changed results so far. Each was fixed, and the affected results
 | Reproductive share | Fraction of the final population descended from the winner's ancestor |
 | Reward hacking | Evolution scoring well by exploiting a flaw in the scoring rule rather than doing the task |
 | Seed | The number that fixes a run's random choices; same seed = same run |
+| Sense-cut test | Testing the same evolved brain twice, once with one sensor unplugged; a drop in skill shows the brain relies on that sense |
 | Tick | One time step: every worm senses, thinks and moves once |
 | Tragedy of the commons | Individuals winning by competing, while the group as a whole does worse |
 | Welch t-test | A test of whether two groups' averages differ, allowing different spreads |
