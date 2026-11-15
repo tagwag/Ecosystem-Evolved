@@ -21,10 +21,17 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | queued 3 | engine batch v3 f4-f6 + explorations x1-x9, alongside gravity while GPU < 70 % | - | watcher | remote/logs/ | overnight |
 | queued 4 | REWARD HACKING EXPERIMENT r1 (ecosim/step22.py, doc STEP22_REWARD_HACKING_EXPERIMENT.md): whole GPU ~3 h, then analysis | after the above | watcher | remote/logs/r1_*.txt | morning |
 | DONE | MAIN EXPERIMENT (connectome Step 20), ran 15:52-19:00 | 2026-11-13 | watcher | results/step20_stats.txt | done |
+| TO QUEUE (2026-11-14, cloud session wrote code, NOT yet run) | code checks `food_circles_check`, `muscle_fair_check`; then `muscle_fair` (Step 20b, ~2-3 h) and `food_circles_experiment` (Step 23, ~5 h) | - | watcher | remote/logs/ | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-14 NEW, not run yet: Step 20b FAIR MUSCLE RE-TEST (ecosim/step20b.py): same evolvable decoder reading 28 interneurons
+  vs the 95 muscles + AVA/AVB (Step 20's muscle arm had 3 gains vs 168 decoder weights = unfair). Step 23 FOOD-CIRCLE
+  GRAVITY & MAGNETISM (ecosim/step23.py, doc STEP23_FOOD_CIRCLES_EXPERIMENT.md): big feathered field circles with food at
+  each centre; 5 arms (ctrl / grav food / grav decoy / mag food / mag decoy) x 16 seeds x 300 gens; rules pre-registered.
+- 2026-11-14: results of the 2026-11-13 overnight queue (2nd Experiment m1-m3, Gravity g1, engine batch, Reward Hacking r1)
+  were never pushed: check remote/status.json + logs on the workstation and commit results/ .
 - 2026-11-13 MAIN EXPERIMENT (ecosim/step20.py, doc ecosim/STEP20_MAIN_EXPERIMENT.md): at gen 190, 16 paired seeds, 12 unseen
   worlds: reversal potentials NO detectable effect (-0.003, Holm p 0.97); muscle output HURTS (-0.63, 0/16 seeds, Holm
   p 0.0001). Not proof muscles are worse: the readout has 3 gains vs 168 decoder weights and starts with little drive.

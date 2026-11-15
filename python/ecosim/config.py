@@ -144,6 +144,27 @@ class Config:
     grav_wall: float = 0.25         # noise level (noise scaled to -1..1) above which ground is "wall" = heavy
     grav_feather: float = 0.25      # half-width of the soft edge in noise units; 0 = hard cave-wall edge
     grav_seed: int = 20261113       # fixes the pattern's layout (same pattern for every world and run)
+    # ---- Step 23 (2026-11-14): FOOD CIRCLES for gravity and magnetism (off by default). GPU code only.
+    # With field_circles on, the gravity pattern (and/or the magnetic field) is NOT the cave pattern above but one
+    # large FEATHERED CIRCLE per food patch: value 1 inside circle_r, fading smoothly (smoothstep) to 0 at
+    # circle_r + circle_feather, 0 elsewhere (where circles overlap, the larger value wins). Rebuilt every
+    # generation from that world's food layout.
+    #   circle_place = 'food'   circles centred on the food patches (the field POINTS TO food)
+    #                  'decoy'  same number and size of circles, placed away from the food (the field points nowhere
+    #                           useful; separates "the field is a food cue" from "the field's physical effect")
+    # Gravity inside a circle: 1 g + strength x value (circle_sign = +1: a heavy "gravity well" at the food;
+    # -1: light ground at the food). Slowing, energy cost and PVD sensing work exactly as in Step 21.
+    # MAGNETISM (magnetism=True): field value x mag_s (per world, FastSim.mag_s) is sensed by the AFD neurons, the
+    # neurons reported to mediate magnetic orientation in C. elegans (Vidal-Gadea et al. 2015, eLife 4:e07493; a
+    # replication attempt failed: Landler et al. 2018, eLife 7:e30187). Magnetism is a pure CUE in this model:
+    # it does not slow worms or cost energy.
+    field_circles: bool = False
+    circle_r: float = 100.0         # fully-on radius (world units; world is 1920 x 1080, food patch spread 60)
+    circle_feather: float = 140.0   # width of the soft edge: the field reaches 0 at circle_r + circle_feather
+    circle_place: str = 'food'
+    circle_sign: float = 1.0
+    magnetism: bool = False
+    mag_gain: float = 3.0
     temp_cost: float = 0.4          # per tick at the hottest/coldest spot (base_cost is 0.6)
     light_cost: float = 0.3
     toxic_cost: float = 1.5

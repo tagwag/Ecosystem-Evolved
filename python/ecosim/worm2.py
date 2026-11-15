@@ -32,7 +32,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .connectome import (Connectome, READOUT, SENSORS, SILENT, FLIPPED, _is_neuron)
+from .connectome import (Connectome, READOUT, SENSORS, SILENT, FLIPPED, _is_neuron, _is_muscle, FWD, BWD)
 from .sim import TAU, max_speed
 from .world import World
 
@@ -42,7 +42,7 @@ N_OUT = 3
 @dataclass
 class Opts:
     hunger: bool = True
-    readout: str = 'known'        # 'known' | 'all'
+    readout: str = 'known'        # 'known' | 'all' | 'muscles' (Step 20b: the 95 body-wall muscles + AVA/AVB commands)
     fitness: str = 'energy'       # 'energy' | 'food' | 'end' (energy left at the end + survival; GPU code only)
     gut_cap: float = 1500.0
     h_rate: float = 0.01          # how fast H follows the energy level (per tick)
@@ -62,6 +62,13 @@ class Opts:
 def readout_names(conn: Connectome, opts: Opts):
     if opts.readout == 'all':
         return [n for n in conn.names if _is_neuron(n)]
+    if opts.readout == 'muscles':
+        # Step 20b (2026-11-14), the FAIR muscle-output test: the normal evolvable decoder (change + level weights for
+        # each read cell, x3 outputs) reading the BODY instead of interneurons: all 95 body-wall muscles plus the
+        # AVA/AVB command interneurons (reversals need them; real worms reverse through AVA). 99 cells x 3 x 2 = 594
+        # decoder genes vs 168 for the 28-interneuron decoder; starting strength and mutation per child are already
+        # scaled by readout size (random_genomes, mutate), so neither version starts stronger or mutates faster.
+        return [n for n in conn.names if _is_muscle(n)] + [n for n in BWD + FWD if n in conn.idx]
     return [n for n in READOUT if n in conn.idx]
 
 
