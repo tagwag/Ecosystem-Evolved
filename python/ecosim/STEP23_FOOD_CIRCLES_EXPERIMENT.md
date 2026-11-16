@@ -143,3 +143,22 @@ the cost; one extra arm, about 1.5 h. Not queued; owner's call.
 16 seeds x 300 generations; skill was still creeping up at 300. Gravity and magnetism effects are model rules (PVD
 gravity input, AFD magnetic input, invented speed and energy costs), so this says how evolution responds to these
 rules, not what real C. elegans would do.
+
+## 7. Results of the light-gravity arm (run 2026-11-16 06:08-07:07 MT; 6-arm re-analysis, same unseen worlds)
+| Arm | Skill (own) | Skill (sense cut) | Food | Occupancy |
+|---|---|---|---|---|
+| s23_ctrl | 2.607 | - | 7.64 | 0.569 |
+| s23_grav_food (heavy at food) | 1.829 | 1.467 | 7.05 | 0.612 |
+| **s23_grav_light (light at food)** | **3.843** | 3.720 | 7.79 | 0.622 |
+(H1-H4 and the other arms reproduced the 2026-11-15 numbers exactly.)
+
+- **H5 light gravity circles vs control: +1.236, 16/16 seeds, Holm p 0.0001 -> PASS: helps** (the biggest gain in
+  the project so far).
+- **H6 light-gravity brains use the sense: +0.123, 9/16 seeds, Holm p 0.13 -> no detectable effect.**
+- Reported: light vs heavy at food +2.014 (16/16).
+
+Plain words: food on light ground makes worms far better off, but they do NOT steer by the gravity sense: unplugging
+it barely matters. The gain is physics (on light ground they move up to 1.5x faster and spend less energy right where
+they eat), not navigation. So for LEADING worms with gravity, the heavy-well version (H3: the sense IS used) is the
+informative one, and a cue works best when it is the only way to find something (see Step 25, the beacon series).
+

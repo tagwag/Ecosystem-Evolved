@@ -165,6 +165,45 @@ class Config:
     circle_sign: float = 1.0
     magnetism: bool = False
     mag_gain: float = 3.0
+    # ---- Step 25 (2026-11-16): BEACON (off by default). GPU code only (batch3_fast.FastSim).
+    # One feathered circle per world (value 1 within beacon_r of its centre, smooth fade to 0 at beacon_r +
+    # beacon_feather; distances wrap), at a random place every generation. Two separate things come from it:
+    #   CUE     value x beacon_gain is fed into the neurons named in beacon_neurons (comma-separated, e.g. 'AFDL,AFDR');
+    #           nothing else senses it. Per world on/off: FastSim.b_cue (K,1), default 1.
+    #   REWARD  a worm inside gains value x beacon_reward energy per tick (never above the gut limit). Per world
+    #           on/off: FastSim.b_rew (K,1), default 1. The zone has no food, no smell, no physical effect.
+    # beacon_speed > 0 makes the beacon drift in a straight line (random direction) at that many units per tick
+    # (the moving-beacon test). FastSim.b_place (K,2) fixes the centres for the next load (steering tests).
+    beacon: bool = False
+    beacon_neurons: str = ''
+    beacon_gain: float = 3.0
+    beacon_reward: float = 0.3      # per tick at the centre; the cost of living (base_cost) is 0.6
+    beacon_r: float = 100.0
+    beacon_feather: float = 140.0
+    beacon_speed: float = 0.0
+    # ---- Step 27 (2026-11-16): FLEEING FOOD (off by default = food never moves). GPU code only.
+    # Each living food item checks the nearest living worm (distances wrap). If it is within food_flee_radius the
+    # food moves food_flee_speed units directly away from it, plus a random wobble of +-food_flee_wobble radians.
+    # Worm top speed is speed_max (5). food_tire_run > 0: after that many ticks of running in a row the food must
+    # rest food_tire_rest ticks (the fallback if the fastest food is never caught).
+    food_flee_speed: float = 0.0
+    food_flee_radius: float = 40.0
+    food_flee_wobble: float = 0.35
+    food_tire_run: int = 0
+    food_tire_rest: int = 30
+    # ---- Step 28 (2026-11-16): CORRIDOR TEST (off by default). GPU code only.
+    # One straight corridor per worm (worm_population corridors stacked across the world), worm i alone in corridor i,
+    # starting at x = 100 with a random heading; ONE food at the far end (x = 100 + corridor_len). Sliding walls: a worm
+    # that walks into a side wall keeps its along-corridor motion (no getting stuck, no wall sensing needed). No food
+    # regrowth, no predators. Arrival = first tick the worm is within corridor_reach of its food (FastSim stats
+    # 'corr_arrival', ticks_per_generation if never). Smell reaches ~256 units from food (4 sigma of the smell blur),
+    # so in a 400-unit corridor the first ~150 units must be crossed without smell.
+    corridor: bool = False
+    corridor_len: float = 400.0
+    corridor_width: float = 40.0
+    corridor_reach: float = 20.0
+    corridor_food: int = 1          # food items at the far end of each corridor (> 1 = a small patch, like the
+    corridor_spread: float = 12.0   #   patches the brains evolved with; scattered around the end point by this much)
     temp_cost: float = 0.4          # per tick at the hottest/coldest spot (base_cost is 0.6)
     light_cost: float = 0.3
     toxic_cost: float = 1.5

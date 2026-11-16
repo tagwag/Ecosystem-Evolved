@@ -1,0 +1,6 @@
+Step 25 / Beacon series, PILOT (50 generations; ranking only, no formal tests): 2 seeds, 2 unseen worlds x 60 clones, reward OFF
+arm             steering index (+ seeds)  occ on  occ off  arrival on/off
+s25_smell       +0.0049 ( 1/2)       0.0734  0.0686     1431/  1500
+s25_none        +0.0000 ( 0/2)       0.0686  0.0686     1500/  1500
+s25_afd         -0.0103 ( 0/2)       0.0583  0.0686     1500/  1500
+uncorrected sign-flip p of the steering index (pilot, for ranking only): smell 1, afd 0.49

@@ -79,3 +79,26 @@ the passive "slower there, so they linger" bias predicted in section 4. Skill 2.
 Reading: with these rules gravity is invisible to selection in 300 generations. Not shown: that gravity cannot
 matter. Follow-up written but NOT run: `ecosim/step24.py` (harsher cost, with / without sensing, 16 seeds).
 A slowly changing ("eroding") pattern was proposed 2026-11-14 and not run for the same reason.
+
+## 8. Follow-up: the GRAVITY BITE TEST (Step 24, ecosim/step24.py), run 2026-11-16 07:07-09:40 MT
+Question: is there ANY setting at which gravity matters to evolution here? 4 arms x 16 seeds x 200 generations,
+Main Experiment world + the cave-style gravity pattern; every best brain tested on 12 unseen worlds at strength 1.0
+with the harsh ("bite") rules. Avoidance = -(mean pattern value under living worms); > 0 = they stay on light ground.
+
+| Arm | Evolved under | Avoidance | Skill (bite world) | Speed |
+|---|---|---|---|---|
+| s24_flat | no gravity | -0.073 | 1.924 | 0.593 |
+| s24_base | Step 21 rules (cost 0.3) | -0.057 | 2.567 | 0.557 |
+| **s24_bite** | **cost 1.5 (5x), sensed** | **+0.121** | **2.960** | 0.421 |
+| s24_blind | cost 1.5, NOT sensed | -0.092 | 2.151 | 0.635 |
+
+Pre-registered tests (vs s24_flat, paired sign-flip, Holm over 3):
+- base: +0.016 (9/16), Holm p 0.96 -> no detectable response (repeats Step 21's null)
+- **bite: +0.195 (14/16), Holm p 0.00045 -> RESPONDS TO GRAVITY**
+- blind: -0.019 (5/16), Holm p 0.96 -> no detectable response
+
+Plain words: when heavy ground is costly enough (2.5x the cost of living at its heaviest) AND the worms can feel
+gravity, evolution makes them avoid heavy ground and move more slowly, and those brains are the best in that world.
+Same cost without the sense: no avoidance, so the sense is what gets used (not just a general slowdown).
+Decision rule fixed before the run: "if s24_bite responds, the changing-pattern (erosion) experiment is worth running
+with the bite rules." It responded, so erosion is now worth designing (owner's call; not built).

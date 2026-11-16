@@ -320,3 +320,14 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
   H2/H4 magnetism no detectable effect. Details in ecosim/STEP23_FOOD_CIRCLES_EXPERIMENT.md section 6.
 - Both experiments ran in parallel; GPU sat near 99 % utilisation (watcher util_max 50 only gates job starts, both
   started before load rose). Temperature stayed safe (max 69 C, mean utilisation 94 %). For a true ~50 % load, queue one at a time.
+
+2026-11-16 (cloud session)
+- Step 23 light-gravity arm (gravity circles at food, 0 g at centre): H5 skill +1.24 vs control (16/16, Holm p 0.0001)
+  but H6 the sense is NOT used (+0.12, p 0.13): the gain is physics (faster, cheaper movement on food), not navigation.
+- Step 24 gravity bite test: with 5x cost AND sensing, worms avoid heavy ground (+0.195, 14/16, Holm p 0.00045);
+  base rules and blind worms: nothing. Pre-registered decision -> the erosion experiment is now worth designing.
+- New code (all features off by default; checks passed on the workstation 09:34-09:39): Step 25 beacon series,
+  Step 26 single-neuron knockout guide, Step 27 fleeing food, Step 28 corridor combination screen (continuous refill,
+  per-brain knockout masks). Behaviour stats added to every run: reversal_rate, turn_rate, near_food.
+- Step 28 calibration FAILED as first built: intact brains reach ONE piece of food down a 400-unit corridor in 1.6 %
+  of tries (300 units: 14 %). Owner chose to compare variants first (corridor_calibrate job).

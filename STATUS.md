@@ -15,12 +15,17 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| RUNNING 2026-11-16 06:08 | e3 food_circles_experiment: new arm s23_grav_light (light gravity at food), then re-analysis of all 6 arms (~1.5-2 h). Alone on the GPU. | 06:08 | watcher | remote/logs/e3_food_circles_light.txt | ~08:00 |
-| QUEUED 2 | e4 gravity_bite_test (ecosim/step24.py, ~2.5 h), starts when e3 ends | after e3 | watcher | remote/logs/e4_gravity_bite_test.txt | ~10:30 |
+| DONE 07:07 | e3 Step 23 light-gravity arm: H5 skill +1.24 (16/16, Holm p 0.0001), H6 sense NOT used (p 0.13) | 06:08 | watcher | results/step23_stats.txt | done |
+| DONE 09:40 | e4 gravity bite test (step24): with 5x cost + sensing worms AVOID heavy ground (+0.195, 14/16, Holm p 0.00045); base and blind: nothing | 07:07 | watcher | results/step24_stats.txt | done |
+| DONE 09:39 | code checks: knockout, beacon, fleeing food passed (fleeing-food ratio fix re-checked as k13); combo_check FAILED calibration (intact worms 1.6 % / 14 % arrival) | 09:34 | watcher | remote/logs | done |
+| QUEUED (in order, one at a time) | k14 corridor_calibrate (~10 min) -> e5 beacon_pilot (~2.5 h) -> e6 knockout_guide (~6 h); then fleeing_food_experiment, beacon_full, combo_screen (after the corridor fix) | 09:42 | watcher | remote/logs | ~18:30 |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-16 GRAVITY BITE TEST (step24): worms DO evolve to avoid heavy ground when it is costly (5x) and sensed
+  (+0.195, 14/16, Holm p 0.00045); Step 21 rules and blind worms: no response. Erosion experiment now justified.
+- 2026-11-16 STEP 23 LIGHT GRAVITY at food: skill +1.24 (16/16) but the gravity sense is NOT used: physics, not cue.
 - 2026-11-15 FOOD CIRCLES (step23, 16 seeds x 300 gens): gravity wells at food HURT skill (-0.78, 0/16, Holm p 0.0002)
   but those brains USE the gravity sense (sense cut -0.36, 13/16, Holm p 0.003) = first evolved use of a gravity cue.
   Magnetic circles: no detectable effect, sense not used. Decoys: neither sought nor avoided.

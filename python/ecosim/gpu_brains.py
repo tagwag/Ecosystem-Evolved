@@ -129,6 +129,31 @@ class Worm2Brain(_Base):
             self.m_hd, self.m_hv = ids(HEAD_D), ids(HEAD_V)                # dorsal / ventral head muscles (steering)
             self.c_bwd, self.c_fwd = ids(BWD), ids(FWD)                    # AVA (backward) / AVB (forward) commands
             self.mk, self.mb = z(B, 3), z(B, 3)                            # 3 output gains + 3 biases (genome)
+        self.ko = None                     # Steps 26/28 knockouts: (B, N) 1 = neuron present, 0 = removed; None = off
+        self.vmax = None                   # Step 28: if set to zeros (N,), records the largest |v| of every neuron
+
+    def enable_knockout(self):
+        """Steps 26/28: allow removing neurons, separately for every brain (call before the first run).
+        A removed neuron's activity is held at 0 every tick and all its gap junctions are cut, so it neither sends nor
+        receives anything: like a laser ablation. Chemical synapses need no change (their strength is multiplied by
+        the removed neuron's zero activity). Gap junctions: the current into neuron j is sum_k G[j,k] (v_k - v_j);
+        with v_k = 0 for a removed k, the only leftover is the leak -G[j,k] v_j, which is removed by using a
+        per-brain degree gdeg_b[b, j] = sum over PRESENT k of G[j,k] (G is symmetric)."""
+        B, N = self.v.shape
+        self.ko = torch.ones(B, N, **self.f)                    # 1 = present, 0 = removed, per brain
+        self.gdeg_b = self.G_deg.expand(B, N).clone()
+
+    def set_knockout(self, ids):
+        """Remove the same neurons (indices) from every brain; empty = intact. In place: works between runs."""
+        m = torch.ones_like(self.ko)
+        if len(ids):
+            m[:, torch.as_tensor(ids, device=self.dev, dtype=torch.long)] = 0.0
+        self.set_knockout_mask(m)
+
+    def set_knockout_mask(self, mask):
+        """Per-brain removal: mask (B, N), 1 = present, 0 = removed."""
+        self.ko.copy_(torch.as_tensor(mask, **self.f))
+        self.gdeg_b.copy_(self.G_deg[None, :] - (1.0 - self.ko) @ self.G)
 
     def load(self, genomes):
         L, opts = self.L, self.opts
@@ -158,7 +183,7 @@ class Worm2Brain(_Base):
             I = self.e_exc * g_exc + self.e_inh * (g_all - g_exc) - v * g_all
         else:
             I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
-        I = I + v @ self.G - self.G_deg * v                              # gap junctions
+        I = I + v @ self.G - (self.G_deg if self.ko is None else self.gdeg_b) * v     # gap junctions
         I = I - self.inhibition * r.mean(1, keepdim=True)
         I[:, self.s_on] += (self.g3[:, 0] * torch.clamp(d, min=0))[:, None]
         I[:, self.s_off] += (self.g3[:, 1] * torch.clamp(-d, min=0))[:, None]
@@ -173,6 +198,10 @@ class Worm2Brain(_Base):
         v = v + self.k_dt * (-v + I)
         if self.dials is not None:
             v = self._apply_dials(v, tick)
+        if self.ko is not None:                                          # Step 26: removed neurons stay silent
+            v = v * self.ko
+        if self.vmax is not None:                                        # Step 28: silent-neuron detection
+            torch.maximum(self.vmax, v.abs().amax(0), out=self.vmax)
         r = torch.tanh(torch.clamp(v, min=0))
         x = r[:, self.rd]
         dev = x - rbar

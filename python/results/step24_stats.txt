@@ -1,0 +1,9 @@
+Step 24 / Gravity bite test: best brains at generation 200, 16 seeds, tested at strength 1.0 with the bite rules
+arm         avoidance   skill    food   speed
+s24_flat    -0.0732    1.924   5.96   0.593
+s24_base    -0.0572    2.567   6.98   0.557
+s24_bite    +0.1214    2.960   6.34   0.421
+s24_blind   -0.0918    2.151   6.82   0.635
+s24_base - s24_flat: avoidance +0.0159 (higher in 9/16 seeds), p=0.607, Holm p=0.956 -> no detectable response
+s24_bite - s24_flat: avoidance +0.1946 (higher in 14/16 seeds), p=0.00015, Holm p=0.00045 -> RESPONDS TO GRAVITY
+s24_blind - s24_flat: avoidance -0.0186 (higher in 5/16 seeds), p=0.478, Holm p=0.956 -> no detectable response

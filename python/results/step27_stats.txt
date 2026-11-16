@@ -1,0 +1,14 @@
+Step 27 / Fleeing food: 2 seeds, best brains at generation 2, 2 unseen worlds x 60 clones
+arm                 ratio  skill   food  catches/world  group share  ambush share  chase ticks | skill in still world  in 1.1x world
+s27_still            0.0   0.548   3.32         nan         nan          nan        nan   |    0.548           0.259
+s27_edge             1.1   0.259   0.01        0.75       0.250        0.000       16.2   |    0.548           0.259
+s27_veryfast         3.0   0.258   0.00        0.00         nan          nan        nan   |    0.548           0.259
+s27_edge_tired       1.1   0.260   0.03        1.75       0.300        0.000       84.2   |    0.548           0.259
+s27_veryfast_tired   3.0   0.258   0.00        0.00         nan          nan        nan   |    0.548           0.259
+PRE-REGISTERED:
+  R1 skill vs speed ratio (main arms): Spearman rho = -0.837, p = 0.0378 -> PASS: skill falls with food speed
+  R2 group-catch share vs speed ratio (moving arms, one-sided): rho = +nan, p = nan -> no detectable rise
+  R3 evolved vs random brains, catches per world (paired sign-flip, Holm over the moving arms):
+    s27_edge       +0.00 (1/2)  p=1  Holm p=1 -> no detectable difference
+    s27_veryfast   +0.00 (0/2)  p=1  Holm p=1 -> no detectable difference
+Tiring fallback decisions (random brains, before evolution): s27_edge 0.75/world -> tired arm, s27_veryfast 0.00/world -> tired arm

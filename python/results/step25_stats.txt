@@ -1,0 +1,13 @@
+Step 25 / Beacon series, FULL (pre-registered tests): 2 seeds, 2 unseen worlds x 60 clones, reward OFF
+arm             steering index (+ seeds)  occ on  occ off  arrival on/off   moving: dist off-on   skill(train)  skill(cue cut)
+s25_smell       +0.0049 ( 1/2)       0.0734  0.0686     1431/  1500       -0.08 ( 1)      0.861        0.655
+s25_none        +0.0000 ( 0/2)       0.0686  0.0686     1500/  1500       +0.00 ( 0)      0.655        0.655
+s25_afd         -0.0103 ( 0/2)       0.0583  0.0686     1500/  1500       -9.19 ( 0)      0.645        0.655
+PRE-REGISTERED: steering index > 0, paired sign-flip, Holm over the 12 cue arms
+  s25_afd         -0.0103  p=0.492  Holm p=0.985  -> no detectable steering
+  s25_smell       +0.0049  p=1  Holm p=1  -> no detectable steering
+  positive control s25_smell: FAILED -> setup judged broken
+  method check s25_none (no cue): steering +0.0000, p=1 (should be ~0)
+REPORTED: skill vs s25_none (train world)
+  s25_smell       +0.206 (2/2)  p=0.492 (uncorrected)
+  s25_afd         -0.010 (1/2)  p=1 (uncorrected)

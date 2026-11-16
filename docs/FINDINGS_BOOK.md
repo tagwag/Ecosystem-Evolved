@@ -15,7 +15,7 @@ A research notebook in book form: every finding so far, the bugs that were found
 | Project | Ecosystem-Evolved (github.com/tagwag/Ecosystem-Evolved) |
 | Owner | Tag (tagwag) |
 | Written by | Claude, from the project notes, status board and result files |
-| Edition | 1st edition, 13 November 2026; updated 15 November 2026 |
+| Edition | 1st edition, 13 November 2026; updated 16 November 2026 |
 | Covers | 1 November to 13 November 2026 (Steps 1-19, sweep, teacher, Main Experiment, equilibrium world, factor engine) |
 | Hardware | Desktop: i9-10900K, 32 GB RAM, RTX 3080 (10 GB) |
 
@@ -127,7 +127,7 @@ No effect found. Across a 1000-fold range of gravity pattern strength, evolved b
 - **Rule 2, cost of specialising:** skill with no gravity vs log strength: rho = +0.03, p = 0.73. No trend.
 - Every tenth of the series sat slightly MORE on heavy ground than chance (avoidance -0.05 to -0.19). Worms move slower there, so they linger: the passive bias predicted before the run.
 - Reading: with these rules (energy cost up to 0.3 per tick against 0.6 for living), gravity is invisible to selection within 300 generations. It does not show gravity cannot matter, only that this version did not.
-- Decision that follows: a slowly changing ("eroding") gravity pattern was proposed on 14 November and NOT run, because worms ignored even a constant strong pattern. A short test of harsher gravity rules (python/ecosim/step24.py, renamed from step23 on 14 November) is written and checked but not queued.
+- Decision that follows: a slowly changing ("eroding") gravity pattern was proposed on 14 November and NOT run, because worms ignored even a constant strong pattern. A short test of harsher gravity rules (python/ecosim/step24.py) was run on 16 November: see "Gravity bite test, Step 24" below. Harsh, sensed gravity IS avoided.
 
 ## Can evolution here be predicted? (analysis of all saved runs, 14 November)
 
@@ -186,6 +186,44 @@ Reported, not tested: gravity decoy vs control +0.17 (11/16, p 0.095, a hint onl
 - Open choice for the owner: food on heavy ground (current) punishes the very behaviour being rewarded. A light-at-food arm (circle\_sign = -1) would test the cue without its cost; about 1.5 h. Not queued.
 - Limits: 16 seeds x 300 generations, skill still creeping up. Gravity (PVD input) and magnetism (AFD input) and their costs are model rules, so this describes how evolution responds to these rules, not what real C. elegans would do.
 - Run note: Step 20b and Step 23 ran side by side; the GPU averaged 94% use (peak 69 C, safe), above the 50% target. The watcher's 50% limit only gates job starts. One job at a time keeps the load near half.
+
+## Light gravity at the food, Step 23 extra arm (16 November, finished 07:07)
+
+Food on light ground (0 g at the centre of each circle) gave the biggest skill gain in the project, but the worms did NOT use the gravity sense to get it. Same circles as the heavy-gravity arm, opposite price: on light ground worms move up to 1.5x faster and spend less energy. Rules were written before the run as a separate test family, so H1-H4 kept their correction.
+
+| Arm | Skill, sense connected | Skill, sense cut | Food |
+| --- | --- | --- | --- |
+| Control (no field) | 2.607 | - | 7.64 |
+| Heavy gravity at food | 1.829 | 1.467 | 7.05 |
+| **Light gravity at food** | **3.843** | 3.720 | 7.79 |
+
+- **H5 light circles vs control: +1.236, 16/16 seeds, Holm p 0.0001. Confirmed: helps.**
+- **H6 light-gravity brains use the sense: +0.123, 9/16 seeds, Holm p 0.13. Null.**
+- Reading: the gain is physics (cheap, fast movement where the food is), not navigation. A cue that also changes the world gets credit for the change, not for the information. That is why the beacon series (Step 25) uses pure cues with a hidden reward.
+
+## Gravity bite test, Step 24 (16 November, finished 09:40)
+
+Confirmed: gravity can shape evolution here, if heavy ground is costly enough and the worm can feel it. Four arms x 16 seeds x 200 generations in the Main Experiment world with the cave-style gravity pattern; every best brain tested on 12 unseen worlds with the harsh rules. **Avoidance** = how much the worms stay off heavy ground (> 0 = they avoid it). Method: python/ecosim/step24.py and STEP21\_GRAVITY\_EXPERIMENT.md section 8.
+
+| Arm | Evolved under | Avoidance | Skill | Speed |
+| --- | --- | --- | --- | --- |
+| Flat | no gravity | -0.073 | 1.924 | 0.593 |
+| Base | Step 21 rules (cost 0.3) | -0.057 | 2.567 | 0.557 |
+| **Bite** | **cost 1.5 (5x), sensed** | **+0.121** | **2.960** | 0.421 |
+| Blind | cost 1.5, not sensed | -0.092 | 2.151 | 0.635 |
+
+- **Bite vs flat: +0.195, 14/16 seeds, Holm p 0.00045. Confirmed: responds to gravity.**
+- Base vs flat: +0.016, Holm p 0.96 (null, repeats the 100-seed Gravity experiment). Blind vs flat: -0.019, Holm p 0.96 (null): without the sense, the same cost produces no avoidance.
+- Decision written before the run: if the bite arm responds, a slowly changing ("eroding") gravity pattern is worth running with the bite rules. It responded; erosion is now worth designing.
+
+## Built 16 November, not yet run
+
+Four new experiments are coded and passed their workstation code checks; results will get their own chapters.
+
+- **Beacon series (Step 25):** one experiment per sense. A hidden reward zone that only one sense can detect; the key test switches the reward off and asks whether the cue alone leads worms to a place we choose, or along a moving path.
+- **Single-neuron knockout guide (Step 26):** each of the 300 neurons removed in turn from 16 evolved brains; a plain-words guide of what each removal does, checked against real-worm ablation results.
+- **Fleeing food (Step 27):** food that runs from worms at 0 to 3x worm top speed; does group hunting or ambushing evolve?
+- **Corridor combination screen (Step 28):** every single, pair and triple of removed neurons tested once in a corridor-to-food test, to find combinations that break navigation only together (**epistasis**). First calibration showed intact worms rarely find one piece of food down a corridor; corridor variants are being compared before the screen runs.
 
 ## 2. Part I: the connectome platform (1 to 12 November)
 
@@ -451,6 +489,7 @@ Nine flaws have changed results so far. Each was fixed, and the affected results
 | Decoder (readout) | The evolvable set of weights that turns brain activity into movement (speed, reverse, turn) |
 | Drift (genetic drift) | Change in a population caused by chance, not by fitness |
 | Elite | One of the best worms of a generation, copied unchanged into the next |
+| Epistasis | Two or more changes (e.g. removed neurons) doing together something none of them does alone |
 | Equilibrium | A steady state: births balance deaths and population stays level |
 | Fair test | Scoring a finished brain on fresh, unseen worlds, the same for every condition |
 | Fixation | When one gene version or family reaches 100% of a population |

@@ -223,6 +223,8 @@ class FastSim:
         # --- world buffers
         w0 = World(cfg, np.random.default_rng(0))
         self.gw, self.gh, self.Fd, self.C = w0.gw, w0.gh, len(w0.food), len(w0.patch_centers)
+        if getattr(cfg, 'corridor', False):    # Step 28: one food per corridor, nothing else (much less work per tick)
+            self.Fd = P * max(1, getattr(cfg, 'corridor_food', 1))
         self.centers, self.food = z(K, self.C, 2), z(K, self.Fd, 2)
         self.falive = torch.zeros(K, self.Fd, dtype=torch.bool, device=dev)
         self.smap, self.prev = z(K, self.gw, self.gh), z(K, P)
@@ -280,6 +282,29 @@ class FastSim:
         if self.mag_on:
             mm[torch.as_tensor(conn.ids(['AFDL', 'AFDR']), device=dev)] = cfg.mag_gain
         self.mmap = mm
+        # Step 25 beacon (see config.py): cue into chosen neurons + hidden reward zone, one circle per world
+        self.bea_on = getattr(cfg, 'beacon', False)
+        bm = torch.zeros(conn.N, **f)
+        bn = [n.strip() for n in getattr(cfg, 'beacon_neurons', '').split(',') if n.strip()]
+        if self.bea_on and bn:
+            bm[torch.as_tensor(conn.ids(bn), device=dev)] = cfg.beacon_gain
+        self.bmap = bm
+        self.bc, self.bv = z(K, 2), z(K, 2)              # beacon centre and drift per tick
+        self.b_cue, self.b_rew = torch.ones(K, 1, **f), torch.ones(K, 1, **f)   # per world: cue on/off, reward on/off
+        self.bexp = z(K, 4)                    # sums over living worm-ticks: field value, distance, count; arrival tick
+        self.b_place = None                    # optional (K, 2) array: fixed beacon centres for the next load()
+        # Step 27 fleeing food (see config.py)
+        self.flee_on = getattr(cfg, 'food_flee_speed', 0.0) > 0
+        self.fled = torch.zeros(K, self.Fd, dtype=torch.bool, device=dev)   # has this food item fled yet?
+        self.fstart, self.frun, self.frest = z(K, self.Fd), z(K, self.Fd), z(K, self.Fd)
+        self.flx = z(K, 6)                     # sums: caught fleeing food, group catches, all food taken, slow eats,
+                                               #       chase ticks of caught fleeing food, food-ticks spent running
+        # Step 28 corridor test (see config.py)
+        self.corr_on = getattr(cfg, 'corridor', False)
+        self.goal, self.carr = z(K, P, 2), z(K, P)          # each worm's food position; arrival tick (world age)
+        self.wage = z(K)                                    # ticks since this world was (re)started
+        self.cylo, self.cyhi = z(K, P), z(K, P)             # corridor band (y limits) of each worm
+        self.beh = z(K, 4)                     # sums over living worm-ticks: tumbles (reversals), |turn|, near food, count
         # Step 22 red light / green light (see config.py): per-world phase schedule and the signal the peptide carries
         self.red_on = getattr(cfg, 'redlight', False)
         nb = cfg.ticks_per_generation // BLOCK
@@ -340,8 +365,9 @@ class FastSim:
                 gx, gy = cell(x.food)
                 x.food_alive = x.food_alive & ~sol[k][gx, gy]
         self.centers.copy_(torch.as_tensor(np.stack([x.patch_centers for x in ws]), **f))
-        self.food.copy_(torch.as_tensor(np.stack([x.food for x in ws]), **f))
-        self.falive.copy_(torch.as_tensor(np.stack([x.food_alive for x in ws]), device=self.dev))
+        if not self.corr_on:                   # (corridor mode places its own food below)
+            self.food.copy_(torch.as_tensor(np.stack([x.food for x in ws]), **f))
+            self.falive.copy_(torch.as_tensor(np.stack([x.food_alive for x in ws]), device=self.dev))
         pos0 = np.stack([np.column_stack([r.uniform(0, cfg.width, P), r.uniform(0, cfg.height, P)]) for r in rngs])
         if self.obs_on:                                         # worms don't start inside rock
             for k, r in enumerate(rngs):
@@ -353,6 +379,30 @@ class FastSim:
                     pos0[k][bad] = np.column_stack([r.uniform(0, cfg.width, bad.sum()), r.uniform(0, cfg.height, bad.sum())])
         self.pos.copy_(torch.as_tensor(pos0, **f))
         self.heading.copy_(torch.as_tensor(np.stack([r.uniform(0, TAU, P) for r in rngs]), **f))
+        if self.corr_on:                       # Step 28: worm i alone in corridor i, one food at the far end
+            sp = cfg.height / P
+            assert cfg.corridor_width < sp and 100 + cfg.corridor_len + 20 < cfg.width, 'corridors do not fit'
+            cy = (np.arange(P) + 0.5) * sp
+            x1 = 100.0 + cfg.corridor_len
+            fd = np.zeros((self.Fd, 2)); fa = np.ones(self.Fd, bool)
+            nf = self.Fd // P                    # food items per corridor (1 = one piece; more = a small patch)
+            fr = np.random.default_rng(28)       # same patch layout in every world
+            fd[:, 0] = np.repeat(np.full(P, x1), nf)
+            fd[:, 1] = np.repeat(cy, nf)
+            if nf > 1:
+                hw0 = cfg.corridor_width / 2 - 2
+                fd[:, 0] = np.clip(fd[:, 0] - np.abs(fr.normal(0, cfg.corridor_spread, self.Fd)), x1 - 3 * cfg.corridor_spread, x1)
+                fd[:, 1] = fd[:, 1] + np.clip(fr.normal(0, cfg.corridor_spread, self.Fd), -hw0, hw0)
+            self.food.copy_(torch.as_tensor(np.broadcast_to(fd, (K, self.Fd, 2)).copy(), **f))
+            self.falive.copy_(torch.as_tensor(np.broadcast_to(fa, (K, self.Fd)).copy(), device=self.dev))
+            self.pos.copy_(torch.as_tensor(np.broadcast_to(np.column_stack([np.full(P, 100.0), cy]), (K, P, 2)).copy(), **f))
+            gx = x1 - (3 * cfg.corridor_spread if nf > 1 else 0.0)   # a patch counts as reached at its front edge
+            self.goal.copy_(torch.as_tensor(np.broadcast_to(np.column_stack([np.full(P, gx), cy]), (K, P, 2)).copy(), **f))
+            hw = cfg.corridor_width / 2
+            self.cylo.copy_(torch.as_tensor(np.broadcast_to(cy - hw, (K, P)).copy(), **f))
+            self.cyhi.copy_(torch.as_tensor(np.broadcast_to(cy + hw, (K, P)).copy(), **f))
+            self.carr.fill_(float(cfg.ticks_per_generation))
+            self.wage.zero_()
         self.size.fill_(cfg.start_size); self.energy.fill_(cfg.start_energy)
         self.H.copy_(torch.clamp(1 - self.energy / self.gut_cap, 0, 1))
         self.alive.fill_(True)
@@ -360,7 +410,8 @@ class FastSim:
         self.sat.zero_(); self.ti.zero_(); self.nn.zero_(); self.spd.zero_()
         self.touchF.zero_(); self.touchB.zero_(); self.bites.zero_(); self.pcool.zero_(); self.stomach.zero_()
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
-        self.gexp.zero_(); self.rexp.zero_(); self.mexp.zero_()
+        self.gexp.zero_(); self.rexp.zero_(); self.mexp.zero_(); self.beh.zero_()
+        self.fled.zero_(); self.fstart.zero_(); self.frun.zero_(); self.frest.zero_(); self.flx.zero_()
         if self.circ_on:                       # Step 23: one feathered circle per food patch (or decoy), this world
             fld = np.stack([make_circle_field(cfg, circle_centres(cfg, x.patch_centers), self.gw, self.gh).reshape(-1)
                             for x in ws])
@@ -374,6 +425,15 @@ class FastSim:
             red = np.stack([make_phase_schedule(x, nb, cfg.red_min, cfg.red_max) for x in rr])
             sig = red if cfg.red_signal == 'true' else np.stack([make_phase_schedule(x, nb, cfg.red_min, cfg.red_max) for x in rr])
             self.red_sched.copy_(torch.as_tensor(red, **f)); self.sig_sched.copy_(torch.as_tensor(sig, **f))
+        if self.bea_on:                        # Step 25: one beacon per world (random numbers drawn after all others)
+            rb = [np.random.default_rng(r.integers(2**62)) for r in rngs]
+            c = np.stack([[x.uniform(0, cfg.width), x.uniform(0, cfg.height)] for x in rb])
+            a = np.array([x.uniform(0, TAU) for x in rb])
+            if self.b_place is not None:
+                c = np.asarray(self.b_place, dtype=np.float64).reshape(K, 2)
+            self.bc.copy_(torch.as_tensor(c, **f))
+            self.bv.copy_(torch.as_tensor(np.column_stack([np.cos(a), np.sin(a)]) * cfg.beacon_speed, **f))
+            self.bexp.zero_(); self.bexp[:, 3] = float(cfg.ticks_per_generation)
         if self.form is not None:
             self._load_formula(rngs)
         if self.sense_on:
@@ -498,7 +558,8 @@ class FastSim:
         stomach, DIG = self.stomach, cfg.digestion
         Q, half = self.Q, self.wh / 2
         inf = torch.full((), float('inf'), **self.f)
-        self.smap.copy_(self._smell_map())
+        if not self.corr_on:                     # corridor mode: food never moves, the smell map from load() stays
+            self.smap.copy_(self._smell_map())
         pprev = self.pprev
         if self.pher_on:
             self.pmap.copy_(self._pher_map(pos, alive))
@@ -507,6 +568,10 @@ class FastSim:
         GRAV = self.grav_on
         MAG = self.mag_on
         RED = self.red_on
+        BEA, FLEE, CORR = self.bea_on, self.flee_on, self.corr_on
+        fled, fstart, frun, frest = self.fled, self.fstart, self.frun, self.frest
+        TIRE = FLEE and cfg.food_tire_run > 0
+        R2f, TT = cfg.food_flee_radius ** 2, float(cfg.ticks_per_generation)
         if RED:                                  # this block's phase (K,1) and the peptide command, graph-safe lookup
             red = self.red_sched.index_select(1, self.bi.view(1))
             Hcmd = self.sig_sched.index_select(1, self.bi.view(1)).expand(K, P)
@@ -559,6 +624,13 @@ class FastSim:
                 inject = minj if inject is None else inject + minj
                 maf = alive.float()
                 self.mexp += torch.stack([(mfv * maf).sum(1), maf.sum(1)], 1)
+            if BEA:                                  # Step 25: beacon field at each worm (smooth circle, wraps)
+                bdl = torch.remainder(pos - self.bc[:, None, :] + half, self.wh) - half
+                bdist = torch.sqrt((bdl ** 2).sum(-1))                                          # (K,P)
+                btt = torch.clamp((bdist - cfg.beacon_r) / cfg.beacon_feather, 0, 1)
+                bfv = 1 - btt * btt * (3 - 2 * btt)                                             # 1 inside .. 0
+                binj = (self.b_cue * bfv).reshape(K * P, 1) * self.bmap[None, :]
+                inject = binj if inject is None else inject + binj
             Hin = Hcmd if RED else H                 # Step 22: the peptide carries the outside command, not hunger
             bs, (p_tumble, speed_frac, turn) = self.brain.step(bs, smell.view(-1), d.view(-1), Hin.reshape(-1), alarm, touch, pher,
                                                                bump.view(-1) if OBS else None, extra,
@@ -571,6 +643,10 @@ class FastSim:
                 speed = speed * torch.clamp(1 - cfg.grav_slow * dg, 0.25, 1.75)
             step = torch.stack([torch.cos(heading), torch.sin(heading)], -1) * speed[..., None]
             npos = torch.remainder(pos + step, self.wh)
+            if CORR:                                 # Step 28: sliding walls (clamp to the corridor band and ends)
+                cx = torch.clamp((pos + step)[..., 0], 90.0, 110.0 + cfg.corridor_len)
+                cyy = torch.minimum(torch.maximum((pos + step)[..., 1], self.cylo), self.cyhi)
+                npos = torch.stack([cx, cyy], -1)
             if OBS:                                  # rock blocks the move; the worm feels the bump next tick
                 blk = self._solid_at(npos) & ~self._solid_at(pos)     # (a worm stuck inside rock may leave)
                 bump = (alive & blk).float()
@@ -587,6 +663,15 @@ class FastSim:
                 af = alive.float()
                 energy = energy - cfg.grav_cost * dg * af
                 self.gexp += torch.stack([(dg * af).sum(1), (gpv * af).sum(1), af.sum(1)], 1)
+            if BEA:                                  # Step 25: hidden reward inside the beacon; bookkeeping; drift
+                baf = alive.float()
+                room = torch.clamp(self.gut_cap - energy, min=0)
+                energy = energy + torch.minimum(cfg.beacon_reward * self.b_rew * bfv * baf, room)
+                bfrac = ((bdist < cfg.beacon_r).float() * baf).sum(1) / baf.sum(1).clamp(min=1)
+                barr = torch.where((bfrac >= 0.5) & (self.bexp[:, 3] >= TT), self.ti.float(), self.bexp[:, 3])
+                self.bexp[:, :3] += torch.stack([(bfv * baf).sum(1), (bdist * baf).sum(1), baf.sum(1)], 1)
+                self.bexp[:, 3].copy_(barr)
+                self.bc.copy_(torch.remainder(self.bc + self.bv, self.wh))
             if FORM:                                 # test bench feature costs (signed features: |value|)
                 fa = fv.abs() * alive[..., None].float()
                 fpaid = fa * self.form['cost'][:, None, :]
@@ -598,9 +683,10 @@ class FastSim:
                 energy = energy - cs.sum(1)
                 self.sense_cost += cs.sum(2)
             # nearest-neighbour distances (clumping measure) and neighbour counts (Step 14b herd predators)
-            dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
-            nd2 = (dd ** 2).sum(-1)
-            both = alive[:, :, None] & alive[:, None, :] & ~torch.eye(P, dtype=torch.bool, device=dev)[None]
+            if not CORR:                             # (corridor mode: worms are walled apart, skip this work)
+                dd = torch.remainder(pos[:, :, None] - pos[:, None, :] + half, self.wh) - half
+                nd2 = (dd ** 2).sum(-1)
+                both = alive[:, :, None] & alive[:, None, :] & ~torch.eye(P, dtype=torch.bool, device=dev)[None]
             if Q:   # predators: chase nearest living prey in range, bite on contact, pause after a bite
                 if HERD:
                     nbr = (both & (nd2 < cfg.herd_radius ** 2)).float().sum(2)                    # (K,P)
@@ -656,6 +742,26 @@ class FastSim:
                 to_pred = -delta.gather(1, mq[:, None, :, None].expand(-1, 1, -1, 2)).squeeze(1)  # prey -> predator
                 ahead = (torch.cos(heading) * to_pred[..., 0] + torch.sin(heading) * to_pred[..., 1]) > 0
                 touchF, touchB = tch * ahead, tch * ~ahead
+            if FLEE:                                 # Step 27: food runs from the nearest worm within its flee radius
+                dfw = torch.remainder(food[:, None] - pos[:, :, None] + half, self.wh) - half    # (K,P,Fd,2) worm->food
+                fd2 = torch.where(alive[:, :, None], (dfw ** 2).sum(-1), inf)                  # (K,P,Fd)
+                md2, mw = fd2.min(1)                                                            # nearest worm per food
+                near_n = (fd2 < R2f).float().sum(1)                                             # worms within radius
+                frun_now = falive & (md2 < R2f)
+                if TIRE:
+                    frun_now = frun_now & (frest <= 0)
+                away = dfw.gather(1, mw[:, None, :, None].expand(-1, 1, -1, 2)).squeeze(1)    # (K,Fd,2)
+                fang = torch.atan2(away[..., 1], away[..., 0]) + (self._rand(K, Fd) * 2 - 1) * cfg.food_flee_wobble
+                fmv = torch.stack([torch.cos(fang), torch.sin(fang)], -1) * cfg.food_flee_speed
+                food = torch.where(frun_now[..., None], torch.remainder(food + fmv, self.wh), food)
+                fstart = torch.where(frun_now & ~fled, self.ti.float().expand(K, Fd), fstart)
+                fled = fled | frun_now
+                if TIRE:
+                    frun = torch.where(frun_now, frun + 1, torch.zeros_like(frun))
+                    tired = frun >= cfg.food_tire_run
+                    frest = torch.where(tired, torch.full_like(frest, float(cfg.food_tire_rest)), torch.clamp(frest - 1, min=0))
+                    frun = torch.where(tired, torch.zeros_like(frun), frun)
+                took = torch.zeros(K, Fd, dtype=torch.bool, device=dev)
             # eating: parallel rounds, random winner per contested food (branch-free)
             can = alive & (energy < self.gut_cap - cfg.food_value)
             if DIG:                                  # gut must have room for a whole meal; satiety counts the gut too
@@ -663,6 +769,11 @@ class FastSim:
             d2 = ((pos[:, :, None, :] - food[:, None, :, :]) ** 2).sum(-1)
             if SENSE:                                # on a food lawn: any food within 20 units (felt next tick)
                 onfood = (((d2 < 400.0) & falive[:, None, :]).any(2) & alive).float()
+            nearf = (((d2 < 400.0) & falive[:, None, :]).any(2) & alive).float()     # within 20 units of food
+            if CORR:                                 # Step 28: first arrival at the worm's own food
+                got = alive & (((pos - self.goal) ** 2).sum(-1) < cfg.corridor_reach ** 2)
+                self.carr.copy_(torch.where(got & (self.carr >= TT), self.wage[:, None].expand(-1, P), self.carr))
+                self.wage += 1                       # world age (worlds can be restarted one by one: step28 streaming)
             reach = (d2 <= r2) & falive[:, None, :] & can[:, :, None]
             ate = torch.zeros(K, P, dtype=torch.bool, device=dev)
             for _ in range(3):
@@ -677,7 +788,15 @@ class FastSim:
                 wf = taken[:K * Fd].view(K, Fd) > 0
                 falive = falive & ~wf
                 reach = reach & ~win[:, :, None] & ~wf[:, None, :]
+                if FLEE:
+                    took = took | wf
             atef = ate.float()
+            if FLEE:                                 # Step 27 bookkeeping: who caught what, how
+                cf = took & fled
+                self.flx += torch.stack([cf.float().sum(1), (cf & (near_n >= 2)).float().sum(1), took.float().sum(1),
+                                         (ate & (speed_frac < 0.2)).float().sum(1),
+                                         torch.where(cf, self.ti.float() - fstart, zero).sum(1),
+                                         frun_now.float().sum(1)], 1)
             if DIG:                                  # food -> gut; gut -> energy, fastest when still
                 stomach = stomach + atef * cfg.food_value
                 frac = torch.clamp(speed / cfg.speed_max, 0, 1)
@@ -693,9 +812,10 @@ class FastSim:
             fullness = (energy + stomach) if DIG else energy
             H = torch.clamp(H + self.h_rate * (torch.clamp(1 - fullness / self.gut_cap, 0, 1) - H) - self.meal_drop * atef, 0, 1)
             # clumping: distance from each living worm to its nearest living neighbour (wraps at edges)
-            nnd = torch.sqrt(torch.where(both, nd2, inf).min(2).values)
-            okn = torch.isfinite(nnd)
-            self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
+            if not CORR:
+                nnd = torch.sqrt(torch.where(both, nd2, inf).min(2).values)
+                okn = torch.isfinite(nnd)
+                self.nn += torch.stack([torch.where(okn, nnd, zero).sum(1), okn.float().sum(1)], 1)
             if OBS:
                 nearpos = self._solid_at(pos, self.nearw)
                 nw = nearpos & alive
@@ -710,6 +830,8 @@ class FastSim:
             full = (alive & (energy >= self.full_e)).float()
             hung = (alive & (energy < self.hungry_e)).float()
             self.spd += torch.stack([(speed_frac * alive).sum(1), alive.float().sum(1)], 1)
+            self.beh += torch.stack([(tumble & alive).float().sum(1), (turn.abs() * alive).sum(1), nearf.sum(1),
+                                     alive.float().sum(1)], 1)
             self.sat += torch.stack([(speed_frac * full).sum(1), full.sum(1),
                                      (speed_frac * hung).sum(1), hung.sum(1)], 1)
             if self.recbuf is not None:
@@ -730,6 +852,11 @@ class FastSim:
             old = food.gather(1, idx[..., None].expand(-1, -1, 2))
             food = food.scatter(1, idx[..., None].expand(-1, -1, 2), torch.where(ok[..., None], p, old))
             falive = falive.scatter(1, idx, falive.gather(1, idx) | ok)
+            if FLEE:                                 # regrown food starts calm
+                fled = fled.scatter(1, idx, fled.gather(1, idx) & ~ok)
+                if TIRE:
+                    frun = frun.scatter(1, idx, torch.where(ok, zero, frun.gather(1, idx)))
+                    frest = frest.scatter(1, idx, torch.where(ok, zero, frest.gather(1, idx)))
             if self.recbuf is not None:
                 t1 = self.ti.view(1)
                 self.recbuf['food'].index_copy_(0, t1, food.index_select(0, self.rec_idx)[None].half())
@@ -744,6 +871,9 @@ class FastSim:
                           ('phead', phead), ('pcool', pcool), ('touchF', touchF), ('touchB', touchB), ('bites', bites),
                           ('stomach', stomach), ('pprev', pprev), ('bump', bump), ('onfood', onfood)):
             getattr(self, name).copy_(val)
+        if self.flee_on:
+            for name, val in (('fled', fled), ('fstart', fstart), ('frun', frun), ('frest', frest)):
+                getattr(self, name).copy_(val)
         self.bi.add_(1)
 
     # ------------------------------------------------------------------ run one generation
@@ -789,6 +919,8 @@ class FastSim:
         rexp = self.rexp.cpu().numpy()
         mexp = self.mexp.cpu().numpy()
         spd = self.spd.cpu().numpy()
+        beh, bexp, flx = self.beh.cpu().numpy(), self.bexp.cpu().numpy(), self.flx.cpu().numpy()
+        carr = self.carr.cpu().numpy()
         fexp = self.form['exp'].cpu().numpy() if self.form is not None else None
         fpaid = self.form['paid'].cpu().numpy() if self.form is not None else None
         with np.errstate(invalid='ignore', divide='ignore'):
@@ -797,6 +929,22 @@ class FastSim:
                       fitness=float(fit[k].mean()), survivors=int(alive[k].sum()), ticks=T,
                       speed_full=float(sf_full[k]), speed_hungry=float(sf_hungry[k]),
                       mean_speed=float(spd[k, 0] / max(spd[k, 1], 1.0)),
+                      # 2026-11-16 behaviour measures (all runs): reversals (tumbles) per worm-tick, mean |turn| per
+                      # tick, share of time within 20 units of food
+                      reversal_rate=float(beh[k, 0] / max(beh[k, 3], 1.0)),
+                      turn_rate=float(beh[k, 1] / max(beh[k, 3], 1.0)),
+                      near_food=float(beh[k, 2] / max(beh[k, 3], 1.0)),
+                      # Step 25 beacon: mean field value under living worms (time in the circle), mean distance to the
+                      # centre, tick when half the living worms were first inside the circle (= ticks if never)
+                      beacon_occ=float(bexp[k, 0] / max(bexp[k, 2], 1.0)) if self.bea_on else float('nan'),
+                      beacon_dist=float(bexp[k, 1] / max(bexp[k, 2], 1.0)) if self.bea_on else float('nan'),
+                      beacon_arrival=float(bexp[k, 3]) if self.bea_on else float('nan'),
+                      # Step 27 fleeing food: catches of food that had fled, how many with another worm within the
+                      # flee radius (group), all food taken, eats by a worm under 20 % speed (ambush), summed chase
+                      # ticks of caught fleeing food, food-ticks spent running
+                      flee=flx[k].tolist() if self.flee_on else None,
+                      # Step 28: arrival tick of each worm at its corridor's food (ticks_per_generation = never)
+                      corr_arrival=carr[k].tolist() if self.corr_on else None,
                       bites=float(bites[k].mean()),
                       nn_dist=float(nn[k, 0] / max(nn[k, 1], 1.0)),
                       near_wall=float(wall[k, 0] / max(wall[k, 1], 1.0)) if self.obs_on else float('nan'),

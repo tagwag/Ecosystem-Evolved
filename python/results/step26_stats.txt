@@ -1,0 +1,14 @@
+Step 26 / single-neuron knockouts: 3 neurons x 2 brains (Step 23 control, gen 300), 2 unseen worlds x 60 clones; paired sign-flip, BH FDR 5 % per measure
+intact: skill 2.79, food 7.933, survivors 13.75, speed 0.6185, reversals 0.006, turning 0.1237, time near food 0.2124, bites 1.075
+skill: 0 knockouts change it (q < 0.05)
+food: 0 knockouts change it (q < 0.05)
+survivors: 0 knockouts change it (q < 0.05)
+speed: 0 knockouts change it (q < 0.05)
+reversals: 0 knockouts change it (q < 0.05)
+turning: 0 knockouts change it (q < 0.05)
+time near food: 0 knockouts change it (q < 0.05)
+bites: 0 knockouts change it (q < 0.05)
+VALIDATION (pre-registered):
+  V1 AVAL: reversals +0.0003563 (q=1) -> does NOT match
+  V1 AVAR: not tested
+  V2 ASEL: food +0.0375 (q=1) -> does NOT match
