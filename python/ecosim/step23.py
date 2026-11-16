@@ -24,6 +24,9 @@ ARMS (16 seeds each, paired by seed: same seed = same food layouts every generat
   s23_mag_food     magnetic circles centred on the food, strength 1.0
   s23_mag_decoy    magnetic circles placed away from the food
   Decoy arms separate "the field is a food cue" from "the field changes the world" (cost, slowing, extra input).
+  s23_grav_light   ADDED 2026-11-16 after the first results: gravity circles on the food but LIGHT (circle_sign = -1):
+                   0 g at the centre, so the food sits where moving is FASTER (1.5x) and CHEAPER (-0.3 per tick).
+                   Same cue, opposite price. Tests whether the gravity cue helps when it does not also cost.
 
 PRE-REGISTERED RULES (written 2026-11-14 20:30 MT, before any run)
   Yardstick: each seed's best brain at generation 300, as 60 clones on 12 fixed unseen worlds (5100-5111), in its own
@@ -37,10 +40,15 @@ PRE-REGISTERED RULES (written 2026-11-14 20:30 MT, before any run)
   A test PASSES if Holm p < 0.05; the sign says helps (+) or hurts (-).
   Reported, not tested: decoy - ctrl and food - decoy for both senses, sense-cut for decoy arms, OCCUPANCY (mean field
   value under living worms = how much time they spend inside the circles), learning curves.
+  ADDED 2026-11-16 06:15 MT, before the s23_grav_light run (a separate family, so H1-H4 above are untouched):
+  Paired sign-flip, Holm over these 2:
+    H5  light gravity circles change skill:      grav_light - ctrl
+    H6  the light-gravity brains USE the sense:  grav_light own - grav_light sense-cut
+  Reported, not tested: grav_light - grav_food (does the price decide whether a gravity cue pays off?).
   Known limits, stated in advance: 16 seeds x 300 generations is short (Step 19 skill was still rising at 300); the
   gravity and magnetism effects are model assumptions, so the results are about this rule set, not real worms.
 
-    python -m ecosim.step23 full           # all 5 arms (skips finished ones; safe to re-queue), then the analysis
+    python -m ecosim.step23 full           # all 6 arms (skips finished ones; safe to re-queue), then the analysis
     python -m ecosim.step23 run            # arms only
     python -m ecosim.step23 analyze        # tests, statistics, chart
     python -m ecosim.step23 picture        # draws the circles + food of one world -> results/step23_circles.png
@@ -71,11 +79,15 @@ if os.environ.get('STEP23_TEST') or '--test' in sys.argv:   # tiny settings to c
 # arm -> (where the circles go, gravity strength, magnetic strength)
 ARMS = {'s23_ctrl': ('food', 0.0, 0.0),
         's23_grav_food': ('food', STRENGTH, 0.0), 's23_grav_decoy': ('decoy', STRENGTH, 0.0),
-        's23_mag_food': ('food', 0.0, STRENGTH), 's23_mag_decoy': ('decoy', 0.0, STRENGTH)}
+        's23_mag_food': ('food', 0.0, STRENGTH), 's23_mag_decoy': ('decoy', 0.0, STRENGTH),
+        's23_grav_light': ('food', STRENGTH, 0.0)}             # added 2026-11-16; light ground at the food (SIGN below)
+# circle_sign per arm: +1 = heavy gravity well inside a circle (default), -1 = light ground (0 g at the centre)
+SIGN = {'s23_grav_light': -1.0}
 for _a, (_place, _g, _m) in ARMS.items():
     CONDITIONS[_a] = dataclasses.replace(CONDITIONS['hunger'], fitness='end')
     # every arm has both fields switched on (so all worlds are built by identical code); the strengths decide
-    CFG_OVERRIDES[_a] = dict(s14.PRED, gravity=True, magnetism=True, field_circles=True, circle_place=_place)
+    CFG_OVERRIDES[_a] = dict(s14.PRED, gravity=True, magnetism=True, field_circles=True, circle_place=_place,
+                             circle_sign=SIGN.get(_a, 1.0))
 
 
 def set_strengths(sim, arm):
@@ -158,12 +170,18 @@ def analyze(out=OUT):
              'H4 magnetic brains use the sense': F['s23_mag_food'] - cut['s23_mag_food']['fitness']}
     p = {k: signflip(v) for k, v in diffs.items()}
     ph = holm(p)
+    # second pre-registered family (2026-11-16), Holm over its own 2 tests so H1-H4 keep their original correction
+    diffs2 = {'H5 light gravity circles vs control': F['s23_grav_light'] - F['s23_ctrl'],
+              'H6 light-gravity brains use the sense': F['s23_grav_light'] - cut['s23_grav_light']['fitness']}
+    p2 = {k: signflip(v) for k, v in diffs2.items()}
+    ph2 = holm(p2)
     rep = {'gravity decoy vs control': F['s23_grav_decoy'] - F['s23_ctrl'],
            'magnetic decoy vs control': F['s23_mag_decoy'] - F['s23_ctrl'],
            'gravity: food circles vs decoy': F['s23_grav_food'] - F['s23_grav_decoy'],
            'magnetic: food circles vs decoy': F['s23_mag_food'] - F['s23_mag_decoy'],
            'gravity decoy: own vs sense-cut': F['s23_grav_decoy'] - cut['s23_grav_decoy']['fitness'],
-           'magnetic decoy: own vs sense-cut': F['s23_mag_decoy'] - cut['s23_mag_decoy']['fitness']}
+           'magnetic decoy: own vs sense-cut': F['s23_mag_decoy'] - cut['s23_mag_decoy']['fitness'],
+           'gravity: light vs heavy at food': F['s23_grav_light'] - F['s23_grav_food']}
     lines = [f'Step 23 / Food-circle gravity & magnetism experiments: {len(seeds)} seeds, best brains at generation {GENS}, '
              f'{len(TEST_WORLDS)} unseen worlds x 60 clones',
              'arm              skill   food   occupancy | sense-cut: skill  occupancy']
@@ -175,6 +193,10 @@ def analyze(out=OUT):
     for k, d in diffs.items():
         v = ('PASS: helps' if d.mean() > 0 else 'PASS: hurts') if ph[k] < 0.05 else 'no detectable effect'
         lines.append(f'  {k:34s} {d.mean():+.3f}  (+ in {(d > 0).sum()}/{len(d)} seeds)  p={p[k]:.3g}  Holm p={ph[k]:.3g}  -> {v}')
+    lines.append('PRE-REGISTERED 2026-11-16 (light gravity at food; paired sign-flip, Holm over 2):')
+    for k, d in diffs2.items():
+        v = ('PASS: helps' if d.mean() > 0 else 'PASS: hurts') if ph2[k] < 0.05 else 'no detectable effect'
+        lines.append(f'  {k:34s} {d.mean():+.3f}  (+ in {(d > 0).sum()}/{len(d)} seeds)  p={p2[k]:.3g}  Holm p={ph2[k]:.3g}  -> {v}')
     lines.append('REPORTED (not tested):')
     for k, d in rep.items():
         lines.append(f'  {k:34s} {d.mean():+.3f}  (+ in {(d > 0).sum()}/{len(d)} seeds)  p={signflip(d):.3g} (uncorrected)')
@@ -182,6 +204,7 @@ def analyze(out=OUT):
     (RES / 'step23_stats.txt').write_text(txt + '\n')
     (RES / 'step23_stats.json').write_text(json.dumps(dict(
         seeds=seeds, p=p, holm=ph, tests={k: v.tolist() for k, v in diffs.items()},
+        p2=p2, holm2=ph2, tests2={k: v.tolist() for k, v in diffs2.items()},
         reported={k: v.tolist() for k, v in rep.items()},
         own={a: {m: v.tolist() for m, v in t.items()} for a, t in own.items()},
         cut={a: {m: v.tolist() for m, v in t.items()} for a, t in cut.items()})))

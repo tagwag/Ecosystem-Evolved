@@ -69,6 +69,20 @@ living worms = how much time they spend inside circles), learning curves.
 **How to read it:** H3/H4 are the cleanest evidence the brains learned to use the field (same brains, only the sensor
 removed). H1 for gravity mixes the cue's benefit with its cost; compare with the decoy arm to separate them.
 
+### 4b. Added 2026-11-16 06:15 MT, before the run: the LIGHT-gravity arm
+Why: section 6 showed gravity wells at the food hurt skill but the brains still used the gravity sense. The cue
+came with a price (heavy ground at the food). New arm **s23_grav_light**: the same circles on the food, but
+`circle_sign = -1`, so gravity inside a circle is 1 g - strength x value = **0 g at the centre**: worms move up to
+1.5x faster there and pay 0.3 less energy per tick. Same cue, opposite price.
+
+A separate test family (Holm over 2), so H1-H4 keep their original correction:
+- **H5** light gravity circles change skill: `grav_light - ctrl`
+- **H6** the light-gravity brains use the sense: `grav_light own - grav_light sense-cut`
+
+Reported, not tested: `grav_light - grav_food` (does the price decide whether a gravity cue pays off?).
+The first 5-arm results are kept as `results/step23_stats_5arms_2026-11-15.txt/.json` and `step23_5arms_2026-11-15.png`;
+the new analysis re-tests all arms on the same unseen worlds and overwrites `step23_stats.*` / `step23.png`.
+
 **Known limits, stated in advance:** 16 seeds x 300 generations is short (Step 19 skill was still rising at 300); the
 gravity and magnetism effects are model assumptions, so the results describe this rule set, not real worms.
 

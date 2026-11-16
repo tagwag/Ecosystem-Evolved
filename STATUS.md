@@ -15,8 +15,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 
 | Status | What | Started | Launcher | Log | Est. done |
 |---|---|---|---|---|---|
-| IDLE since 2026-11-15 05:16 | queue empty; last runs: muscle_fair (done 02:29), food_circles_experiment (done 05:16) | - | - | - | - |
-| ready, NOT queued | gravity bite test (ecosim/step24.py, watcher gravity_bite_test, ~2.5 h); code check passed 12:19; waiting for the owner's go-ahead | - | - | - | - |
+| RUNNING 2026-11-16 06:08 | e3 food_circles_experiment: new arm s23_grav_light (light gravity at food), then re-analysis of all 6 arms (~1.5-2 h). Alone on the GPU. | 06:08 | watcher | remote/logs/e3_food_circles_light.txt | ~08:00 |
+| QUEUED 2 | e4 gravity_bite_test (ecosim/step24.py, ~2.5 h), starts when e3 ends | after e3 | watcher | remote/logs/e4_gravity_bite_test.txt | ~10:30 |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 

@@ -1,19 +1,24 @@
-Step 23 / Food-circle gravity & magnetism experiments: 16 seeds, best brains at generation 300, 12 unseen worlds x 60 clones
+Step 23 / Food-circle gravity & magnetism experiments: 2 seeds, best brains at generation 2, 2 unseen worlds x 60 clones
 arm              skill   food   occupancy | sense-cut: skill  occupancy
-s23_ctrl          2.607   7.64   0.569   |    -
-s23_grav_food     1.829   7.05   0.612   |  1.467   0.586
-s23_grav_decoy    2.779   7.48   0.060   |  2.768   0.052
-s23_mag_food      2.730   7.60   0.580   |  2.665   0.569
-s23_mag_decoy     2.686   7.56   0.052   |  2.661   0.049
+s23_ctrl          0.579   3.17   0.270   |    -
+s23_grav_food     0.564   2.92   0.363   |  0.436   0.322
+s23_grav_decoy    0.722   3.91   0.059   |  0.833   0.046
+s23_mag_food      0.474   3.04   0.241   |  0.694   0.252
+s23_mag_decoy     0.739   4.00   0.040   |  0.694   0.038
+s23_grav_light    0.946   5.38   0.233   |  0.888   0.227
 PRE-REGISTERED TESTS (paired sign-flip, Holm over 4):
-  H1 gravity circles vs control      -0.778  (+ in 0/16 seeds)  p=5e-05  Holm p=0.0002  -> PASS: hurts
-  H2 magnetic circles vs control     +0.123  (+ in 7/16 seeds)  p=0.38  Holm p=0.742  -> no detectable effect
-  H3 gravity brains use the sense    +0.362  (+ in 13/16 seeds)  p=0.0011  Holm p=0.0033  -> PASS: helps
-  H4 magnetic brains use the sense   +0.065  (+ in 10/16 seeds)  p=0.371  Holm p=0.742  -> no detectable effect
+  H1 gravity circles vs control      -0.015  (+ in 0/2 seeds)  p=0.492  Holm p=1  -> no detectable effect
+  H2 magnetic circles vs control     -0.106  (+ in 1/2 seeds)  p=1  Holm p=1  -> no detectable effect
+  H3 gravity brains use the sense    +0.128  (+ in 2/2 seeds)  p=0.492  Holm p=1  -> no detectable effect
+  H4 magnetic brains use the sense   -0.220  (+ in 1/2 seeds)  p=1  Holm p=1  -> no detectable effect
+PRE-REGISTERED 2026-11-16 (light gravity at food; paired sign-flip, Holm over 2):
+  H5 light gravity circles vs control +0.367  (+ in 2/2 seeds)  p=0.492  Holm p=0.985  -> no detectable effect
+  H6 light-gravity brains use the sense +0.058  (+ in 2/2 seeds)  p=0.492  Holm p=0.985  -> no detectable effect
 REPORTED (not tested):
-  gravity decoy vs control           +0.172  (+ in 11/16 seeds)  p=0.0953 (uncorrected)
-  magnetic decoy vs control          +0.079  (+ in 7/16 seeds)  p=0.451 (uncorrected)
-  gravity: food circles vs decoy     -0.950  (+ in 0/16 seeds)  p=5e-05 (uncorrected)
-  magnetic: food circles vs decoy    +0.044  (+ in 9/16 seeds)  p=0.721 (uncorrected)
-  gravity decoy: own vs sense-cut    +0.012  (+ in 8/16 seeds)  p=0.444 (uncorrected)
-  magnetic decoy: own vs sense-cut   +0.025  (+ in 10/16 seeds)  p=0.123 (uncorrected)
+  gravity decoy vs control           +0.143  (+ in 2/2 seeds)  p=0.492 (uncorrected)
+  magnetic decoy vs control          +0.160  (+ in 1/2 seeds)  p=1 (uncorrected)
+  gravity: food circles vs decoy     -0.158  (+ in 0/2 seeds)  p=0.492 (uncorrected)
+  magnetic: food circles vs decoy    -0.265  (+ in 1/2 seeds)  p=1 (uncorrected)
+  gravity decoy: own vs sense-cut    -0.111  (+ in 1/2 seeds)  p=1 (uncorrected)
+  magnetic decoy: own vs sense-cut   +0.045  (+ in 1/2 seeds)  p=1 (uncorrected)
+  gravity: light vs heavy at food    +0.383  (+ in 2/2 seeds)  p=0.492 (uncorrected)
