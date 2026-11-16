@@ -218,12 +218,56 @@ Confirmed: gravity can shape evolution here, if heavy ground is costly enough an
 
 ## Built 16 November, not yet run
 
-Four new experiments are coded and passed their workstation code checks; results will get their own chapters.
+Five new experiments are coded and passed their workstation code checks (the eroding-gravity experiment, Step 29, was added later the same day). Finished ones have their own chapters below; the rest are queued, shortest first.
 
 - **Beacon series (Step 25):** one experiment per sense. A hidden reward zone that only one sense can detect; the key test switches the reward off and asks whether the cue alone leads worms to a place we choose, or along a moving path.
 - **Single-neuron knockout guide (Step 26):** each of the 300 neurons removed in turn from 16 evolved brains; a plain-words guide of what each removal does, checked against real-worm ablation results.
 - **Fleeing food (Step 27):** food that runs from worms at 0 to 3x worm top speed; does group hunting or ambushing evolve?
 - **Corridor combination screen (Step 28):** every single, pair and triple of removed neurons tested once in a corridor-to-food test, to find combinations that break navigation only together (**epistasis**). First calibration showed intact worms rarely find one piece of food down a corridor; corridor variants are being compared before the screen runs.
+
+## Beacon series pilot, Step 25 (16 November, finished 11:51)
+
+A first ranking of which senses can lead a worm to a chosen place. Each of 13 arms (no cue, plus one per sense) evolved for 50 generations with a hidden reward zone that only that arm's sense could detect. Then the reward was switched off and the cue placed somewhere new. **Steering index** = time spent in the cue's circle with the cue on, minus with it off (same brains, same worlds). This is a pilot: a ranking only, no formal tests.
+
+| Sense | Steering index | Seeds positive |
+| --- | --- | --- |
+| Smell (positive control) | +0.0172 | 14/16 |
+| Dopamine (on-food signal) | +0.0083 | 12/16 |
+| Predator / nociception | +0.0083 | 12/16 |
+| Oxygen | +0.0069 | 11/16 |
+| Worm scent | +0.0064 | 12/16 |
+| Body vibration | +0.0063 | 9/16 |
+| Nose touch | +0.0056 | 10/16 |
+| Toxic | +0.0034 | 10/16 |
+| Temperature = magnetism (AFD) | +0.0026 | 11/16 |
+| CO2 | +0.0021 | 9/16 |
+| Light | +0.0017 | 11/16 |
+| Gravity (pure cue) | +0.0004 | 10/16 |
+| No cue (method check) | 0.0000 | - |
+
+- Smell steers most, as expected: it is already wired for finding food. Among new channels, dopamine, nociception and oxygen lead; magnetism, light and gravity trail.
+- Effects are small after 50 generations (time in the circle rises from about 4.4 % to at most 6.1 %), and no group of worms actually reached the circle: steering is a bias, not yet guidance.
+- The method check passes (no cue gives exactly zero). The 300-generation run with the pre-registered tests is queued.
+
+## Corridor combination screen, Step 28 (16 November, finished 12:42)
+
+Every single neuron, every pair (44,850) and every triple (4,455,100) was removed once from 4 evolved brains and tested in a corridor-to-food test. Your definition of a stable worm: it still navigates to one piece of food. The corridor was set to 150 units after a comparison on intact brains: at 400 / 300 / 200 / 150 units, intact worms arrived 2-3 / 8 / 49 / 74 % of the time. Unstable = fewer than 2 of the 4 brains reach their food. The fail rule wrongly flagged 0 % of intact worms. Each candidate was re-tested 5 more times. Method: python/ecosim/STEP28\_CORRIDOR\_SCREEN.md.
+
+| Removed | Tested | Unstable | Confirmed epistasis |
+| --- | --- | --- | --- |
+| 1 neuron | 300 | 1 (AVEL) | - |
+| 2 neurons | 44,551 | 353 (0.8 %) | 82 |
+| 3 neurons | 4,315,887 | 37,989 (0.9 %) | 5,683 |
+
+- **Only AVEL breaks navigation on its own.** The other 299 neurons can each be removed without stopping these brains from reaching food.
+- **RIAL is the weak point**: it is in 52 of the 82 confirmed pairs and 2,660 of the 5,683 confirmed triples. Removing it alone leaves the worm close to failing.
+- **Most single-test flags were noise**: only 15-23 % survived the re-tests. That is why the re-test step was built in.
+- **Strong caveat:** 5,762 of the 5,765 confirmed combinations include a neuron that the motor **decoder** reads directly. Much of this "epistasis" is probably about how the model turns brain activity into movement, not about the wiring. Only 3 confirmed triples involve no decoder-read neuron (e.g. ASHL + AWAR + DA08).
+- Speed: about 2,600 combinations per second on the RTX 3080 with continuous refill; the whole screen took about 40 minutes.
+
+## A speed-up that was not adopted (16 November)
+
+The chemical-synapse step was rewritten to add each synapse's signal straight into its target neuron, instead of a large, mostly empty matrix multiply. Side-by-side benchmark on 16 brains x 12 worlds: **1.29x faster** (8.74 vs 11.29 s per generation). But the results were **not reproducible**: two runs of the new method differ from each other (mean skill 2.680 vs 2.665), while the old method gives identical numbers every time, and the per-brain correlation with the old method was 0.9895, below the 0.99 set before the test. Rejected under the pre-set rule and your "same results" condition; the old method stays the default.
 
 ## 2. Part I: the connectome platform (1 to 12 November)
 

@@ -382,3 +382,11 @@ cmd = ["{py}", "-u", "-m", "ecosim.step29", "full"]
 gpu = true
 share = true
 vram_mb = 3500
+
+[chem_benchmark]
+about = "Side-by-side benchmark: chemical-synapse sum as dense matrix multiply (old) vs index_add (new); same results expected up to rounding; reports the speed-up. About 2-3 min. Whole GPU (timing)."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.bench_chem"]
+gpu = true
+share = false
+vram_mb = 4000

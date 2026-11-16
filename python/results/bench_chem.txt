@@ -1,0 +1,5 @@
+Chemical-synapse benchmark: 16 Step 23 control brains x 12 worlds x 60 clones, 1 generation (1500 ticks), CUDA graph
+mean skill: dense 2.6573, index 2.6799 (difference 0.85%) -> rule 1 PASS
+per-brain |difference|: index vs dense 0.0462; dense re-run vs dense 0.0000; correlation 0.9895 -> rule 2 FAIL
+speed: dense 11.29 s/generation, index 8.74 s/generation -> 1.29x
+VERDICT: keep dense

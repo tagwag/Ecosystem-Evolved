@@ -1,0 +1,14 @@
+Step 29 / Eroding gravity: 2 seeds, best brains at generation 4, 2 unseen worlds x 60 clones, bite rules
+arm          avoidance: FRESH  original   final  |  skill(fresh)  speed(fresh)
+e29_rate0           -0.0894  -0.0905  -0.0905  |     0.650        0.673
+e29_rate1           -0.0894  -0.0905  -0.1286  |     0.650        0.673
+e29_rate3           -0.0894  -0.0905  -0.1024  |     0.650        0.673
+e29_rate10          -0.0894  -0.0905  -0.1340  |     0.650        0.673
+e29_new             -0.0894  -0.0905  -0.1043  |     0.650        0.673
+PRE-REGISTERED:
+  E1 fresh-landscape avoidance vs erosion level: Spearman rho = +0.000, p = 1 -> no detectable trend
+  E2 each eroding arm vs static (fresh landscapes, paired sign-flip, Holm over 4):
+    e29_rate1   +0.0000 (0/2)  p=1  Holm p=1 -> no detectable difference
+    e29_rate3   +0.0000 (0/2)  p=1  Holm p=1 -> no detectable difference
+    e29_rate10  +0.0000 (0/2)  p=1  Holm p=1 -> no detectable difference
+    e29_new     +0.0000 (0/2)  p=1  Holm p=1 -> no detectable difference

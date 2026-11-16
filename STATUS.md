@@ -9,6 +9,9 @@ through the watcher (python/remote). Nothing is run in the cloud - not even tiny
 `*_check` watcher job for that (e.g. `gravity_check`, `reward_hacking_check`). Cloud sessions may edit code, read
 results and write documents only.
 
+## RULE (owner, 2026-11-16 12:04): shortest jobs first
+Queue experiments in order of expected run time, shortest first (code checks, being minutes long, always go first).
+
 ## GPU (the user's RTX 3080 desktop) — one experiment at a time
 Before launching anything on the GPU, check this section. If a run is listed as RUNNING, queue behind it
 (or ask the user) instead of starting a second run: two runs at once both slow down.
@@ -18,12 +21,18 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 07:07 | e3 Step 23 light-gravity arm: H5 skill +1.24 (16/16, Holm p 0.0001), H6 sense NOT used (p 0.13) | 06:08 | watcher | results/step23_stats.txt | done |
 | DONE 09:40 | e4 gravity bite test (step24): with 5x cost + sensing worms AVOID heavy ground (+0.195, 14/16, Holm p 0.00045); base and blind: nothing | 07:07 | watcher | results/step24_stats.txt | done |
 | DONE 09:39 | code checks: knockout, beacon, fleeing food passed (fleeing-food ratio fix re-checked as k13); combo_check FAILED calibration (intact worms 1.6 % / 14 % arrival) | 09:34 | watcher | remote/logs | done |
-| RUNNING 09:44 | e5 beacon_pilot (Step 25, 13 arms x 50 gens, ~12.8 s/gen, then quick steering test) | 09:44 | watcher | remote/logs/e5_beacon_pilot.txt | ~12:35 |
-| QUEUED (in order, one at a time) | k15 combo_check -> e7 combo_screen (Step 28, 150-unit corridor, 4 brains, every triple, ~10-35 min) -> k16 erosion_check -> e10 erosion_experiment (Step 29 eroding gravity, ~5-6 h) -> e6 knockout_guide (~6 h) -> e8 fleeing_food (~9-10 h) -> e9 beacon_full (~14 h) | 09:48 | watcher | remote/logs | ~tomorrow evening |
+| DONE 11:51 | e5 beacon_pilot: smell steers most (+0.017, 14/16); then dopamine, predator, O2; gravity weakest (ranking only) | 09:44 | watcher | results/step25_pilot_stats.txt | done |
+| DONE 12:42 | e7b combo screen (Step 28): AVEL only breaking single; 82 confirmed epistatic pairs, 5,683 triples; nearly all involve decoder-read neurons | 11:51 | watcher | results/step28_b4_stats.txt | done |
+| RUNNING 12:42 | e10 erosion_experiment (Step 29), alone on the GPU, 11 s/generation | 12:42 | watcher | remote/logs/e10_erosion.txt | ~17:40 |
+| QUEUED (shortest first) | e6 knockout_guide (~6 h) -> e8 fleeing_food (~9-10 h) -> e9 beacon_full (~14 h) | - | watcher | remote/logs | ~Wed morning |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-16 CORRIDOR SCREEN (step28, every single/pair/triple, 4 brains): only AVEL breaks navigation alone; 82 pairs and
+  5,683 triples confirmed epistatic (RIAL in most); almost all involve neurons the motor decoder reads = readout artefact.
+- 2026-11-16 BEACON PILOT (step25, 50 gens): smell steers most; dopamine/predator/O2 next; gravity/light/CO2 weakest.
+- 2026-11-16 index_add speed-up 1.29x but not reproducible -> not adopted (dense default kept).
 - 2026-11-16 GRAVITY BITE TEST (step24): worms DO evolve to avoid heavy ground when it is costly (5x) and sensed
   (+0.195, 14/16, Holm p 0.00045); Step 21 rules and blind worms: no response. Erosion experiment now justified.
 - 2026-11-16 STEP 23 LIGHT GRAVITY at food: skill +1.24 (16/16) but the gravity sense is NOT used: physics, not cue.

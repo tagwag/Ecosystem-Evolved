@@ -1,0 +1,9 @@
+Step 28 / corridor combination screen, 2 screen brains [1, 2]: corridor 150 units, time limit 600 ticks (intact arrival median 202.0, 95th 513); intact arrival 81.2%; false-alarm rate 0.0%
+silent neurons (dropped from triples only): 0 of 300
+singles: 6 of 300 break navigation alone: AIBL, AVAL, DA08, PVCR, RIFR, RMDVL
+pairs: 120 combinations, 117 tested (3 skipped as containing a broken part, 0 as containing a silent neuron); 2 tested ones unstable; measured 128 combos/s
+triples: 120 combinations, 115 tested (5 skipped as containing a broken part, 0 as containing a silent neuron); 1 tested ones unstable; measured 125 combos/s
+EPISTASIS: 3 candidates, 3 confirmed (unstable in >= 4 of 6 tests)
+  ADAL + AVEL  (2/3)
+  ADAL + AVJL  (2/3)
+  ADAL + ADAR + AVG  (2/3)

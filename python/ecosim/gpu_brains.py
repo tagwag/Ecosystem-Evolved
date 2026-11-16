@@ -10,6 +10,7 @@ worm scent into ASK/ADL, obstacle bumps into the nose-touch neurons FLP/OLQ (Ste
 step() takes and returns the brain's state as a dict of tensors, so the engine can record it in a CUDA graph.
 """
 import numpy as np
+import os
 import torch
 
 from .connectome import BWD, FWD, HEAD_D, HEAD_V, READOUT, SENSORS, _is_muscle
@@ -98,6 +99,11 @@ class _Base:
 class Worm2Brain(_Base):
     """Same equations as worm2.WormBrains2 (and as batch3_fast before the split)."""
     state_names = ('v', 'rbar')
+    # How the chemical-synapse sum is computed (2026-11-16). 'dense': (B,E) @ M with M the (E,N) synapse->target
+    # table, which is almost all zeros (E*N multiply-adds per worm per tick). 'index': add each synapse's current
+    # straight into its target neuron (index_add_, E additions). Same maths; the order of additions differs, so
+    # results differ only by float rounding. Chosen by env var ECOSIM_CHEM (default below) or set before building.
+    chem_mode = os.environ.get('ECOSIM_CHEM', 'dense')
 
     def __init__(self, conn, opts, cfg, B, dev):
         self._common(conn, opts, cfg, dev)
@@ -108,6 +114,8 @@ class Worm2Brain(_Base):
         M = torch.zeros(E, N, **f)
         M[torch.arange(E, device=dev), torch.as_tensor(conn.post, device=dev)] = 1.0
         self.M = M                                                          # synapse -> target map
+        self.post_idx = torch.as_tensor(conn.post, device=dev, dtype=torch.long)
+        self.N = N
         self.w_base = torch.as_tensor(conn.w_norm * self.chem_scale, **f)
         self.G = torch.as_tensor(conn.G * self.gap_scale, **f)
         self.G_deg = torch.as_tensor(conn.G_deg * self.gap_scale, **f)
@@ -131,6 +139,12 @@ class Worm2Brain(_Base):
             self.mk, self.mb = z(B, 3), z(B, 3)                            # 3 output gains + 3 biases (genome)
         self.ko = None                     # Steps 26/28 knockouts: (B, N) 1 = neuron present, 0 = removed; None = off
         self.vmax = None                   # Step 28: if set to zeros (N,), records the largest |v| of every neuron
+
+    def _chem(self, x):
+        """Sum per-synapse currents x (B, E) into their target neurons -> (B, N). See chem_mode."""
+        if self.chem_mode == 'index':
+            return torch.zeros(x.shape[0], self.N, dtype=x.dtype, device=x.device).index_add_(1, self.post_idx, x)
+        return x @ self.M
 
     def enable_knockout(self):
         """Steps 26/28: allow removing neurons, separately for every brain (call before the first run).
@@ -178,11 +192,11 @@ class Worm2Brain(_Base):
             # current through each synapse = |w| x presynaptic activity x (reversal potential - postsynaptic v):
             # excitation weakens as the target depolarises toward e_exc; inhibition pulls it toward e_inh.
             a = r[:, self.pre] * self.wabs                               # (B, E) conductance-like drive
-            g_exc = (a * self.is_exc) @ self.M                           # summed excitatory drive per neuron
-            g_all = a @ self.M
+            g_exc = self._chem(a * self.is_exc)                          # summed excitatory drive per neuron
+            g_all = self._chem(a)
             I = self.e_exc * g_exc + self.e_inh * (g_all - g_exc) - v * g_all
         else:
-            I = (r[:, self.pre] * self.vals) @ self.M                   # chemical synapses (sparse as a matmul)
+            I = self._chem(r[:, self.pre] * self.vals)                  # chemical synapses
         I = I + v @ self.G - (self.G_deg if self.ko is None else self.gdeg_b) * v     # gap junctions
         I = I - self.inhibition * r.mean(1, keepdim=True)
         I[:, self.s_on] += (self.g3[:, 0] * torch.clamp(d, min=0))[:, None]

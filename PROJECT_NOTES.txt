@@ -331,3 +331,14 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
   per-brain knockout masks). Behaviour stats added to every run: reversal_rate, turn_rate, near_food.
 - Step 28 calibration FAILED as first built: intact brains reach ONE piece of food down a 400-unit corridor in 1.6 %
   of tries (300 units: 14 %). Owner chose to compare variants first (corridor_calibrate job).
+
+2026-11-16 afternoon (cloud session)
+- Beacon pilot (Step 25, 50 gens, ranking only): steering index smell +0.017 (14/16) >> dopamine +0.008, predator
+  +0.008, O2 +0.007, pheromone, vibration, nose, toxic, AFD (temperature/magnetism) +0.003, CO2, light, gravity +0.0004.
+  Effects small after 50 generations; full 300-generation run queued.
+- Chemical-synapse speed-up (index_add instead of the dense matrix multiply): 1.29x faster but NOT reproducible
+  (two index runs differ; dense re-runs are identical; per-brain correlation 0.9895 < 0.99). Not adopted (pre-registered
+  rule + owner's "same results" condition); dense stays the default; index kept as ECOSIM_CHEM=index option.
+- Corridor screen (Step 28): AVEL the only single breaking navigation; 82 confirmed epistatic pairs, 5,683 triples;
+  RIAL in most; nearly all contain a decoder-read neuron (readout artefact). ecosim/STEP28_CORRIDOR_SCREEN.md.
+- Owner's rule: queue shortest jobs first.

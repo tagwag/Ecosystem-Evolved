@@ -1,0 +1,16 @@
+Step 25 / Beacon series, PILOT (50 generations; ranking only, no formal tests): 16 seeds, 12 unseen worlds x 60 clones, reward OFF
+arm             steering index (+ seeds)  occ on  occ off  arrival on/off
+s25_smell       +0.0172 (14/16)       0.0611  0.0438     1500/  1500
+s25_dopamine    +0.0083 (12/16)       0.0513  0.0429     1499/  1500
+s25_predator    +0.0083 (12/16)       0.0523  0.0440     1500/  1500
+s25_o2          +0.0069 (11/16)       0.0522  0.0453     1500/  1500
+s25_pheromone   +0.0064 (12/16)       0.0501  0.0437     1500/  1500
+s25_vibration   +0.0063 ( 9/16)       0.0509  0.0446     1500/  1500
+s25_nose        +0.0056 (10/16)       0.0499  0.0443     1500/  1500
+s25_toxic       +0.0034 (10/16)       0.0476  0.0441     1500/  1500
+s25_afd         +0.0026 (11/16)       0.0462  0.0436     1500/  1500
+s25_co2         +0.0021 ( 9/16)       0.0462  0.0441     1500/  1500
+s25_light       +0.0017 (11/16)       0.0437  0.0420     1500/  1500
+s25_gravity     +0.0004 (10/16)       0.0454  0.0451     1500/  1500
+s25_none        +0.0000 ( 0/16)       0.0447  0.0447     1500/  1500
+uncorrected sign-flip p of the steering index (pilot, for ranking only): smell 0.0003, afd 0.13, light 0.067, toxic 0.28, predator 0.018, co2 0.12, o2 0.039, dopamine 0.026, pheromone 0.08, gravity 0.82, vibration 0.065, nose 0.16

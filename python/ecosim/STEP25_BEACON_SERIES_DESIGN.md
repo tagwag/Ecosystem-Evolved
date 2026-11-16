@@ -74,3 +74,24 @@ Done on each seed's best brain at generation 300, 60 clones x 12 fixed unseen wo
 New `ecosim/step25.py` (arms, reward zone, cue injection into any neuron list, steering + moving-beacon tests),
 reward zone in `batch3_fast.py` (reuses the Step 23 circle code), watcher jobs `beacon_check`, `beacon_pilot`,
 `beacon_full`. About one session of coding, then a workstation code check.
+
+## 8. Pilot results (50 generations, run 2026-11-16 09:44-11:51; ranking only, no formal tests)
+Steering index = time in the beacon circle with the cue on minus off, reward off, 12 unseen worlds, 16 seeds.
+| Sense | Steering index (seeds +) | uncorrected p |
+|---|---|---|
+| smell (positive control) | +0.0172 (14/16) | 0.0003 |
+| dopamine (on-food) | +0.0083 (12/16) | 0.026 |
+| predator / nociception (ASH) | +0.0083 (12/16) | 0.018 |
+| O2 | +0.0069 (11/16) | 0.039 |
+| pheromone (ASK/ADL) | +0.0064 (12/16) | 0.08 |
+| vibration (body touch) | +0.0063 (9/16) | 0.065 |
+| nose touch | +0.0056 (10/16) | 0.16 |
+| toxic (PHA/PHB) | +0.0034 (10/16) | 0.28 |
+| AFD (temperature = magnetism) | +0.0026 (11/16) | 0.13 |
+| CO2 | +0.0021 (9/16) | 0.12 |
+| light | +0.0017 (11/16) | 0.067 |
+| gravity (pure cue) | +0.0004 (10/16) | 0.82 |
+| none (method check) | 0.0000 | - |
+Effects are small after 50 generations (occupancy ~0.044 -> up to ~0.061). The method check passes (no cue = exactly 0).
+No worm group reached the circle (arrival 1500 = never), so steering is a bias, not yet guidance. The full 300-generation
+run (queued) does the pre-registered tests.
