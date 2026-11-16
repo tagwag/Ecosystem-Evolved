@@ -134,6 +134,29 @@ def make_gravity_pattern(cfg, gw, gh):
     return (G / max(np.abs(G).max(), 1e-9)).astype(np.float32)
 
 
+def gravity_noise(cfg, gw, gh, seed):
+    """Step 29: the raw seamless noise field behind make_gravity_pattern (values -1..1), for any noise seed."""
+    c, W, H, fs = cfg.smell_cell, cfg.width, cfg.height, cfg.grav_feature
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * c, (np.arange(gh) + 0.5) * c, indexing='ij')
+    n = lambda x, y: simplex2d(x / fs, y / fs, seed)
+    wx, wy = X / W, Y / H
+    N = (n(X, Y) * (1 - wx) * (1 - wy) + n(X - W, Y) * wx * (1 - wy)
+         + n(X - W, Y - H) * wx * wy + n(X, Y - H) * (1 - wx) * wy)
+    return N / max(np.abs(N).max(), 1e-9)
+
+
+def gravity_shape(cfg, N):
+    """Step 29: noise field -> gravity pattern, exactly as make_gravity_pattern does it (feathered cave walls,
+    mean 0, largest value 1 in size)."""
+    if cfg.grav_feather > 0:
+        u = np.clip((N - (cfg.grav_wall - cfg.grav_feather)) / (2 * cfg.grav_feather), 0.0, 1.0)
+        S = u * u * (3 - 2 * u)
+    else:
+        S = (N >= cfg.grav_wall).astype(float)
+    G = S - S.mean()
+    return (G / max(np.abs(G).max(), 1e-9)).astype(np.float32)
+
+
 def circle_centres(cfg, food_centres):
     """Step 23: where the field circles go in one world.
     'food'  -> exactly on the food patch centres.

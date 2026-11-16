@@ -18,7 +18,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 07:07 | e3 Step 23 light-gravity arm: H5 skill +1.24 (16/16, Holm p 0.0001), H6 sense NOT used (p 0.13) | 06:08 | watcher | results/step23_stats.txt | done |
 | DONE 09:40 | e4 gravity bite test (step24): with 5x cost + sensing worms AVOID heavy ground (+0.195, 14/16, Holm p 0.00045); base and blind: nothing | 07:07 | watcher | results/step24_stats.txt | done |
 | DONE 09:39 | code checks: knockout, beacon, fleeing food passed (fleeing-food ratio fix re-checked as k13); combo_check FAILED calibration (intact worms 1.6 % / 14 % arrival) | 09:34 | watcher | remote/logs | done |
-| QUEUED (in order, one at a time) | k14 corridor_calibrate (~10 min) -> e5 beacon_pilot (~2.5 h) -> e6 knockout_guide (~6 h); then fleeing_food_experiment, beacon_full, combo_screen (after the corridor fix) | 09:42 | watcher | remote/logs | ~18:30 |
+| RUNNING 09:44 | e5 beacon_pilot (Step 25, 13 arms x 50 gens, ~12.8 s/gen, then quick steering test) | 09:44 | watcher | remote/logs/e5_beacon_pilot.txt | ~12:35 |
+| QUEUED (in order, one at a time) | k15 combo_check -> e7 combo_screen (Step 28, 150-unit corridor, 4 brains, every triple, ~10-35 min) -> k16 erosion_check -> e10 erosion_experiment (Step 29 eroding gravity, ~5-6 h) -> e6 knockout_guide (~6 h) -> e8 fleeing_food (~9-10 h) -> e9 beacon_full (~14 h) | 09:48 | watcher | remote/logs | ~tomorrow evening |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
