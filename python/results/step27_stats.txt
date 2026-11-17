@@ -1,0 +1,21 @@
+Step 27 / Fleeing food: 16 seeds, best brains at generation 300, 12 unseen worlds x 60 clones
+arm                 ratio  skill   food  catches/world  group share  ambush share  chase ticks | skill in still world  in 1.1x world
+s27_still            0.0   2.705   7.58         nan         nan          nan        nan   |    2.705           0.289
+s27_slow             0.5   0.534   0.02        1.19       0.021        0.875        0.1   |    0.536           0.534
+s27_close            0.9   0.534   0.01        0.58       0.013        0.938        0.0   |    0.535           0.534
+s27_edge             1.1   0.534   0.01        0.42       0.000        1.000        0.0   |    0.536           0.534
+s27_fast             1.5   0.534   0.00        0.00         nan          nan        nan   |    0.536           0.534
+s27_veryfast         3.0   0.534   0.00        0.03       1.000        1.000        0.0   |    0.535           0.534
+s27_edge_tired       1.1   0.534   0.01        0.42       0.000        1.000        0.0   |    0.536           0.534
+s27_fast_tired       1.5   0.534   0.00        0.00         nan          nan        nan   |    0.536           0.534
+s27_veryfast_tired   3.0   0.534   0.00        0.03       1.000        1.000        0.0   |    0.535           0.534
+PRE-REGISTERED:
+  R1 skill vs speed ratio (main arms): Spearman rho = -0.489, p = 4.43e-07 -> PASS: skill falls with food speed
+  R2 group-catch share vs speed ratio (moving arms, one-sided): rho = +0.326, p = 0.00853 -> PASS: group hunting rises with food speed
+  R3 evolved vs random brains, catches per world (paired sign-flip, Holm over the moving arms):
+    s27_slow       -2.44 (0/16)  p=5e-05  Holm p=0.00025 -> PASS: evolved brains catch LESS
+    s27_close      -0.51 (0/16)  p=0.0001  Holm p=0.0004 -> PASS: evolved brains catch LESS
+    s27_edge       -0.13 (3/16)  p=0.00925  Holm p=0.00925 -> PASS: evolved brains catch LESS
+    s27_fast       -0.16 (0/16)  p=0.0002  Holm p=0.0006 -> PASS: evolved brains catch LESS
+    s27_veryfast   -0.17 (0/16)  p=0.0004  Holm p=0.0008 -> PASS: evolved brains catch LESS
+Tiring fallback decisions (random brains, before evolution): s27_slow 3.63/world, s27_close 1.08/world, s27_edge 0.55/world -> tired arm, s27_fast 0.16/world -> tired arm, s27_veryfast 0.19/world -> tired arm

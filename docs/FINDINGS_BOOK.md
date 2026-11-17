@@ -304,6 +304,24 @@ Each of the 300 neurons was removed in turn (activity held at zero, all its conn
 - 5 of the 7 significant neurons are read directly by the movement decoder: the same caveat as Step 28.
 - Natural next check: remove left and right partners together (about 150 pairs, roughly 30 minutes).
 
+## Fleeing food, Step 27 (16-17 November, finished 03:34)
+
+Failed as designed, and the failure is a finding in itself: **when food runs away, even at half a worm's top speed, the worms evolved to stop moving entirely.** Six food speeds (still, 0.5x, 0.9x, 1.1x, 1.5x and 3x worm top speed), plus tiring versions of the three fastest, 16 seeds x 300 generations each. Method and full numbers: python/ecosim/STEP27\_FLEEING\_FOOD\_DESIGN.md section 8.
+
+| Food speed | Skill | Food per worm | Speed command at the end |
+| --- | --- | --- | --- |
+| still | 2.705 | 7.58 | 0.57 |
+| 0.5x | 0.534 | 0.02 | 0.001 |
+| 0.9x | 0.534 | 0.01 | 0.001 |
+| 1.1x | 0.534 | 0.01 | 0.001 |
+| 3x | 0.534 | 0.00 | 0.001 |
+
+- In every moving-food arm the speed command fell from 0.71 to about 0.10 within 20 generations and to almost zero by generation 100. Every worm starves, but standing still makes stored energy last longest, and the score (energy left plus time survived) rewards exactly that. This is **reward hacking**, the same flaw found in Step 3e: when the real task is impossible, the tie-break becomes the goal.
+- Why the food was uncatchable even at half speed: food noticed a worm 40 units away (5x the eating distance) and ran at once. A worm closes only about one unit per tick at 0.5x, and must hold its heading for about 30 ticks while its brain keeps turning. Even random starting brains ate only 0.05 food each at 0.5x, against 3.8 with still food.
+- The pre-registered tests formally "passed" (skill falls with food speed; group catches rise with speed; evolved brains catch less than random ones) but all three are artefacts of the worms giving up. The group-hunting result rests on a handful of accidental catches. **No evidence about pursuit or group hunting either way.**
+- Tiring food changed nothing: worms that never chase never make the food tire.
+- Possible fixes, not run: food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
+
 ## 2. Part I: the connectome platform (1 to 12 November)
 
 Evolution tuned the real worm wiring to forage 4.4 times better than a random walk, but almost every brain feature added on top did nothing. The world never demanded them. Brain: Cook 2019 connectome via OpenWorm c302, one strength gene per synapse. Fair test: one genome copied to 40 worms on unseen worlds.

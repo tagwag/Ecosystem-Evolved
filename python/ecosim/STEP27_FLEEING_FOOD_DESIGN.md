@@ -61,3 +61,39 @@ log scale from 0.1 to 3, one seed each.
 Food movement in `batch3_fast.py` (food positions already live on the GPU; add a nearest-worm search like the predator
 code uses and a move step), catch bookkeeping, `ecosim/step27.py`, watcher jobs `fleeing_food_check` and
 `fleeing_food_experiment`. Under one session of coding, then a workstation code check.
+
+## 8. Results (run 2026-11-16 18:27 - 2026-11-17 03:34 MT, 9 arms x 16 seeds x 300 generations)
+Built as designed. Random starting brains caught fewer than 1 fleeing food per world at 1.1x, 1.5x and 3x, so tiring
+versions of those three arms were added automatically (9 arms).
+
+**Headline: in EVERY moving-food arm, even the slowest (0.5x), evolution gave up on food and evolved worms that stop
+moving.** Mean speed command fell from 0.71 at generation 0 to ~0.10 by generation 20 and ~0.001 by generation 100;
+food eaten ~0.01 per worm (still food: 7.4); every worm starves (0 survivors), but standing still makes the energy
+last longest, and the fitness rule ("energy left + time survived") rewards exactly that. This is the same kind of
+REWARD HACKING as Step 3e: when the task is impossible, the tie-break becomes the goal.
+
+| Arm | Speed ratio | Skill | Food per worm | Catches per world |
+|---|---|---|---|---|
+| still | 0 | 2.705 | 7.58 | - |
+| slow | 0.5 | 0.534 | 0.02 | 1.19 |
+| close | 0.9 | 0.534 | 0.01 | 0.58 |
+| edge | 1.1 | 0.534 | 0.01 | 0.42 |
+| fast | 1.5 | 0.534 | 0.00 | 0.00 |
+| very fast | 3.0 | 0.534 | 0.00 | 0.03 |
+(Tiring arms gave numbers identical to their non-tiring versions: worms that never chase never make food tire.)
+
+Pre-registered tests, with what they really mean:
+- R1 skill falls with food speed: rho -0.49, p 4e-7 -> PASS, but it is a step (still vs any moving), not a slope.
+- R2 group-catch share rises with speed: rho +0.33, p 0.009 -> PASS, but **meaningless**: it rests on a handful of
+  catches (0.03 per world at 3x), mostly of food that wandered into motionless worms.
+- R3 evolved vs random brains: evolved brains catch LESS in all 5 moving arms (Holm p <= 0.009) - because they stopped
+  moving.
+Cross-test: moving-food brains score 0.536 even in the still-food world: they no longer forage at all.
+
+Why the food was uncatchable even at half speed: food notices a worm 40 units away (5x the eating distance) and runs
+straight away at once; a worm's typical speed is ~0.7 x 5 = 3.5, so at 0.5x it closes only ~1 unit per tick and must
+hold its heading for ~30 ticks while its brain keeps turning and tumbling; 60 clones compete. Random brains ate 0.05
+food each at 0.5x versus 3.8 with still food.
+
+Not re-run. Possible fixes (owner's call): food notices worms only at ~15 units; mix still and fleeing food (worms
+keep foraging; does catching fleeing food add anything?); remove the survival tie-break so idling is not rewarded.

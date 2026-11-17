@@ -25,12 +25,13 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 12:42 | e7b combo screen (Step 28): AVEL only breaking single; 82 confirmed epistatic pairs, 5,683 triples; nearly all involve decoder-read neurons | 11:51 | watcher | results/step28_b4_stats.txt | done |
 | DONE 17:23 | e10 eroding gravity (Step 29): NULL - erosion rate does not change avoidance; all arms avoid unseen heavy ground equally | 12:42 | watcher | results/step29_stats.txt | done |
 | DONE 18:27 | e6 knockout guide (Step 26): 7/300 single removals change skill; validation vs real worms FAILED (model, not worm) | 17:23 | watcher | results/step26_stats.txt, docs/KNOCKOUT_GUIDE.md | done |
-| RUNNING 18:27 | e8 fleeing_food (Step 27): 6 speeds + 3 tiring arms = 9 arms x 16 seeds x 300 gens, ~11.5 s/gen | 18:27 | watcher | remote/logs/e8_fleeing_food.txt | ~05:00 Tue |
-| QUEUED | e9 beacon_full (~14 h) | - | watcher | remote/logs | ~Tue 19:00 |
+| DONE 03:34 | e8 fleeing food (Step 27): DESIGN FAILURE - worms evolved to stop moving in every moving-food arm (reward hacking); tests meaningless | 18:27 | watcher | results/step27_stats.txt | done |
+| RUNNING 03:34 | e9 beacon_full (Step 25), 13 arms x 300 gens, ~11 s/gen | 03:34 | watcher | remote/logs/e9_beacon_full.txt | ~16:00 Tue |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-17 FLEEING FOOD (step27): failed as designed - even half-speed food was uncatchable (flee radius 40), so worms evolved to stand still and starve slowest (reward hacking). Needs a redesign.
 - 2026-11-16 KNOCKOUT GUIDE (step26): 293/300 neurons removable without detectable skill change; smell-off sensors (ASER, AWCR) + AIY/AIZ/AIB matter; real-worm validation FAILED.
 - 2026-11-16 ERODING GRAVITY (step29): no effect of erosion rate; worms avoid never-seen heavy ground as well as their own -> they react to the sense, not to places.
 - 2026-11-16 CORRIDOR SCREEN (step28, every single/pair/triple, 4 brains): only AVEL breaks navigation alone; 82 pairs and

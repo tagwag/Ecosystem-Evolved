@@ -348,3 +348,7 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
   PVCL); smell-falling sensors + AIY/AIZ/AIB steering interneurons. Validation vs real-worm ablations FAILED (AVA
   removal did not cut reversals; ASEL removal did not cut food): the guide describes the model. docs/KNOCKOUT_GUIDE.md.
 - Fleeing food started 18:27: random brains caught <1 fleeing food/world at 1.1x, 1.5x, 3x -> tired arms added (9 arms).
+- Fleeing food (Step 27, done 03:34): DESIGN FAILURE - in every moving-food arm (even 0.5x) worms evolved to stop
+  moving (speed 0.71 -> 0.001), eat ~nothing, and starve slowest: reward hacking of the survival tie-break. R1-R3
+  "passed" but are artefacts of idling. Food was uncatchable: flee radius 40 (5x eat radius). Not re-run; fixes listed
+  in STEP27 doc section 8.
