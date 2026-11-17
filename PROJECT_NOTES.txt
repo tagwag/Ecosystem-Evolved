@@ -342,3 +342,5 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
 - Corridor screen (Step 28): AVEL the only single breaking navigation; 82 confirmed epistatic pairs, 5,683 triples;
   RIAL in most; nearly all contain a decoder-read neuron (readout artefact). ecosim/STEP28_CORRIDOR_SCREEN.md.
 - Owner's rule: queue shortest jobs first.
+- Eroding gravity (Step 29): null as predicted - all 5 erosion levels avoid heavy ground equally (+0.13 to +0.15) and
+  generalise to never-seen landscapes (E1 rho +0.07 p 0.53; E2 all Holm p 1). Brains react to the sense, not to places.

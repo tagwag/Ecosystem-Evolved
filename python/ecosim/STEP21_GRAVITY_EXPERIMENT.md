@@ -102,3 +102,26 @@ gravity, evolution makes them avoid heavy ground and move more slowly, and those
 Same cost without the sense: no avoidance, so the sense is what gets used (not just a general slowdown).
 Decision rule fixed before the run: "if s24_bite responds, the changing-pattern (erosion) experiment is worth running
 with the bite rules." It responded, so erosion is now worth designing (owner's call; not built).
+
+## 9. Follow-up: ERODING GRAVITY (Step 29, ecosim/step29.py), run 2026-11-16 12:42-17:23 MT
+Same world and harsh ("bite") rules as Step 24; the landscape starts identical in every arm and morphs over 300
+generations: static, replaced 1x, 3x, 10x, or a brand-new landscape every generation (16 seeds each). Each best brain
+tested on 12 unseen worlds: on never-seen landscapes (FRESH), the original one, and its own final one.
+
+| Arm | Avoidance, FRESH | original | final | Skill (fresh) | Speed (fresh) |
+|---|---|---|---|---|---|
+| static | +0.140 | +0.136 | +0.136 | 3.172 | 0.366 |
+| 1 turnover | +0.125 | +0.118 | +0.119 | 3.127 | 0.397 |
+| 3 turnovers | +0.136 | +0.131 | +0.136 | 3.308 | 0.424 |
+| 10 turnovers | +0.132 | +0.128 | +0.126 | 3.271 | 0.447 |
+| new every generation | +0.147 | +0.141 | +0.138 | 3.340 | 0.394 |
+
+Pre-registered: E1 avoidance on fresh landscapes vs erosion level: Spearman rho +0.07, p 0.53 -> **no detectable trend**.
+E2 each eroding arm vs static: all Holm p = 1 -> **no detectable difference**.
+
+Plain words: every arm learned to avoid heavy ground about equally well, and they do it just as well on landscapes
+they have never seen as on their own. So the brains react to what the gravity sense feels, not to a remembered
+layout; how fast the landscape changes does not matter. This is what was predicted before the run (the worms have no
+sense of position and no place memory). Not tested: speed rises somewhat with erosion (0.37 -> 0.45) - a hint only.
+Implication: to make a changing landscape matter, the worms would need something that can store places (a memory
+or position sense), e.g. the 2nd Experiment's hippocampus layer.

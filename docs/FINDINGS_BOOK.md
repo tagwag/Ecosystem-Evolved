@@ -269,6 +269,23 @@ Every single neuron, every pair (44,850) and every triple (4,455,100) was remove
 
 The chemical-synapse step was rewritten to add each synapse's signal straight into its target neuron, instead of a large, mostly empty matrix multiply. Side-by-side benchmark on 16 brains x 12 worlds: **1.29x faster** (8.74 vs 11.29 s per generation). But the results were **not reproducible**: two runs of the new method differ from each other (mean skill 2.680 vs 2.665), while the old method gives identical numbers every time, and the per-brain correlation with the old method was 0.9895, below the 0.99 set before the test. Rejected under the pre-set rule and your "same results" condition; the old method stays the default.
 
+## Eroding gravity, Step 29 (16 November, finished 17:23)
+
+No effect, as predicted before the run. Your erosion idea: the gravity landscape starts the same in every arm and then morphs over 300 generations. Five arms of 16 seeds: static, replaced once, 3 times, 10 times, or a brand-new landscape every generation. All used the harsh rules from the bite test. Each best brain was tested on landscapes it had never seen, on the original one, and on its own final one. Method: python/ecosim/step29.py and STEP21\_GRAVITY\_EXPERIMENT.md section 9.
+
+| Erosion | Avoidance on unseen landscapes | on its own final landscape | Skill |
+| --- | --- | --- | --- |
+| static | +0.140 | +0.136 | 3.172 |
+| replaced once | +0.125 | +0.119 | 3.127 |
+| replaced 3x | +0.136 | +0.136 | 3.308 |
+| replaced 10x | +0.132 | +0.126 | 3.271 |
+| new every generation | +0.147 | +0.138 | 3.340 |
+
+- Rule 1 (avoidance on unseen landscapes vs erosion rate): Spearman rho +0.07, p 0.53. Null.
+- Rule 2 (each eroding arm vs static, Holm over 4): all Holm p = 1. Null.
+- Every arm avoids heavy ground about equally, and just as well on landscapes it has never met. The brains react to what the gravity sense feels underfoot, not to a remembered layout, so how fast the landscape changes does not matter. The worms have no sense of position and no place memory, which is why this was the expected outcome.
+- To make a changing landscape matter, the brain would need something that stores places, such as the hippocampus layer of the 2nd Experiment.
+
 ## 2. Part I: the connectome platform (1 to 12 November)
 
 Evolution tuned the real worm wiring to forage 4.4 times better than a random walk, but almost every brain feature added on top did nothing. The world never demanded them. Brain: Cook 2019 connectome via OpenWorm c302, one strength gene per synapse. Fair test: one genome copied to 40 worms on unseen worlds.
