@@ -390,3 +390,19 @@ cmd = ["{py}", "-u", "-m", "ecosim.bench_chem"]
 gpu = true
 share = false
 vram_mb = 4000
+
+[knockout_pairs_check]
+about = "Code check for the left+right pair knockout guide (3 pairs, 2 brains, 2 worlds). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "check", "--test", "--pairs"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[knockout_pairs]
+about = "LEFT+RIGHT PAIR KNOCKOUT GUIDE (ecosim/step26.py --pairs): every L/R twin pair removed together from 16 evolved brains, 12 unseen worlds each, then the guide (docs/KNOCKOUT_GUIDE_PAIRS.md). About 30 min. Resumes where it stopped."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "full", "--pairs"]
+gpu = true
+share = true
+vram_mb = 3500

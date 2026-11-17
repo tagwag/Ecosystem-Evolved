@@ -26,7 +26,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 17:23 | e10 eroding gravity (Step 29): NULL - erosion rate does not change avoidance; all arms avoid unseen heavy ground equally | 12:42 | watcher | results/step29_stats.txt | done |
 | DONE 18:27 | e6 knockout guide (Step 26): 7/300 single removals change skill; validation vs real worms FAILED (model, not worm) | 17:23 | watcher | results/step26_stats.txt, docs/KNOCKOUT_GUIDE.md | done |
 | DONE 03:34 | e8 fleeing food (Step 27): DESIGN FAILURE - worms evolved to stop moving in every moving-food arm (reward hacking); tests meaningless | 18:27 | watcher | results/step27_stats.txt | done |
-| RUNNING 03:34 | e9 beacon_full (Step 25), 13 arms x 300 gens, ~11 s/gen | 03:34 | watcher | remote/logs/e9_beacon_full.txt | ~16:00 Tue |
+| RUNNING 03:34 | e9 beacon_full (Step 25), 13 arms x 300 gens, ~13.5 s/gen | 03:34 | watcher | remote/logs/e9_beacon_full.txt | ~18:40 Tue |
+| QUEUED | k17 knockout_pairs_check -> e11 knockout_pairs (Step 26 --pairs: 98 left+right pairs removed together, ~21 min) | 09:30 | watcher | remote/logs | ~19:10 Tue |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 

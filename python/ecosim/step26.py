@@ -31,6 +31,13 @@ PRE-REGISTERED RULES (written 2026-11-16 08:00 MT, before any run)
     python -m ecosim.step26 analyze          # tests, CSV, guide, chart
     python -m ecosim.step26 full             # run + analyze (watcher: knockout_guide)
     python -m ecosim.step26 check --test     # 3 neurons, 2 brains, 2 worlds (watcher: knockout_check)
+    add --pairs to any command: remove LEFT AND RIGHT partners together (e.g. AVAL + AVAR = "AVA"), one pair at a time
+    (owner's request 2026-11-17, after the single-sided validation failed: a lone partner may cover for its twin).
+    Pairs = neurons whose names differ only in a final L / R. Watcher: knockout_pairs / knockout_pairs_check.
+    Pair results: runs/step26_pairs/, results/step26_pairs_*, docs/KNOCKOUT_GUIDE_PAIRS.md.
+    PRE-REGISTERED for pairs (2026-11-17 09:30 MT, before running): same tests (paired sign-flip over the 16 brains,
+    BH 5 % per measure over all pairs); validation V1 removing AVA (both sides) lowers reversals; V2 removing ASE (both
+    sides) lowers food eaten.
 Results: runs/step26/<neuron>.json, results/step26_knockouts.csv, results/step26_stats.txt, results/step26.png,
          docs/KNOCKOUT_GUIDE.md
 """
@@ -50,9 +57,14 @@ SEEDS = list(range(1, 17))
 WORLDS = list(range(5200, 5212))
 OUT, RES, DOCS = Path('runs/step26'), Path('results'), Path('../docs')
 TEST = bool(os.environ.get('STEP26_TEST')) or '--test' in sys.argv
+PAIRS = '--pairs' in sys.argv
+TAG = '_pairs' if PAIRS else ''
+OUT = Path('runs/step26' + TAG)
 ONLY = None
 if TEST:
-    SEEDS, WORLDS, OUT, ONLY = [1, 2], [5200, 5201], Path('runs/step26_test'), ['AVAL', 'ASEL', 'RIAL']
+    SEEDS, WORLDS, OUT = [1, 2], [5200, 5201], Path('runs/step26' + TAG + '_test')
+    RES = Path('results/_test_artifacts')     # code-check output never mixes with real results
+    ONLY = ['AVA', 'ASE', 'RIA'] if PAIRS else ['AVAL', 'ASEL', 'RIAL']
 MEASURES = ('fitness', 'mean_food', 'survivors', 'mean_speed', 'reversal_rate', 'turn_rate', 'near_food', 'bites')
 LABEL = dict(fitness='skill', mean_food='food', survivors='survivors', mean_speed='speed', reversal_rate='reversals',
              turn_rate='turning', near_food='time near food', bites='bites')
@@ -62,6 +74,16 @@ READOUT_SET = None
 def neurons(conn):
     from .connectome import _is_muscle
     return [n for n in conn.names if not _is_muscle(n)]
+
+
+def units(conn):
+    """What gets removed together: {label: [neuron names]}. Singles: each neuron alone. Pairs (--pairs): every
+    left/right twin pair (names equal except a final L / R), labelled by the shared base name."""
+    ns = neurons(conn)
+    if not PAIRS:
+        return {n: [n] for n in ns}
+    s = set(ns)
+    return {n[:-1]: [n, n[:-1] + 'R'] for n in ns if n.endswith('L') and n[:-1] + 'R' in s}
 
 
 def run(device='cuda'):
@@ -81,13 +103,14 @@ def run(device='cuda'):
     sim = FastSim(cfg, opts, conn, len(pairs), P, dev, False, gen)
     s23.set_strengths(sim, ARM)
     sim.brain.enable_knockout()
-    todo = ['NONE'] + (ONLY or neurons(conn))
+    U = units(conn)
+    todo = ['NONE'] + (ONLY or list(U))
     t0 = time.time()
     for i, n in enumerate(todo):
         f = OUT / f'{n}.json'
         if f.exists():
             continue
-        sim.brain.set_knockout([] if n == 'NONE' else conn.ids([n]).tolist())
+        sim.brain.set_knockout([] if n == 'NONE' else conn.ids(U[n]).tolist())
         gen.manual_seed(4242)
         fit, st = sim.run(G, [np.random.default_rng(w) for _, w in pairs])
         nw = len(WORLDS)
@@ -133,7 +156,8 @@ def analyze():
     RES.mkdir(exist_ok=True)
     conn = Connectome()
     base = json.loads((OUT / 'NONE.json').read_text())
-    names = [n for n in (ONLY or neurons(conn)) if (OUT / f'{n}.json').exists()]
+    U = units(conn)
+    names = [n for n in (ONLY or list(U)) if (OUT / f'{n}.json').exists()]
     R = {n: json.loads((OUT / f'{n}.json').read_text()) for n in names}
     rows = []
     D, Pm = {}, {}
@@ -143,16 +167,16 @@ def analyze():
         Pm[m] = np.array([signflip(d) if np.any(d != 0) else 1.0 for d in D[m]])
     Q = {m: bh(Pm[m]) for m in MEASURES}
     for i, n in enumerate(names):
-        row = dict(neuron=n, kind=kind(n), decoder_reads_it=n in READOUT)
+        row = dict(neuron=n, members='+'.join(U[n]), kind=kind(n), decoder_reads_it=any(x in READOUT for x in U[n]))
         for m in MEASURES:
             row[f'{m}_intact'] = float(np.mean(base[m])); row[f'{m}_change'] = float(D[m][i].mean())
             row[f'{m}_p'] = float(Pm[m][i]); row[f'{m}_q'] = float(Q[m][i])
         rows.append(row)
     import csv
-    with open(RES / 'step26_knockouts.csv', 'w', newline='') as fh:
+    with open(RES / f'step26{TAG}_knockouts.csv', 'w', newline='') as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
     hits = {m: [(names[i], D[m][i].mean(), Q[m][i]) for i in np.argsort(Q[m]) if Q[m][i] < 0.05] for m in MEASURES}
-    lines = [f'Step 26 / single-neuron knockouts: {len(names)} neurons x {len(SEEDS)} brains (Step 23 control, gen 300),'
+    lines = [f'Step 26 / {"LEFT+RIGHT PAIR" if PAIRS else "single-neuron"} knockouts: {len(names)} {"pairs" if PAIRS else "neurons"} x {len(SEEDS)} brains (Step 23 control, gen 300),'
              f' {len(WORLDS)} unseen worlds x 60 clones; paired sign-flip, BH FDR 5 % per measure',
              'intact: ' + ', '.join(f'{LABEL[m]} {np.mean(base[m]):.4g}' for m in MEASURES)]
     for m in MEASURES:
@@ -165,11 +189,14 @@ def analyze():
         i = names.index(n); c, q = D[m][i].mean(), Q[m][i]
         ok = q < 0.05 and np.sign(c) == sign
         return f'{n}: {LABEL[m]} {c:+.4g} (q={q:.3g}) -> {"MATCHES the real worm" if ok else "does NOT match"}'
-    lines += ['VALIDATION (pre-registered):',
-              '  V1 ' + val('AVAL', 'reversal_rate', -1), '  V1 ' + val('AVAR', 'reversal_rate', -1),
-              '  V2 ' + val('ASEL', 'mean_food', -1)]
+    if PAIRS:
+        lines += ['VALIDATION (pre-registered):', '  V1 ' + val('AVA', 'reversal_rate', -1), '  V2 ' + val('ASE', 'mean_food', -1)]
+    else:
+        lines += ['VALIDATION (pre-registered):',
+                  '  V1 ' + val('AVAL', 'reversal_rate', -1), '  V1 ' + val('AVAR', 'reversal_rate', -1),
+                  '  V2 ' + val('ASEL', 'mean_food', -1)]
     txt = '\n'.join(lines); print(txt)
-    (RES / 'step26_stats.txt').write_text(txt + '\n')
+    (RES / f'step26{TAG}_stats.txt').write_text(txt + '\n')
     # chart: skill change per neuron, sorted, coloured by class
     order = np.argsort(D['fitness'].mean(1))
     col = {'sensory': '#2a9d8f', 'interneuron': '#e76f51', 'motor': '#457b9d'}
@@ -181,14 +208,15 @@ def analyze():
     ax[1].barh([names[i] for i in worst][::-1], D['fitness'].mean(1)[worst][::-1],
                color=[col[kind(names[i])] for i in worst][::-1])
     ax[1].set(title='The 25 knockouts that hurt skill most', xlabel='skill change')
-    fig.tight_layout(); fig.savefig(RES / 'step26.png', dpi=110)
-    guide(names, D, Q, base)
+    fig.tight_layout(); fig.savefig(RES / f'step26{TAG}.png', dpi=110)
+    guide(names, D, Q, base, U)
 
 
-def guide(names, D, Q, base):
+def guide(names, D, Q, base, U=None):
     """docs/KNOCKOUT_GUIDE.md: one plain-words line per neuron, grouped by class, biggest skill effect first."""
     from .connectome import READOUT
-    out = ['# Knockout guide: what happens when one neuron is removed', '',
+    U = U or {n: [n] for n in names}
+    out = ['# Knockout guide: what happens when ' + ('a LEFT + RIGHT neuron pair is removed' if PAIRS else 'one neuron is removed'), '',
            f'Generated by `python -m ecosim.step26 analyze` from {len(names)} neurons x {len(SEEDS)} evolved brains '
            f'(Step 23 control, generation 300), each tested on {len(WORLDS)} unseen worlds as 60 clones. '
            'Method and rules: python/ecosim/step26.py and python/ecosim/STEP26_KNOCKOUT_GUIDE_DESIGN.md.', '',
@@ -203,18 +231,20 @@ def guide(names, D, Q, base):
         out += [f'## {k.capitalize()} neurons ({len(idx)})', '']
         for i in idx:
             sig = [f'{LABEL[m]} {D[m][i].mean():+.3g}' for m in MEASURES if Q[m][i] < 0.05]
-            tag = ' (D)' if names[i] in READOUT else ''
-            out.append(f'- **{names[i]}**{tag}: ' + ('; '.join(sig) if sig else 'no detectable effect'))
+            tag = ' (D)' if any(x in READOUT for x in U[names[i]]) else ''
+            lab = f'{names[i]} ({" + ".join(U[names[i]])})' if PAIRS else names[i]
+            out.append(f'- **{lab}**{tag}: ' + ('; '.join(sig) if sig else 'no detectable effect'))
         out.append('')
     if not TEST:
         DOCS.mkdir(exist_ok=True)
-        (DOCS / 'KNOCKOUT_GUIDE.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
+        (DOCS / f'KNOCKOUT_GUIDE{TAG.upper()}.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
     else:
-        (RES / 'step26_test_guide.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
+        (RES / '_test_artifacts').mkdir(exist_ok=True)
+        (RES / '_test_artifacts' / f'step26{TAG}_test_guide.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':
-    a = [x for x in sys.argv[1:] if x != '--test']
+    a = [x for x in sys.argv[1:] if x not in ('--test', '--pairs')]
     if a[:1] in (['run'], ['full'], ['check']):
         import torch
         dev = 'cuda' if torch.cuda.is_available() else 'cpu'
