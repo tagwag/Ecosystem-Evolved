@@ -286,6 +286,24 @@ No effect, as predicted before the run. Your erosion idea: the gravity landscape
 - Every arm avoids heavy ground about equally, and just as well on landscapes it has never met. The brains react to what the gravity sense feels underfoot, not to a remembered layout, so how fast the landscape changes does not matter. The worms have no sense of position and no place memory, which is why this was the expected outcome.
 - To make a changing landscape matter, the brain would need something that stores places, such as the hippocampus layer of the 2nd Experiment.
 
+## Single-neuron knockout guide, Step 26 (16 November, finished 18:27)
+
+Each of the 300 neurons was removed in turn (activity held at zero, all its connections cut, like a laser ablation) from the 16 best brains of the Step 23 control arm. Each was then tested on 12 unseen worlds and compared with the same intact brains on the same worlds. 300 tests per measure, so a 5 % false-discovery-rate correction was used. The plain-words guide for every neuron is docs/KNOCKOUT\_GUIDE.md; method: python/ecosim/STEP26\_KNOCKOUT\_GUIDE\_DESIGN.md.
+
+| Measure | Removals that change it | Biggest |
+| --- | --- | --- |
+| Skill | 7 of 300 | AIYR -0.61, AIZR -0.40, AIZL -0.38, AWCR -0.34, ASER -0.31, AIBR -0.28, PVCL -0.23 |
+| Food eaten | 2 | ASER -0.63, SIBDR +0.17 |
+| Survivors | 2 | AWCR -2.2, ASER -1.8 (of 60) |
+| Speed | 1 | AFDR +0.011 |
+| Reversals, turning, time near food, bites | 0 | - |
+
+- **These brains shrug off single losses**: 293 of 300 neurons can go with no detectable change in skill.
+- **What they depend on**: the smell neurons that report smell *falling* (ASER, AWCR), and the interneurons that turn smell into steering (AIY, AIZ, AIB). Close but not significant: AIYL (-0.74), AVEL (-0.52, the one neuron whose loss broke corridor navigation in Step 28) and RIAL (-0.35, the hub of the Step 28 combinations).
+- **Checked against real worms, and it failed** (rules set before the run). Removing AVAL or AVAR did not reduce reversals; in real worms AVA is needed for backing up (Chalfie et al. 1985). Removing ASEL did not reduce food; in real worms ASE drives chemotaxis (Bargmann & Horvitz 1991). Likely reasons: only one side of each pair was removed, so the partner covers; and in this model reversals come from a decoder that reads many neurons, not from AVA alone. **This guide describes the model, not the real worm.**
+- 5 of the 7 significant neurons are read directly by the movement decoder: the same caveat as Step 28.
+- Natural next check: remove left and right partners together (about 150 pairs, roughly 30 minutes).
+
 ## 2. Part I: the connectome platform (1 to 12 November)
 
 Evolution tuned the real worm wiring to forage 4.4 times better than a random walk, but almost every brain feature added on top did nothing. The world never demanded them. Brain: Cook 2019 connectome via OpenWorm c302, one strength gene per synapse. Fair test: one genome copied to 40 worms on unseen worlds.

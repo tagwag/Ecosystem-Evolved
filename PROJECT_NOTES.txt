@@ -344,3 +344,7 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
 - Owner's rule: queue shortest jobs first.
 - Eroding gravity (Step 29): null as predicted - all 5 erosion levels avoid heavy ground equally (+0.13 to +0.15) and
   generalise to never-seen landscapes (E1 rho +0.07 p 0.53; E2 all Holm p 1). Brains react to the sense, not to places.
+- Knockout guide (Step 26, 64 min): only 7 of 300 single removals change skill (AIYR, AIZR, AIZL, AWCR, ASER, AIBR,
+  PVCL); smell-falling sensors + AIY/AIZ/AIB steering interneurons. Validation vs real-worm ablations FAILED (AVA
+  removal did not cut reversals; ASEL removal did not cut food): the guide describes the model. docs/KNOCKOUT_GUIDE.md.
+- Fleeing food started 18:27: random brains caught <1 fleeing food/world at 1.1x, 1.5x, 3x -> tired arms added (9 arms).

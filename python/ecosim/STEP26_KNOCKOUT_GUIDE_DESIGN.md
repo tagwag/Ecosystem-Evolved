@@ -47,3 +47,32 @@ Measured: testing 16 brains on 12 worlds takes about 70 s on the RTX 3080 (from 
 ~13 min). ~300 neurons + the intact baseline = **~6 h** on the workstation, one job, safe to stop and resume
 (each neuron's result saved as it finishes). Building: a removal mask in `gpu_brains.Worm2Brain` (activity and both
 weight matrices), `ecosim/step26.py`, watcher jobs `knockout_check`, `knockout_guide`. Under one session of coding.
+
+## 7. Results (run 2026-11-16 17:23-18:27 MT on the workstation, ~12.6 s per neuron)
+Built and run as designed (phase 1): 300 neurons removed one at a time from the 16 best Step 23 control brains,
+12 unseen worlds x 60 clones, paired over brains, Benjamini-Hochberg 5 % per measure. Files:
+`python/results/step26_stats.txt`, `step26_knockouts.csv` (every neuron, every measure, p and q), `step26.png`,
+and the plain-words guide `docs/KNOCKOUT_GUIDE.md`.
+
+Intact brains: skill 2.678, food 7.26, survivors 13.0 of 60, speed 0.574, reversals 0.029 per tick.
+
+| Measure | Knockouts that change it (q < 0.05) | Biggest |
+|---|---|---|
+| skill | 7 | AIYR -0.61, AIZR -0.40, AIZL -0.38, AWCR -0.34, ASER -0.31, AIBR -0.28, PVCL -0.23 |
+| food | 2 | ASER -0.63, SIBDR +0.17 |
+| survivors | 2 | AWCR -2.2, ASER -1.8 |
+| speed | 1 | AFDR +0.011 |
+| reversals, turning, time near food, bites | 0 | - |
+
+- **Robust to single losses:** 293 of 300 neurons can be removed with no detectable change in skill.
+- **What matters:** the smell neurons that report smell FALLING (ASER, AWCR; in this model ASER and AWC are the
+  "off" sensors) and the interneurons that turn smell into steering (AIY, AIZ, AIB). Near misses (not significant
+  after correction): AIYL -0.74 (q 0.08), AVEL -0.52 (q 0.07; the only single that broke corridor navigation in
+  Step 28), RIAL -0.35 (q 0.34; the hub of the Step 28 combinations).
+- 5 of the 7 significant neurons are read directly by the motor decoder (readout-artefact caveat, as in Step 28).
+- **Validation against real worms FAILED (pre-registered):** removing AVAL or AVAR did not reduce reversals
+  (-0.0007 / -0.0011, q 0.99), and removing ASEL did not lower food (+0.35, q 0.16; the opposite direction).
+  Likely reasons: one-sided removal (the partner AVAR/AVAL covers), and in this model reversals come from the decoder
+  reading many neurons, not from AVA alone; ASEL here reports smell RISING, and losing it may be harmless because
+  ASER/AWC carry the "falling" signal the evolved brains actually use. **So this guide describes the model, not
+  C. elegans.** A paired (left + right) knockout run (~150 pairs, ~30 min) is the natural next check.

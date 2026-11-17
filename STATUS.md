@@ -24,12 +24,14 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 11:51 | e5 beacon_pilot: smell steers most (+0.017, 14/16); then dopamine, predator, O2; gravity weakest (ranking only) | 09:44 | watcher | results/step25_pilot_stats.txt | done |
 | DONE 12:42 | e7b combo screen (Step 28): AVEL only breaking single; 82 confirmed epistatic pairs, 5,683 triples; nearly all involve decoder-read neurons | 11:51 | watcher | results/step28_b4_stats.txt | done |
 | DONE 17:23 | e10 eroding gravity (Step 29): NULL - erosion rate does not change avoidance; all arms avoid unseen heavy ground equally | 12:42 | watcher | results/step29_stats.txt | done |
-| RUNNING 17:23 | e6 knockout_guide (Step 26), alone on the GPU, ~12.6 s per neuron | 17:23 | watcher | remote/logs/e6_knockout_guide.txt | ~18:30 |
-| QUEUED (shortest first) | e8 fleeing_food (~9-10 h) -> e9 beacon_full (~14 h) | - | watcher | remote/logs | ~Wed evening |
+| DONE 18:27 | e6 knockout guide (Step 26): 7/300 single removals change skill; validation vs real worms FAILED (model, not worm) | 17:23 | watcher | results/step26_stats.txt, docs/KNOCKOUT_GUIDE.md | done |
+| RUNNING 18:27 | e8 fleeing_food (Step 27): 6 speeds + 3 tiring arms = 9 arms x 16 seeds x 300 gens, ~11.5 s/gen | 18:27 | watcher | remote/logs/e8_fleeing_food.txt | ~05:00 Tue |
+| QUEUED | e9 beacon_full (~14 h) | - | watcher | remote/logs | ~Tue 19:00 |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-16 KNOCKOUT GUIDE (step26): 293/300 neurons removable without detectable skill change; smell-off sensors (ASER, AWCR) + AIY/AIZ/AIB matter; real-worm validation FAILED.
 - 2026-11-16 ERODING GRAVITY (step29): no effect of erosion rate; worms avoid never-seen heavy ground as well as their own -> they react to the sense, not to places.
 - 2026-11-16 CORRIDOR SCREEN (step28, every single/pair/triple, 4 brains): only AVEL breaks navigation alone; 82 pairs and
   5,683 triples confirmed epistatic (RIAL in most); almost all involve neurons the motor decoder reads = readout artefact.
