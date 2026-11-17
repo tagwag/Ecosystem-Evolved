@@ -320,6 +320,10 @@ class FastSim:
         self.flee_on = getattr(cfg, 'food_flee_speed', 0.0) > 0
         self.fled = torch.zeros(K, self.Fd, dtype=torch.bool, device=dev)   # has this food item fled yet?
         self.fstart, self.frun, self.frest = z(K, self.Fd), z(K, self.Fd), z(K, self.Fd)
+        nmov = int(round(getattr(cfg, 'food_flee_fraction', 1.0) * self.Fd))
+        self.fmover = (torch.arange(self.Fd, device=dev) < nmov)[None, :].expand(K, self.Fd).contiguous()   # Step 27b
+        self.fdrift = getattr(cfg, 'food_flee_mode', 'flee') == 'drift'
+        self.fhead = z(K, self.Fd)                                       # drifting food: current heading
         self.flx = z(K, 6)                     # sums: caught fleeing food, group catches, all food taken, slow eats,
                                                #       chase ticks of caught fleeing food, food-ticks spent running
         # Step 28 corridor test (see config.py)
@@ -435,6 +439,8 @@ class FastSim:
         self.bump.zero_(); self.wall.zero_(); self.odiag.zero_(); self.onfood.zero_(); self.sense_cost.zero_()
         self.gexp.zero_(); self.rexp.zero_(); self.mexp.zero_(); self.beh.zero_()
         self.fled.zero_(); self.fstart.zero_(); self.frun.zero_(); self.frest.zero_(); self.flx.zero_()
+        if self.flee_on and self.fdrift:
+            self.fhead.copy_(torch.rand(K, self.Fd, generator=self.gen, **f) * TAU)
         if self.circ_on:                       # Step 23: one feathered circle per food patch (or decoy), this world
             fld = np.stack([make_circle_field(cfg, circle_centres(cfg, x.patch_centers), self.gw, self.gh).reshape(-1)
                             for x in ws])
@@ -770,11 +776,16 @@ class FastSim:
                 fd2 = torch.where(alive[:, :, None], (dfw ** 2).sum(-1), inf)                  # (K,P,Fd)
                 md2, mw = fd2.min(1)                                                            # nearest worm per food
                 near_n = (fd2 < R2f).float().sum(1)                                             # worms within radius
-                frun_now = falive & (md2 < R2f)
+                frun_now = falive & (md2 < R2f) & self.fmover
+                if self.fdrift:                      # Step 27b drift: movers always wander, blind to worms
+                    frun_now = falive & self.fmover
                 if TIRE:
                     frun_now = frun_now & (frest <= 0)
                 away = dfw.gather(1, mw[:, None, :, None].expand(-1, 1, -1, 2)).squeeze(1)    # (K,Fd,2)
                 fang = torch.atan2(away[..., 1], away[..., 0]) + (self._rand(K, Fd) * 2 - 1) * cfg.food_flee_wobble
+                if self.fdrift:
+                    self.fhead.copy_(self.fhead + (self._rand(K, Fd) * 2 - 1) * cfg.food_flee_wobble)
+                    fang = self.fhead
                 fmv = torch.stack([torch.cos(fang), torch.sin(fang)], -1) * cfg.food_flee_speed
                 food = torch.where(frun_now[..., None], torch.remainder(food + fmv, self.wh), food)
                 fstart = torch.where(frun_now & ~fled, self.ti.float().expand(K, Fd), fstart)
@@ -931,6 +942,8 @@ class FastSim:
         T, cfg = self.cfg.ticks_per_generation, self.cfg
         if self.fitness_mode == 'energy':          # average energy held (Step 3; can be gamed by idling, see 3e)
             fit = self.esum / T / cfg.food_value
+        elif self.fitness_mode == 'eaten':         # Step 27b: food eaten only (no survival tie-break: idling earns 0)
+            fit = self.eaten.clone()
         elif self.fitness_mode == 'end':           # energy left at the end (dead = 0) + time survived as tie-break
             fit = torch.where(self.alive, self.energy, torch.zeros_like(self.energy)) / cfg.food_value + self.lifetime / T
         else:                                      # 'food': food eaten + time survived (Steps 1-2, 4)

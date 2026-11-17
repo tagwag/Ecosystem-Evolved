@@ -191,6 +191,11 @@ class Config:
     food_flee_wobble: float = 0.35
     food_tire_run: int = 0
     food_tire_rest: int = 30
+    # Step 27b (2026-11-17): only a fraction of the food moves (the first fraction of food slots; regrown food keeps
+    # its slot's role), and how movers move: 'flee' = run from the nearest worm within food_flee_radius (as above);
+    # 'drift' = wander all the time at food_flee_speed with a slowly turning random heading, blind to worms.
+    food_flee_fraction: float = 1.0
+    food_flee_mode: str = 'flee'
     # ---- Step 28 (2026-11-16): CORRIDOR TEST (off by default). GPU code only.
     # One straight corridor per worm (worm_population corridors stacked across the world), worm i alone in corridor i,
     # starting at x = 100 with a random heading; ONE food at the far end (x = 100 + corridor_len). Sliding walls: a worm

@@ -406,3 +406,19 @@ cmd = ["{py}", "-u", "-m", "ecosim.step26", "full", "--pairs"]
 gpu = true
 share = true
 vram_mb = 3500
+
+[fleeing_food2_check]
+about = "Code check for fleeing food, fixed (Step 27b): 2 seeds, 2 gens, 3 arms (still, flee 0.9x, drift 0.9x) + analysis. Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27b", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[fleeing_food2]
+about = "FLEEING FOOD, FIXED (ecosim/step27b.py): half the food moves (flees within 15 units at 0.5-3x worm speed, or drifts blind at 0.9x), score = food eaten; 7 arms x 16 seeds x 300 gens + analysis. About 8 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27b", "full"]
+gpu = true
+share = true
+vram_mb = 4000
