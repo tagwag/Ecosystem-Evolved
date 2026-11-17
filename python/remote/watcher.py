@@ -299,7 +299,16 @@ def main():
                         else:
                             j.hot_since = None
             # ---- maybe start the next job
-            jobs = sorted(Q.glob("*.json"), key=lambda p: p.stat().st_mtime)
+            def _est(p):                             # owner's rule (2026-11-17): SHORTEST expected job first
+                try:                                 # est_minutes: job file > experiments.toml > checks 5 > unknown last
+                    jb = json.loads(p.read_text()); spec = reg.get(jb.get("experiment"), {})
+                    e = jb.get("est_minutes", spec.get("est_minutes"))
+                    if e is None:
+                        e = 5 if str(jb.get("experiment", "")).endswith("_check") else 10 ** 6
+                    return (float(e), p.stat().st_mtime)
+                except Exception:                    # unreadable / vanished file: first, so it fails fast and is reported
+                    return (0.0, 0.0)
+            jobs = sorted(Q.glob("*.json"), key=_est)   # ties: oldest file first
             waiting = None
             if jobs and not (Q / "PAUSE").exists():
                 path = jobs[0]

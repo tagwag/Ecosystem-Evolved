@@ -285,3 +285,13 @@ against the cloud copy before queueing anything that uses it.
 - **One at a time:** two GPU experiments at once both run slower and make timing comparisons meaningless.
 - **Everything logged:** every start, stop, rejection and temperature reading is written down, so a person (or a
   future Claude session) can reconstruct what happened without having watched it.
+
+## Queue order: shortest job first (owner's rule, 2026-11-17)
+The watcher does NOT run jobs in arrival order. Every time it picks the next job it sorts the queue by expected run
+time, shortest first; ties go to the oldest file. The expected time comes from, in order:
+1. `"est_minutes": N` in the job file (to override one job),
+2. `est_minutes = N` in the experiment's section of `experiments.toml` (minutes on the RTX 3080),
+3. 5 minutes for any experiment whose name ends in `_check` (code checks always run first),
+4. otherwise "unknown" = last.
+A job that is already running is never interrupted by a shorter one arriving; the order applies to what starts next.
+When adding a new experiment to `experiments.toml`, give it an `est_minutes` line.

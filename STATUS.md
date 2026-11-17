@@ -11,6 +11,8 @@ results and write documents only.
 
 ## RULE (owner, 2026-11-16 12:04): shortest jobs first
 Queue experiments in order of expected run time, shortest first (code checks, being minutes long, always go first).
+Since 2026-11-17 the WATCHER enforces this itself (sorts by est_minutes every time it starts a job; see
+python/remote/README.md). Give every new experiment an est_minutes line in experiments.toml.
 
 ## GPU (the user's RTX 3080 desktop) — one experiment at a time
 Before launching anything on the GPU, check this section. If a run is listed as RUNNING, queue behind it

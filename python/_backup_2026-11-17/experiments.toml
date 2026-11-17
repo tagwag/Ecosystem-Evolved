@@ -1,0 +1,424 @@
+# Registry of experiments the remote watcher may run. ONLY these can be started remotely.
+# share = true: light, may run alongside other light jobs. vram_mb / preflight: used by the SAFETY GATE (README 6c).
+# cmd: list of words; {py} = the project's Python; {name} = an argument below. cwd is relative to python/.
+# Each arg: type (int / name), min/max for ints, default. 'name' args must be letters, digits, _ or -.
+# gpu = true -> waits until no other program is using the GPU before starting.
+
+[toybrain_gpu]
+about = "2nd Experiment (toy brain) experiment on the 3080: 5 brain types (smell / no smell / bigger brains) x seeds x generations"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.seeds = { type = "int", min = 1, max = 500, default = 30 }
+args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
+
+[toybrain_cpu]
+about = "2nd Experiment (toy brain) experiment, original CPU code, parallel across cores"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "run_cpu.py", "{seeds}", "{gens}", "{workers}"]
+gpu = false
+vram_mb = 0               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.seeds   = { type = "int", min = 1, max = 50, default = 3 }
+args.gens    = { type = "int", min = 1, max = 5000, default = 300 }
+args.workers = { type = "int", min = 1, max = 10, default = 8 }
+
+[sweep]
+about = "Config-file factor sweep (python/sweeps/<config>.toml): evolve all arms (skips finished ones)"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.sweep", "run", "{config}"]
+gpu = true
+vram_mb = 3000               # safety: GPU memory this job needs (estimate)
+args.config = { type = "name", default = "screen1" }
+
+[gpu_check]
+about = "Quick check that the GPU and PyTorch work (seconds)"
+cwd = "."
+cmd = ["{py}", "-c", "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"]
+gpu = false
+vram_mb = 300               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+
+[toybrain_gpu_fair]
+about = "2nd Experiment (toy brain) on the 3080, FAIR version: mutation scaled by genome size, starting weights by brain size"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "{seeds}", "{gens}", "all", "--fair"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.seeds = { type = "int", min = 1, max = 500, default = 30 }
+args.gens  = { type = "int", min = 1, max = 5000, default = 300 }
+
+[eq_world]
+about = "Equilibrium world (python/equilibrium): frozen / neutral shadow / real arms, ~380 worms per world, then analysis"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "{replicates}", "{ticks}"]
+gpu = true
+vram_mb = 1500               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.replicates = { type = "int", min = 1, max = 200, default = 30 }
+args.ticks      = { type = "int", min = 1000, max = 1000000, default = 50000 }
+
+[form]
+about = "Factor engine: run an experiment form python/engine/configs/<form>.toml (full run, then chart + stats)"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml"]
+gpu = true
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]   # safety: memory estimate + settings check
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.form = { type = "name", default = "baseline" }
+
+[form_quick]
+about = "Factor engine: quick check of a form (1 replicate, 3000 ticks) - seconds"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml", "--quick"]
+gpu = false
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]   # safety: memory estimate + settings check
+vram_mb = 700               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.form = { type = "name", default = "baseline" }
+
+[toybrain_continue]
+about = "2nd Experiment (toy brain) FAIR: continue every lineage from its saved champion for more generations (tracks mutations + combined score)"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "30", "{gens}", "all", "--fair", "--resume", "results_gpu_300g_30s_fair.json"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true                 # light: may run alongside other light jobs (GPU < 50 % busy)
+args.gens = { type = "int", min = 1, max = 5000, default = 600 }
+
+[eq_replay]
+about = "Equilibrium world: replay the original 30-world run (same seed) up to a tick and save a snapshot there"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "30", "{ticks}", "--save-at", "{ticks}", "--tag", "_replay"]
+gpu = true
+vram_mb = 1500               # safety: GPU memory this job needs (estimate)
+share = true
+args.ticks = { type = "int", min = 100, max = 50000, default = 13000 }
+
+[eq_continue]
+about = "Equilibrium world: continue ONE replicate world from a replay snapshot, as several copies with their own luck"
+cwd = "equilibrium"
+cmd = ["{py}", "-u", "eqworld.py", "0", "{ticks}", "--resume", "snapshots/eq_replay_t{at}.pt", "--pick", "{world}", "--copies", "{copies}", "--tag", "_w{world}", "--every", "5000"]
+gpu = true
+vram_mb = 900               # safety: GPU memory this job needs (estimate)
+share = true
+args.at = { type = "int", min = 100, max = 50000, default = 13000 }
+args.world = { type = "int", min = 0, max = 29, default = 19 }
+args.copies = { type = "int", min = 1, max = 30, default = 10 }
+args.ticks = { type = "int", min = 1000, max = 5000000, default = 1600000 }
+
+[form_branch]
+about = "Factor engine: start a new run from a saved tick of a form's run (resume point / Lenski-style replay with new luck)"
+cwd = "engine"
+cmd = ["{py}", "-u", "run.py", "configs/{form}.toml", "--from-tick", "{tick}", "--as", "{as}", "--seed", "{seed}"]
+preflight = ["{py}", "run.py", "configs/{form}.toml", "--preflight"]
+gpu = true
+share = true
+args.form = { type = "name", default = "baseline" }
+args.tick = { type = "int", min = 1, max = 20000000, default = 20000 }
+args.as = { type = "name", default = "branch" }
+args.seed = { type = "int", min = 0, max = 1000000, default = 1 }
+
+[genealogy_report]
+about = "Family-tree report for one world of a finished engine run (summary, families, common ancestor, takeover, Muller plot, tree)"
+cwd = "engine"
+cmd = ["{py}", "-u", "genealogy.py", "{run}", "report", "--world", "{world}"]
+gpu = false
+vram_mb = 0
+args.run = { type = "name", default = "baseline" }
+args.world = { type = "int", min = 0, max = 10000, default = 60 }
+
+[toybrain_interbreed]
+about = "2nd Experiment (toy brain) FAIR with interbreeding: a % of children are crosses with elites of other lineages in the same group"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "30", "{gens}", "all", "--fair", "--cross-pct", "{cross_pct}", "--groups", "{groups}"]
+gpu = true
+share = true
+vram_mb = 900
+args.gens = { type = "int", min = 1, max = 5000, default = 900 }
+args.cross_pct = { type = "int", min = 1, max = 100, default = 25 }
+args.groups = { type = "int", min = 1, max = 30, default = 10 }
+
+[main_experiment]
+about = "2nd EXPERIMENT (toy brain, fair mode; was called Main Experiment 13 Nov 15:10-15:50): all 5 brain types, 30 lineages; optional interbreeding (cross_pct 0 = none = the reference arm; groups 1 = one shared pool, 10 = 10 independent groups of 3); stops cleanly at 'until' (HHMM, e.g. 1900; none = no limit) and resumes if re-queued"
+cwd = "toybrain"
+cmd = ["{py}", "-u", "sim_gpu.py", "30", "{gens}", "all", "--fair", "--cross-pct", "{cross_pct}", "--groups", "{groups}", "--until", "{until}"]
+gpu = true
+share = true
+vram_mb = 900
+args.gens = { type = "int", min = 1, max = 20000, default = 2500 }
+args.cross_pct = { type = "int", min = 0, max = 100, default = 0 }
+args.groups = { type = "int", min = 0, max = 30, default = 10 }
+args.until = { type = "name", default = "none" }
+
+[connectome_main]
+about = "MAIN EXPERIMENT (from 2026-11-13 15:50): the real C. elegans connectome brain with reversal potentials and/or muscle output, 2x2 = 4 arms run at once (ecosim/step20.py); stops cleanly at 'until' (HHMM, e.g. 1900; none = run all gens). Exclusive: uses the whole GPU, other jobs wait."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20", "all", "--gens", "{gens}", "--until", "{until}"]
+gpu = true
+share = false
+vram_mb = 7500               # 2026-11-13: measured ~8.7 GB in use for the 4 arms (card 9.8 of 10.2 GB incl. desktop). The gate adds a 1.2 GB margin, so a truthful 8700 would be refused on a 10 GB card even though it runs; 7500 lets it start. If it ever runs out of memory, lower BRAINS in ecosim/step20.py.
+args.gens = { type = "int", min = 1, max = 5000, default = 1000 }
+args.until = { type = "name", default = "1900" }
+
+[connectome_analyze]
+about = "Main Experiment analysis: yardstick test of every arm's best brains on 12 unseen worlds at the common checkpoint, statistics (pre-registered rule) and chart -> results/step20_*"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20", "analyze"]
+gpu = true
+share = true
+vram_mb = 2500
+
+[gravity_experiment]
+about = "GRAVITY EXPERIMENT (ecosim/step21.py): Main Experiment world + a gravity pattern whose strength rises on a log scale across 100 seeds (0.001 .. 1.0), 300 generations, 4 batches of 25 seeds. Skips finished batches, so it is safe to re-queue after an interruption."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step21", "full"]      # all 4 batches, then the analysis (results/step21_*)
+gpu = true
+share = true                 # one batch of 25 seeds leaves room for light engine jobs
+vram_mb = 4000
+
+[gravity_analyze]
+about = "Gravity experiment analysis: every seed's best brain tested at its own strength, at full strength and with no gravity; dose-response statistics and chart -> results/step21_*"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step21", "analyze"]
+gpu = true
+share = true
+vram_mb = 3000
+
+[reward_hacking_experiment]
+about = "REWARD HACKING EXPERIMENT (ecosim/step22.py): red light / green light. The peptide channel is set from outside as a stop/go command; 3 arms at once (true signal / scrambled signal / no receptors), 16 seeds. Exclusive: whole GPU."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step22", "full", "--gens", "{gens}", "--until", "{until}"]   # 3 arms, then the analysis
+gpu = true
+share = false
+vram_mb = 6000
+args.gens = { type = "int", min = 1, max = 5000, default = 300 }
+args.until = { type = "name", default = "none" }
+
+[reward_hacking_analyze]
+about = "Reward Hacking experiment analysis: go/no-go index on unseen worlds and unseen timing, obedience test, reward-hacking check -> results/step22_*"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step22", "analyze"]
+gpu = true
+share = true
+vram_mb = 2500
+
+[gravity_check]
+about = "Code check for the Gravity experiment (4 seeds, 2 generations, analysis, pattern picture). Minutes. Run this after changing ecosim/step21.py or the gravity code; all code checks run here on the workstation, never in the cloud."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step21", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[reward_hacking_check]
+about = "Code check for the Reward Hacking experiment (2 seeds, 2 generations, all 3 arms, analysis). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step22", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 2000
+
+[gravity_bite_test]
+about = "GRAVITY BITE TEST (ecosim/step24.py): can gravity matter to evolution at all? 4 arms x 16 seeds x 200 generations, one arm after another (about half the GPU), then the analysis. Skips finished arms if re-queued."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step24", "full"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[gravity_bite_check]
+about = "Code check for the gravity bite test (2 seeds, 2 generations, 4 arms, analysis). Minutes. Workstation only."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step24", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[food_circles_experiment]
+about = "FOOD-CIRCLE GRAVITY & MAGNETISM EXPERIMENTS (ecosim/step23.py, doc ecosim/STEP23_FOOD_CIRCLES_EXPERIMENT.md): large feathered gravity or magnetic circles with food at each centre; 5 arms (control / gravity on food / gravity decoy / magnetism on food / magnetism decoy) x 16 seeds x 300 gens, then the analysis. Skips finished arms, so it is safe to re-queue after an interruption."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "full"]
+gpu = true
+share = true                 # 16 seeds x 12 brains at a time leaves room for light jobs
+vram_mb = 3500
+
+[food_circles_analyze]
+about = "Food-circle experiments analysis only: skill, occupancy and sense-cut tests on 12 unseen worlds -> results/step23_*"
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "analyze"]
+gpu = true
+share = true
+vram_mb = 2500
+
+[food_circles_check]
+about = "Code check for the food-circle experiments (2 seeds, 2 generations, all 5 arms, analysis, circle picture). Minutes. All code checks run here on the workstation, never in the cloud."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step23", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[muscle_fair]
+about = "FAIR MUSCLE-OUTPUT RE-TEST of the Main Experiment (ecosim/step20b.py): same evolvable decoder reading interneurons vs reading the 95 muscles + AVA/AVB; 2 arms x 16 seeds x 300 gens, then the analysis. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20b", "full"]
+gpu = true
+share = true
+vram_mb = 3000
+
+[muscle_fair_check]
+about = "Code check for the fair muscle re-test (2 seeds, 2 generations, both arms, analysis). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step20b", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+# ---- 2026-11-16: Step 25 beacon series, Step 26 knockout guide, Step 27 fleeing food (design docs in ecosim/)
+[beacon_check]
+about = "Code check for the beacon series (2 seeds, 2 generations, 3 arms, pilot + full analysis). Minutes. Workstation only."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step25", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[beacon_pilot]
+about = "BEACON SERIES PILOT (ecosim/step25.py): 13 arms (no cue + one per sense) x 16 seeds x 50 generations, then the quick steering test. About 2.5 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step25", "pilot"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[beacon_full]
+about = "BEACON SERIES FULL (ecosim/step25.py): 13 arms x 16 seeds x 300 generations, then steering, moving-beacon and sense-cut tests. About 13-14 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step25", "full"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[knockout_check]
+about = "Code check for the knockout guide (3 neurons, 2 brains, 2 worlds, analysis). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[knockout_guide]
+about = "SINGLE-NEURON KNOCKOUT GUIDE (ecosim/step26.py): each of the 300 neurons removed in turn from 16 evolved brains, 12 unseen worlds each, then the guide. About 6 h. Resumes where it stopped."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "full"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[fleeing_food_check]
+about = "Code check for fleeing food (2 seeds, 2 generations, 3 arms, tiring decision, analysis). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[fleeing_food_experiment]
+about = "FLEEING FOOD (ecosim/step27.py): 6 food speeds (0 to 3x worm top speed) x 16 seeds x 300 generations, plus tiring-food arms if needed, then the analysis. About 6-8 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27", "full"]
+gpu = true
+share = true
+vram_mb = 4000
+
+[combo_check]
+about = "Code check for the corridor combination screen (4 brains, short lists of singles/pairs/triples). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step28", "check", "--test", "--brains", "2"]
+gpu = true
+share = true
+vram_mb = 2000
+
+[combo_screen]
+about = "CORRIDOR COMBINATION SCREEN (ecosim/step28.py), 4 brains per combination (owner's choice): calibration, all 300 single, 44,850 pair and every non-skipped triple neuron knockout, each once in a corridor test, then re-tests of epistasis candidates. Est. 10-70 min for the triples; the log prints the measured speed. Resumes where it stopped."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step28", "full", "--brains", "4"]
+gpu = true
+share = true
+vram_mb = 6000
+
+[combo_screen16]
+about = "The same screen with all 16 navigating brains per combination (about 4x slower, less noisy). Not planned; kept as an option."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step28", "full", "--brains", "16"]
+gpu = true
+share = true
+vram_mb = 6000
+
+[corridor_calibrate]
+about = "Compares corridor-test variants (one piece vs a small patch, 150-400 units, 600 vs 1500 ticks) on intact brains, to choose the Step 28 stability test. About 10 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step28", "calcompare"]
+gpu = true
+share = true
+vram_mb = 4000
+
+[erosion_check]
+about = "Code check for the eroding-gravity experiment (2 seeds, 4 generations, all 5 arms, analysis, landscape picture). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step29", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[erosion_experiment]
+about = "ERODING GRAVITY (ecosim/step29.py): 5 erosion levels (static, 1, 3, 10 turnovers, new landscape every generation) x 16 seeds x 300 generations with the Step 24 bite rules, then fresh/original/final-landscape tests. About 5 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step29", "full"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[chem_benchmark]
+about = "Side-by-side benchmark: chemical-synapse sum as dense matrix multiply (old) vs index_add (new); same results expected up to rounding; reports the speed-up. About 2-3 min. Whole GPU (timing)."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.bench_chem"]
+gpu = true
+share = false
+vram_mb = 4000
+
+[knockout_pairs_check]
+about = "Code check for the left+right pair knockout guide (3 pairs, 2 brains, 2 worlds). Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "check", "--test", "--pairs"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[knockout_pairs]
+about = "LEFT+RIGHT PAIR KNOCKOUT GUIDE (ecosim/step26.py --pairs): every L/R twin pair removed together from 16 evolved brains, 12 unseen worlds each, then the guide (docs/KNOCKOUT_GUIDE_PAIRS.md). About 30 min. Resumes where it stopped."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step26", "full", "--pairs"]
+gpu = true
+share = true
+vram_mb = 3500
+
+[fleeing_food2_check]
+about = "Code check for fleeing food, fixed (Step 27b): 2 seeds, 2 gens, 3 arms (still, flee 0.9x, drift 0.9x) + analysis. Minutes."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27b", "check", "--test"]
+gpu = true
+share = true
+vram_mb = 1500
+
+[fleeing_food2]
+about = "FLEEING FOOD, FIXED (ecosim/step27b.py): half the food moves (flees within 15 units at 0.5-3x worm speed, or drifts blind at 0.9x), score = food eaten; 7 arms x 16 seeds x 300 gens + analysis. About 8 h. Skips finished arms."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step27b", "full"]
+gpu = true
+share = true
+vram_mb = 4000
