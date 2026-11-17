@@ -27,7 +27,7 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 18:27 | e6 knockout guide (Step 26): 7/300 single removals change skill; validation vs real worms FAILED (model, not worm) | 17:23 | watcher | results/step26_stats.txt, docs/KNOCKOUT_GUIDE.md | done |
 | DONE 03:34 | e8 fleeing food (Step 27): DESIGN FAILURE - worms evolved to stop moving in every moving-food arm (reward hacking); tests meaningless | 18:27 | watcher | results/step27_stats.txt | done |
 | RUNNING 03:34 | e9 beacon_full (Step 25), 13 arms x 300 gens, ~13.5 s/gen | 03:34 | watcher | remote/logs/e9_beacon_full.txt | ~18:40 Tue |
-| QUEUED | k17 knockout_pairs_check -> e11 knockout_pairs (Step 26 --pairs: 98 left+right pairs removed together, ~21 min) | 09:30 | watcher | remote/logs | ~19:10 Tue |
+| QUEUED (in order) | k17 knockout_pairs_check, k18 fleeing_food2_check (minutes) -> e11 knockout_pairs (98 L+R pairs, ~21 min) -> e12 fleeing_food2 (Step 27b: fixed fleeing food + drift world, 7 arms, ~8 h) | 09:30 | watcher | remote/logs | ~03:20 Wed |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
