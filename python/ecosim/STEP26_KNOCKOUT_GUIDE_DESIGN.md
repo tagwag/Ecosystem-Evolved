@@ -76,3 +76,24 @@ Intact brains: skill 2.678, food 7.26, survivors 13.0 of 60, speed 0.574, revers
   reading many neurons, not from AVA alone; ASEL here reports smell RISING, and losing it may be harmless because
   ASER/AWC carry the "falling" signal the evolved brains actually use. **So this guide describes the model, not
   C. elegans.** A paired (left + right) knockout run (~150 pairs, ~30 min) is the natural next check.
+
+## 8. Left+right PAIR knockouts (run 2026-11-17 15:57-16:18 MT, 98 pairs; written up 2026-11-20)
+Both twins removed together (e.g. AIYL + AIYR = "AIY"); same 16 brains, 12 worlds, BH 5 %. Guide:
+`docs/KNOCKOUT_GUIDE_PAIRS.md`; data `python/results/step26_pairs_*`.
+
+| Measure | Pairs that change it | Biggest |
+|---|---|---|
+| skill | 13 of 98 | AIY -1.03, AWC -0.78, AVE -0.75, AIZ -0.67, AVD -0.53, AIB -0.50, RIM -0.49, RIA -0.48 |
+| food | 4 | AVE -2.10, AIY -2.10, AWC -1.85, HSN +0.26 |
+| survivors (of 60) | 5 | AIY -5.4, AWC -4.5, AVE -4.5, RIA -3.1, ASE -1.2 |
+| time near food | 3 | AIY, AIZ, AWC |
+| bites | 1 | AWC -0.11 |
+| speed, reversals, turning | 0 | - |
+
+- Removing BOTH sides roughly doubles the effects of single-sided removal (AIY -1.03 vs AIYR -0.61) and reveals new
+  ones (AVE, AVD, RIM, RIA): the twin does cover for a single loss.
+- **Validation still FAILS**: removing both AVA does not cut reversals (-0.001, q 0.88); removing both ASE lowers food
+  only slightly and not significantly (-0.25, q 0.31). In this model reversals come from the decoder, not from AVA.
+  The guide describes the model, not the real worm.
+- Core circuit the evolved brains depend on: smell-off sensors AWC (+ASE), and the interneurons AIY, AIZ, AIB, RIA,
+  AVE, AVD, RIM (most are decoder-read: readout caveat as before).

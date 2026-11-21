@@ -15,7 +15,7 @@ A research notebook in book form: every finding so far, the bugs that were found
 | Project | Ecosystem-Evolved (github.com/tagwag/Ecosystem-Evolved) |
 | Owner | Tag (tagwag) |
 | Written by | Claude, from the project notes, status board and result files |
-| Edition | 1st edition, 13 November 2026; updated 16 November 2026 |
+| Edition | 1st edition, 13 November 2026; updated 20 November 2026 |
 | Covers | 1 November to 13 November 2026 (Steps 1-19, sweep, teacher, Main Experiment, equilibrium world, factor engine) |
 | Hardware | Desktop: i9-10900K, 32 GB RAM, RTX 3080 (10 GB) |
 
@@ -321,6 +321,51 @@ Failed as designed, and the failure is a finding in itself: **when food runs awa
 - The pre-registered tests formally "passed" (skill falls with food speed; group catches rise with speed; evolved brains catch less than random ones) but all three are artefacts of the worms giving up. The group-hunting result rests on a handful of accidental catches. **No evidence about pursuit or group hunting either way.**
 - Tiring food changed nothing: worms that never chase never make the food tire.
 - Possible fixes, not run: food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
+
+## Fleeing food, fixed: Step 27b (17 November, finished 23:18)
+
+The fixes worked, and the result is the best sign of cooperation-like behaviour so far. Food now notices a worm only within 15 units (was 40), only half the food moves, and the score is food eaten (no reward for surviving longest). A seventh world has food that **drifts** at 0.9x worm speed without sensing worms. 16 seeds x 300 generations per arm. **No arm idled**: worms kept moving at 0.67-0.97 of top speed. Method: python/ecosim/step27b.py and STEP27\_FLEEING\_FOOD\_DESIGN.md section 9.
+
+| Moving food | Food eaten per worm | Catches of moving food per world | Catches with a 2nd worm within 15 units |
+| --- | --- | --- | --- |
+| none (still) | 9.62 | - | - |
+| flees at 0.5x | 8.35 | 185.5 | 15 % |
+| flees at 0.9x | 5.89 | 17.5 | 98 % |
+| flees at 1.1x | 5.85 | 11.1 | 99 % |
+| flees at 1.5x | 6.03 | 16.3 | 90 % |
+| flees at 3x | 6.25 | 30.5 | 14 % |
+| drifts at 0.9x (blind) | 8.39 | 214.5 | 2 % |
+
+- **R1: evolution learns to catch moving food**, in all six moving worlds (16/16 seeds in five, 15/16 in drift; Holm p 0.0003).
+- **R2: catches fall as food gets faster** (rho -0.25, p 0.027), though not smoothly: they rise again at 3x.
+- **R3: running away matters.** At the same 0.9x speed, fleeing food is caught about 12x less often than drifting food (17.5 vs 214.5 per world; 0/16 seeds the other way).
+- **Reported, not tested:** when food is about as fast as a worm (0.9x to 1.5x), 90-99 % of catches happen with a second worm within 15 units of the food, against 2 % for drifting food. Near-worm-speed food is caught almost only when two worms close in on it: a hint of pincer catching. Caveat: the worms are clones of one brain, and food fleeing one worm can simply run into another. A density-matched control (randomly placed worms) would separate the two; not run.
+
+## Beacon series, full run: Step 25 (17 November)
+
+Which senses can lead a worm to a place we choose? 13 arms (no cue plus one per sense) x 16 seeds x 300 generations, with a hidden reward zone only that arm's sense could detect. Test: reward off, cue placed somewhere new, time in its circle with the cue on minus off. Rules set before the run, Holm over 12 senses.
+
+| Sense | Steering index | Seeds positive | Holm p | Verdict |
+| --- | --- | --- | --- | --- |
+| Worm scent (pheromone, ASK/ADL) | +0.0100 | 13/16 | 0.016 | **leads them** |
+| Dopamine (on-food signal) | +0.0116 | 13/16 | 0.038 | **leads them** |
+| Smell (positive control) | +0.0134 | 12/16 | 0.049 | **leads them** |
+| Nociception (ASH) | +0.0128 | 11/16 | 0.22 | null |
+| Nose touch, vibration, oxygen | +0.004 to +0.006 | 11-12/16 | 0.12-0.47 | null |
+| Magnetism (AFD), gravity, light, CO2, toxic | -0.001 to +0.0015 | 6-10/16 | 1 | null |
+| No cue (method check) | 0.0000 | - | - | ok |
+
+- **Three channels can lead worms to a chosen place: worm scent, the dopamine signal and smell.** Magnetism, gravity, light, CO2 and toxic cues cannot, at this cue strength and 300 generations.
+- The effect is a small bias, not guidance: time in the target circle rises from about 4.4 % to 5.4-5.9 %, and no group of worms ever reached it.
+- Every cue arm foraged slightly worse than the no-cue arm (-0.08 to -0.32 skill): an extra input costs a little.
+
+## Left + right pair knockouts: Step 26 (17 November, finished 16:18)
+
+The 98 left/right twin pairs removed together (e.g. AIYL + AIYR) from the same 16 brains. Guide: docs/KNOCKOUT\_GUIDE\_PAIRS.md.
+
+- **13 of 98 pairs lower skill**: AIY -1.03, AWC -0.78, AVE -0.75, AIZ -0.67, AVD -0.53, AIB -0.50, RIM -0.49, RIA -0.48 and others. AIY, AWC and AVE pairs also cut food eaten by about 2 per worm and survivors by 4.5-5.4 of 60.
+- Removing both twins roughly doubles single-sided effects (AIY pair -1.03 vs AIYR alone -0.61) and reveals new ones (AVE, AVD, RIM, RIA): one twin does cover for the other.
+- **Check against real worms still fails**: removing both AVA does not reduce reversals, and removing both ASE lowers food only slightly (not significant). In this model reversals come from the movement decoder, not from AVA. The guide describes the model, not the real worm.
 
 ## 2. Part I: the connectome platform (1 to 12 November)
 

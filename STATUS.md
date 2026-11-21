@@ -28,12 +28,17 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 17:23 | e10 eroding gravity (Step 29): NULL - erosion rate does not change avoidance; all arms avoid unseen heavy ground equally | 12:42 | watcher | results/step29_stats.txt | done |
 | DONE 18:27 | e6 knockout guide (Step 26): 7/300 single removals change skill; validation vs real worms FAILED (model, not worm) | 17:23 | watcher | results/step26_stats.txt, docs/KNOCKOUT_GUIDE.md | done |
 | DONE 03:34 | e8 fleeing food (Step 27): DESIGN FAILURE - worms evolved to stop moving in every moving-food arm (reward hacking); tests meaningless | 18:27 | watcher | results/step27_stats.txt | done |
-| RUNNING 03:34 | e9 beacon_full (Step 25), 13 arms x 300 gens, ~13.5 s/gen | 03:34 | watcher | remote/logs/e9_beacon_full.txt | ~18:40 Tue |
-| QUEUED (in order) | k17 knockout_pairs_check, k18 fleeing_food2_check (minutes) -> e11 knockout_pairs (98 L+R pairs, ~21 min) -> e12 fleeing_food2 (Step 27b: fixed fleeing food + drift world, 7 arms, ~8 h) | 09:30 | watcher | remote/logs | ~03:20 Wed |
+| DONE 17 Nov | e9 beacon full (Step 25): pheromone, dopamine, smell steer (Holm p < 0.05); others null | 03:34 | watcher | results/step25_stats.txt | done |
+| DONE 17 Nov 16:18 | e11 paired L+R knockouts: 13/98 pairs lower skill; real-worm validation fails | 15:57 | watcher | results/step26_pairs_stats.txt | done |
+| DONE 17 Nov 23:18 | e12 fleeing food fixed (Step 27b): no idling; all R1-R3 pass; group catches 90-99 % at 0.9-1.5x | 16:18 | watcher | results/step27b_stats.txt | done |
+| IDLE | queue empty since 2026-11-17 23:18 | - | - | - | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-17 BEACON FULL (step25): worm scent, dopamine and smell can lead worms to a chosen place (small bias); magnetism, gravity, light: no.
+- 2026-11-17 PAIRED KNOCKOUTS (step26 --pairs): both-sides removal doubles effects; AIY, AWC, AVE, AIZ key; validation still fails.
+- 2026-11-17 FLEEING FOOD FIXED (step27b): evolution learns to catch it; fleeing 12x harder than drifting; near-worm-speed food caught almost only with 2 worms close.
 - 2026-11-17 FLEEING FOOD (step27): failed as designed - even half-speed food was uncatchable (flee radius 40), so worms evolved to stand still and starve slowest (reward hacking). Needs a redesign.
 - 2026-11-16 KNOCKOUT GUIDE (step26): 293/300 neurons removable without detectable skill change; smell-off sensors (ASER, AWCR) + AIY/AIZ/AIB matter; real-worm validation FAILED.
 - 2026-11-16 ERODING GRAVITY (step29): no effect of erosion rate; worms avoid never-seen heavy ground as well as their own -> they react to the sense, not to places.

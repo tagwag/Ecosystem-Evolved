@@ -95,3 +95,28 @@ Steering index = time in the beacon circle with the cue on minus off, reward off
 Effects are small after 50 generations (occupancy ~0.044 -> up to ~0.061). The method check passes (no cue = exactly 0).
 No worm group reached the circle (arrival 1500 = never), so steering is a bias, not yet guidance. The full 300-generation
 run (queued) does the pre-registered tests.
+
+## 9. Full results (300 generations, run 2026-11-17 03:34-~15:40 MT; written up 2026-11-20)
+Steering index = time in the cue circle with cue on minus off, REWARD OFF, 12 unseen worlds, 16 seeds.
+Pre-registered: steering > 0, paired sign-flip, Holm over the 12 cue arms.
+
+| Sense | Steering index (seeds +) | Holm p | Verdict | Moving beacon: distance off-on |
+|---|---|---|---|---|
+| **pheromone (ASK/ADL)** | +0.0100 (13/16) | **0.016** | **PASS: leads them** | +2.88 |
+| **dopamine (on-food)** | +0.0116 (13/16) | **0.038** | **PASS** | +1.25 |
+| **smell (positive control)** | +0.0134 (12/16) | **0.049** | **PASS** | +1.55 |
+| nose touch | +0.0057 (11/16) | 0.12 | null | +0.52 |
+| predator / nociception (ASH) | +0.0128 (11/16) | 0.22 | null | +2.54 |
+| vibration | +0.0060 (11/16) | 0.36 | null | +2.07 |
+| O2 | +0.0039 (12/16) | 0.47 | null | +0.56 |
+| gravity, CO2, AFD (temp = magnetism), light, toxic | -0.001 to +0.0015 | 1 | null | -1.2 to +0.8 |
+| none (method check) | 0.0000 | - | ok | 0 |
+
+- Positive control passed (smell), method check passed (no cue = exactly 0).
+- **Three channels can lead worms to a chosen place: worm scent (pheromone), the dopamine "on food" signal, and
+  smell.** Magnetism (AFD), gravity, light, CO2 and toxic cues: no detectable steering.
+- Effect size is small: time in the circle rises from ~4.4 % to ~5.4-5.9 %, and no group of worms ever reached the
+  circle (arrival 1500 = never). It is a bias, not guidance.
+- Reported, not tested: every cue arm scored LOWER than no-cue in the training world (-0.08 to -0.32; uncorrected p <
+  0.05 for toxic, CO2, O2, dopamine, pheromone, nose): carrying an extra input costs a little foraging skill.
+- Next options (not run): stronger cue gain or reward, longer evolution, or combining the three passing channels.

@@ -1,0 +1,19 @@
+Step 27b / Fleeing food, fixed: 16 seeds, best brains at generation 300, 12 unseen worlds x 60 clones
+arm           speed mode   skill  catches/world  group  ambush  move speed | skill in still world   IDLE?
+b27_still      0.0 flee    9.617         nan     nan    nan    0.908   |  9.617
+b27_slow       0.5 flee    8.351      185.50   0.147  0.001    0.969   |  9.675
+b27_close      0.9 flee    5.885       17.51   0.981  0.003    0.901   |  9.143
+b27_edge       1.1 flee    5.851       11.05   0.994  0.003    0.858   |  8.788
+b27_fast       1.5 flee    6.028       16.30   0.904  0.003    0.857   |  9.441
+b27_veryfast   3.0 flee    6.247       30.48   0.141  0.001    0.896   |  9.414
+b27_drift      0.9 drift   8.385      214.49   0.020  0.020    0.668   |  8.659
+PRE-REGISTERED:
+  R1 evolved vs random brains, catches of moving food (paired sign-flip, Holm over 6):
+    b27_slow     +166.58 (16/16)  p=5e-05  Holm p=0.0003 -> PASS: evolution learned to catch more
+    b27_close    +16.23 (16/16)  p=5e-05  Holm p=0.0003 -> PASS: evolution learned to catch more
+    b27_edge     +9.74 (16/16)  p=5e-05  Holm p=0.0003 -> PASS: evolution learned to catch more
+    b27_fast     +14.88 (16/16)  p=5e-05  Holm p=0.0003 -> PASS: evolution learned to catch more
+    b27_veryfast +27.92 (16/16)  p=5e-05  Holm p=0.0003 -> PASS: evolution learned to catch more
+    b27_drift    +18.93 (15/16)  p=0.0001  Holm p=0.0003 -> PASS: evolution learned to catch more
+  R2 catches vs flee speed (fleeing arms): Spearman rho = -0.247, p = 0.0269 -> PASS: catches fall with speed
+  R3 fleeing (0.9x) vs drifting (0.9x) food, catches: -196.98 (0/16)  p=5e-05 -> PASS: running away makes food harder to catch

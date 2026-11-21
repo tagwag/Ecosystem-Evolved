@@ -1,0 +1,43 @@
+Step 25 / Beacon series, FULL (pre-registered tests): 16 seeds, 12 unseen worlds x 60 clones, reward OFF
+arm             steering index (+ seeds)  occ on  occ off  arrival on/off   moving: dist off-on   skill(train)  skill(cue cut)
+s25_smell       +0.0134 (12/16)       0.0573  0.0440     1500/  1500       +1.55 (10)      2.767        2.865
+s25_predator    +0.0128 (11/16)       0.0586  0.0457     1500/  1500       +2.54 (12)      2.880        2.903
+s25_dopamine    +0.0116 (13/16)       0.0562  0.0446     1500/  1500       +1.25 (12)      2.682        2.727
+s25_pheromone   +0.0100 (13/16)       0.0540  0.0440     1500/  1500       +2.88 (12)      2.721        2.753
+s25_vibration   +0.0060 (11/16)       0.0496  0.0436     1500/  1500       +2.07 (12)      2.872        2.913
+s25_nose        +0.0057 (11/16)       0.0512  0.0455     1500/  1500       +0.52 ( 8)      2.697        2.731
+s25_o2          +0.0039 (12/16)       0.0491  0.0452     1500/  1500       +0.56 ( 9)      2.675        2.721
+s25_gravity     +0.0015 (10/16)       0.0466  0.0452     1500/  1500       +0.06 ( 7)      2.896        2.955
+s25_co2         +0.0012 ( 7/16)       0.0467  0.0455     1500/  1500       +0.78 (11)      2.692        2.697
+s25_afd         +0.0012 ( 8/16)       0.0456  0.0444     1500/  1500       -1.21 ( 4)      2.861        2.869
+s25_light       +0.0005 ( 8/16)       0.0466  0.0461     1500/  1500       -0.13 (10)      2.906        2.886
+s25_none        +0.0000 ( 0/16)       0.0435  0.0435     1500/  1500       +0.00 ( 0)      2.987        2.987
+s25_toxic       -0.0007 ( 6/16)       0.0428  0.0434     1500/  1500       +0.12 ( 8)      2.673        2.709
+PRE-REGISTERED: steering index > 0, paired sign-flip, Holm over the 12 cue arms
+  s25_pheromone   +0.0100  p=0.00135  Holm p=0.0162  -> PASS: the cue leads them
+  s25_dopamine    +0.0116  p=0.00345  Holm p=0.0379  -> PASS: the cue leads them
+  s25_smell       +0.0134  p=0.00485  Holm p=0.0485  -> PASS: the cue leads them
+  s25_nose        +0.0057  p=0.0132  Holm p=0.119  -> no detectable steering
+  s25_predator    +0.0128  p=0.027  Holm p=0.216  -> no detectable steering
+  s25_vibration   +0.0060  p=0.052  Holm p=0.364  -> no detectable steering
+  s25_o2          +0.0039  p=0.0779  Holm p=0.467  -> no detectable steering
+  s25_afd         +0.0012  p=0.695  Holm p=1  -> no detectable steering
+  s25_light       +0.0005  p=0.657  Holm p=1  -> no detectable steering
+  s25_toxic       -0.0007  p=0.781  Holm p=1  -> no detectable steering
+  s25_co2         +0.0012  p=0.588  Holm p=1  -> no detectable steering
+  s25_gravity     +0.0015  p=0.662  Holm p=1  -> no detectable steering
+  positive control s25_smell: PASSED
+  method check s25_none (no cue): steering +0.0000, p=1 (should be ~0)
+REPORTED: skill vs s25_none (train world)
+  s25_smell       -0.220 (5/16)  p=0.0507 (uncorrected)
+  s25_afd         -0.126 (9/16)  p=0.287 (uncorrected)
+  s25_light       -0.082 (8/16)  p=0.385 (uncorrected)
+  s25_toxic       -0.315 (3/16)  p=0.00235 (uncorrected)
+  s25_predator    -0.107 (9/16)  p=0.291 (uncorrected)
+  s25_co2         -0.296 (2/16)  p=0.0083 (uncorrected)
+  s25_o2          -0.312 (4/16)  p=0.0107 (uncorrected)
+  s25_dopamine    -0.305 (2/16)  p=0.0076 (uncorrected)
+  s25_pheromone   -0.266 (5/16)  p=0.0235 (uncorrected)
+  s25_gravity     -0.091 (7/16)  p=0.432 (uncorrected)
+  s25_vibration   -0.115 (8/16)  p=0.327 (uncorrected)
+  s25_nose        -0.290 (4/16)  p=0.0109 (uncorrected)

@@ -1,0 +1,13 @@
+Step 26 / LEFT+RIGHT PAIR knockouts: 98 pairs x 16 brains (Step 23 control, gen 300), 12 unseen worlds x 60 clones; paired sign-flip, BH FDR 5 % per measure
+intact: skill 2.678, food 7.26, survivors 13.03, speed 0.5745, reversals 0.02948, turning 0.1431, time near food 0.2161, bites 1.148
+skill: 13 knockouts change it (q < 0.05); biggest: AIY -1.027, AWC -0.7752, AVE -0.7537, AIZ -0.6651, AVD -0.5257, AIB -0.5028, RIM -0.4883, RIA -0.4759
+food: 4 knockouts change it (q < 0.05); biggest: AVE -2.096, AIY -2.095, AWC -1.851, HSN +0.2617
+survivors: 5 knockouts change it (q < 0.05); biggest: AIY -5.432, AWC -4.526, AVE -4.51, RIA -3.057, ASE -1.182
+speed: 0 knockouts change it (q < 0.05)
+reversals: 0 knockouts change it (q < 0.05)
+turning: 0 knockouts change it (q < 0.05)
+time near food: 3 knockouts change it (q < 0.05); biggest: AIY -0.05521, AIZ -0.03813, AWC -0.03414
+bites: 1 knockouts change it (q < 0.05); biggest: AWC -0.1071
+VALIDATION (pre-registered):
+  V1 AVA: reversals -0.001128 (q=0.881) -> does NOT match
+  V2 ASE: food -0.249 (q=0.312) -> does NOT match

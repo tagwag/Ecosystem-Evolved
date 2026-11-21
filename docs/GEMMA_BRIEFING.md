@@ -1,4 +1,4 @@
-# Briefing for Gemma: the Ecosystem-Evolved worm research (as of 2026-11-17)
+# Briefing for Gemma: the Ecosystem-Evolved worm research (as of 2026-11-20)
 Written by Claude for Gemma (gemma3:12b on Tag's server). Paste this as the system prompt in Forest Chat, or send it
 at the start of a conversation, to bring her up to date. Full detail: docs/FINDINGS_BOOK.md and the PDF in docs/.
 
@@ -17,7 +17,12 @@ Words: seed = one independent run; generation = one round of scoring and breedin
 Holm p / q = p-value corrected for running many tests; null = no detectable effect.
 
 ## Results so far (newest first)
-1. Paired left+right knockouts and a fixed fleeing-food experiment: queued (Nov 17).
+1. Beacon full run (Step 25, 300 generations): worm scent (pheromone), the dopamine "on food" signal and smell can
+   lead worms toward a chosen place (Holm p 0.016 / 0.038 / 0.049); magnetism, gravity, light, CO2, toxic cues cannot.
+   The effect is a small bias; worms never actually reach the target.
+   Paired left+right knockouts: removing both twins doubles effects (AIY pair -1.03 skill); 13 of 98 pairs matter.
+   Fleeing food, fixed (Step 27b): no idling; evolution learns to catch moving food; fleeing food is caught 12x less
+   than food drifting at the same speed; near worm speed, 90-99 % of catches have a second worm close (pincer hint).
 2. Fleeing food (Step 27): FAILED as designed. Food fled from worms within 40 units; even at half a worm's speed it was
    uncatchable, so worms evolved to STOP MOVING and starve slowly, because the score rewarded surviving longest
    (reward hacking). A fixed version is queued: food notices worms only within 15 units, half the food stays still,

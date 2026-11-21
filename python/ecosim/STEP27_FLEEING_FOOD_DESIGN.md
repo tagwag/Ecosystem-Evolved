@@ -97,3 +97,31 @@ food each at 0.5x versus 3.8 with still food.
 
 Not re-run. Possible fixes (owner's call): food notices worms only at ~15 units; mix still and fleeing food (worms
 keep foraging; does catching fleeing food add anything?); remove the survival tie-break so idling is not rewarded.
+
+## 9. Fixed re-run, Step 27b (run 2026-11-17 16:18-23:18 MT; written up 2026-11-20)
+Fixes: flee radius 15 (was 40), half the food moves, score = food eaten only; plus a DRIFT world (food wanders at
+0.9x, blind to worms). **No arm idled** (movement 0.67-0.97; idling limit 0.05) - the fixes worked.
+
+| Arm | Speed | Skill (food/worm) | Catches of moving food per world | Group share |
+|---|---|---|---|---|
+| still | 0 | 9.62 | - | - |
+| slow | 0.5x flee | 8.35 | 185.5 | 0.15 |
+| close | 0.9x flee | 5.89 | 17.5 | 0.98 |
+| edge | 1.1x flee | 5.85 | 11.1 | 0.99 |
+| fast | 1.5x flee | 6.03 | 16.3 | 0.90 |
+| very fast | 3x flee | 6.25 | 30.5 | 0.14 |
+| drift | 0.9x blind | 8.39 | 214.5 | 0.02 |
+
+Pre-registered:
+- **R1 evolution learns to catch moving food: PASS in all 6 moving arms** (16/16 seeds each except drift 15/16, Holm p
+  0.0003).
+- **R2 catches fall with flee speed: PASS** (rho -0.25, p 0.027), though not smoothly: catches rise again at 3x.
+- **R3 running away matters: PASS** - at the same 0.9x speed, fleeing food is caught ~12x less than drifting food
+  (17.5 vs 214.5 per world, 0/16 seeds the other way).
+
+Reported, not tested (and the most interesting part): at 0.9x-1.5x, **90-99 % of catches happen with another worm
+within 15 units** of the food, versus 2 % for drifting food and 15 % at 0.5x. When food is about as fast as a worm,
+it is only caught when two worms close in on it: a hint of group (pincer) catching. Caveat, stated before the run:
+worms are clones of one brain and the 15-unit radius equals the flee radius, so part of this may simply be that food
+fleeing one worm runs into another. A follow-up would compare against randomly placed worms of the same density.
+At 3x, group share falls to 14 %: food that fast mostly runs into single worms.

@@ -352,3 +352,11 @@ Combination here (full connectome + ecosystem evolution + neuromodulation) looks
   moving (speed 0.71 -> 0.001), eat ~nothing, and starve slowest: reward hacking of the survival tie-break. R1-R3
   "passed" but are artefacts of idling. Food was uncatchable: flee radius 40 (5x eat radius). Not re-run; fixes listed
   in STEP27 doc section 8.
+
+2026-11-20 (cloud session; write-ups 3 days late because scheduled check-ins were delayed)
+- Beacon full (Step 25): pheromone, dopamine and smell PASS (Holm p 0.016 / 0.038 / 0.049) as steering channels;
+  magnetism/AFD, gravity, light, CO2, toxic: null. Small bias, worms never reach the beacon.
+- Paired L+R knockouts (Step 26 --pairs): 13/98 pairs lower skill (AIY -1.03, AWC, AVE, AIZ, AVD, AIB, RIM, RIA);
+  validation vs real worms still fails (AVA pair does not cut reversals).
+- Fleeing food fixed (Step 27b): no idling; evolution learns to catch moving food in all arms; fleeing food caught 12x
+  less than drifting food at the same speed; at 0.9-1.5x, 90-99 % of catches have a second worm within 15 units.
