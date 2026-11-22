@@ -31,7 +31,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 17 Nov | e9 beacon full (Step 25): pheromone, dopamine, smell steer (Holm p < 0.05); others null | 03:34 | watcher | results/step25_stats.txt | done |
 | DONE 17 Nov 16:18 | e11 paired L+R knockouts: 13/98 pairs lower skill; real-worm validation fails | 15:57 | watcher | results/step26_pairs_stats.txt | done |
 | DONE 17 Nov 23:18 | e12 fleeing food fixed (Step 27b): no idling; all R1-R3 pass; group catches 90-99 % at 0.9-1.5x | 16:18 | watcher | results/step27b_stats.txt | done |
-| IDLE | queue empty since 2026-11-17 23:18 | - | - | - | - |
+| RUNNING 2026-11-22 14:09 | e13 super_harvest (Step 30 phase A: hall of fame from ~12,000 snapshots) | 14:09 | watcher | remote/logs/e13_super_harvest.txt | ~15:10 |
+| QUEUED | e14 super_nurture (Step 30 phase B: 4 arms x 16 seeds x 300 gens + analysis) | - | watcher | remote/logs | ~21:40 |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
