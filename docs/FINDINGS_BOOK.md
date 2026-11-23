@@ -265,6 +265,20 @@ Every single neuron, every pair (44,850) and every triple (4,455,100) was remove
 - **Strong caveat:** 5,762 of the 5,765 confirmed combinations include a neuron that the motor **decoder** reads directly. Much of this "epistasis" is probably about how the model turns brain activity into movement, not about the wiring. Only 3 confirmed triples involve no decoder-read neuron (e.g. ASHL + AWAR + DA08).
 - Speed: about 2,600 combinations per second on the RTX 3080 with continuous refill; the whole screen took about 40 minutes.
 
+### Repeat with every navigating brain (23 November, finished 12:03)
+
+The same screen was run again on all 16 evolved brains, of which 8 navigate well enough to use (the first screen used 4 of these 8). Same corridor, same rules.
+
+|  | 4 brains | 8 brains | In both |
+| --- | --- | --- | --- |
+| Single neurons that break navigation | AVEL | RIML | none |
+| Confirmed epistatic pairs | 82 | 20 | 2 |
+| Confirmed epistatic triples | 5,683 | 3,207 | 89 |
+| Neuron in the most confirmed combinations | RIAL | AVEL |  |
+
+- **The first screen does not generalise.** With 4 more brains, the single breaking neuron changed, the hub neuron changed, and only 2 of 82 pairs (AIZR + RMDDL, PVCR + SMDDL) and 89 of 5,683 triples recurred. What a combination knockout breaks is mostly specific to the individual evolved brain, not a property of the worm's wiring.
+- The readout caveat stands: all but 1 of the 3,227 confirmed combinations contain a neuron the motor decoder reads directly. The 2 recurring pairs are the only candidates worth following up. Method: python/ecosim/STEP28\_CORRIDOR\_SCREEN.md; data: results/step28\_b16\_stats.txt.
+
 ## A speed-up that was not adopted (16 November)
 
 The chemical-synapse step was rewritten to add each synapse's signal straight into its target neuron, instead of a large, mostly empty matrix multiply. Side-by-side benchmark on 16 brains x 12 worlds: **1.29x faster** (8.74 vs 11.29 s per generation). But the results were **not reproducible**: two runs of the new method differ from each other (mean skill 2.680 vs 2.665), while the old method gives identical numbers every time, and the per-brain correlation with the old method was 0.9895, below the 0.99 set before the test. Rejected under the pre-set rule and your "same results" condition; the old method stays the default.

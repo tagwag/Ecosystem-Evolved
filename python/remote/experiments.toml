@@ -584,5 +584,5 @@ cwd = "."
 cmd = ["{py}", "-u", "-m", "ecosim.step31", "run"]
 gpu = true
 share = false
-vram_mb = 9000
+vram_mb = 7000
 est_minutes = 480

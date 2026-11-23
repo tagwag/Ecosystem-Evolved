@@ -8,3 +8,6 @@
   (+0.19) and S3 less-decline (+0.11) do not. Fresh worlds: replicate super worm 3.832, original 3.861 (same run),
   tied; a single brain's 48-world score varies +/-0.07 between runs. Recipe = score each brain on several worlds.
 - Gemma/Qwen advisor built (python/agent: advisor.py quiz/advise/ask, quiz.json backtest); blocked by Forest Chat 401.
+- Step 28 repeat with 8 navigating brains (combo_screen16): single breaker RIML (4-brain: AVEL); only 2 of 82 pairs
+  (AIZR+RMDDL, PVCR+SMDDL) and 89 of 5,683 triples recur. Combination-knockout effects are brain-specific.
+- Peak-stop rule for breeding runs (ecosim/peakstop.py); Step 31 (breed_peak) is its first run.

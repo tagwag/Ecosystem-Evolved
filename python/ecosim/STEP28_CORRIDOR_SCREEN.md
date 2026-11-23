@@ -38,3 +38,27 @@ Every single (300), pair (44,850) and triple (4,455,100) of removed neurons was 
 - The single-neuron knockout guide (Step 26, queued) gives graded effects for every neuron on 16 brains; compare.
 - To separate wiring from readout: repeat the screen with brains that read MUSCLES (Step 20b body readout) or exclude
   decoder-read neurons from the combinations. Not queued.
+
+## Repeat with every navigating brain (2026-11-23 10:40-12:03, watcher job e18 combo_screen16)
+"16" in the job name = the screen considered all 16 evolved brains; 8 of them navigate well enough to use (brains 2, 5,
+8, 9, 10, 11, 13, 16; the 4-brain screen used 2, 5, 8, 9). Same corridor (150 units), same rules, unstable = fewer
+than half of the brains reach their food, candidates re-tested 5 more times. Results: results/step28_b16_stats.txt,
+results/step28_b16_epistasis.csv.
+
+| | 4 brains | 8 brains | In both lists |
+|---|---|---|---|
+| Single neurons that break navigation | AVEL | **RIML** (not AVEL) | none |
+| Unstable pairs (screen) | 353 | 233 | |
+| Confirmed epistatic pairs | 82 | 20 | **2** (AIZR + RMDDL, PVCR + SMDDL) |
+| Unstable triples (screen) | 37,989 | 26,954 | |
+| Confirmed epistatic triples | 5,683 | 3,207 | **89** |
+| Hub neuron (in most confirmed combinations) | RIAL | AVEL, then RMDDL | |
+| Confirmed combinations with no decoder-read neuron | 3 | 1 (ASER + AWCR + VA12) | |
+
+**Reading (blunt):** the 4-brain results do NOT generalise. Adding 4 more brains changed the single breaking neuron,
+the hub neuron, and kept only 2 of 82 pairs and 89 of 5,683 triples. So what a combination knockout breaks is mostly
+specific to the individual evolved brain (each brain has its own weak points), not a property of the worm wiring.
+Both screens are still dominated by decoder-read neurons (all but 1 of 3,227 confirmed), so the readout artefact
+stands. The 2 pairs found in both screens (AIZR + RMDDL, PVCR + SMDDL) are the only candidates worth following up;
+both involve decoder-read neurons.
+

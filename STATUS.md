@@ -44,8 +44,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 23 Nov 01:07 | e15 super_confirm: super worm 3.929 on 48 fresh worlds (beats every champion, 3.571) | 01:03 | watcher | results/step30_confirm.txt | done |
 | DONE 23 Nov 07:46 | e16 super_nurture_rep: only S2 (4-world scoring) reproduces (+0.38, Holm p 0.00075); S1, S3 not | 01:07 | watcher | results/step30_rep_stats.txt | done |
 | DONE 23 Nov 07:55 | e17 super_confirm_rep: replicate super worm 3.832 vs original 3.861 on fresh worlds (tied; noise +/-0.07); both beat every champion | 07:51 | watcher | results/step30_rep_confirm.txt | done |
-| QUEUED 23 Nov 10:40 | e18 combo_screen16 (Step 28 screen with all 16 brains; the only defined run never done) | - | watcher | results/step28_* | ~12:40 |
-| QUEUED | e19 breed_peak (Step 31: super worm recipe under the PEAK-STOP rule, max 600 gens) | after e18 | watcher | results/step31_stats.txt | <= ~20:40 |
+| DONE 23 Nov 12:03 | e18 combo_screen16: 8 navigating brains; single breaker RIML (not AVEL), 20 pairs / 3,207 triples confirmed, only 2 pairs + 89 triples shared with the 4-brain screen -> epistasis is brain-specific | 10:40 | watcher | results/step28_b16_stats.txt | done |
+| RUNNING 23 Nov 12:26 | e19b breed_peak (Step 31: super worm recipe under the PEAK-STOP rule, max 600 gens) | 12:26 | watcher | remote/logs/e19b_breed_peak.txt | <= ~20:15 |
 | DONE 23 Nov 10:16 | advisors: quiz gemma3:12b 1/12, qwen2.5:7b 4/12 (chance ~4); advice logged in python/agent/logs | - | watcher | python/agent/logs | done |
 | WAS BLOCKED (fixed) | k22/k23 Gemma quiz + qwen2.5:7b download: Forest Chat answers 401 Unauthorized; k24-k26 held. Owner must give access (FOREST_URL or FOREST_AUTH env var, see python/agent/advisor.py) | - | watcher | remote/logs/k22_advisor_quiz.txt | owner |
 
