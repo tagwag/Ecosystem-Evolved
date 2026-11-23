@@ -30,7 +30,8 @@ URL, MODEL = 'http://192.168.1.17:8080/api/chat', 'gemma3:12b'
 if '--model' in sys.argv:                            # e.g. --model qwen2.5:7b (second advisor)
     i = sys.argv.index('--model'); MODEL = sys.argv[i + 1]; del sys.argv[i:i + 2]
 import os
-URL = os.environ.get('FOREST_URL', URL)              # e.g. http://192.168.1.17:11434/api/chat if Ollama is opened to the LAN
+_cfg = HERE_ = pathlib.Path(__file__).resolve().parent / 'forest_url.txt'   # one line, written by Claude; no secrets
+URL = os.environ.get('FOREST_URL') or (_cfg.read_text().strip() if _cfg.exists() else URL)              # e.g. http://192.168.1.17:11434/api/chat if Ollama is opened to the LAN
 AUTH = os.environ.get('FOREST_AUTH')                 # optional Authorization header value, set by the OWNER on the workstation
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent                                   # .../python

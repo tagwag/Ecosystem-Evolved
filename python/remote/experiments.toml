@@ -559,3 +559,12 @@ gpu = true
 share = true
 vram_mb = 4000
 est_minutes = 10
+
+[forest_probe]
+about = "READ-ONLY network probe of the server forest: open ports and what login Forest Chat asks for. Seconds."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.forest_probe"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 1
