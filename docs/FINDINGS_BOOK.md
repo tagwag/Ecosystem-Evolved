@@ -322,7 +322,7 @@ Failed as designed, and the failure is a finding in itself: **when food runs awa
 - Tiring food changed nothing: worms that never chase never make the food tire.
 - Possible fixes, not run: food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
 
-## Super worm: Step 30 (22 November, finished 21:47)
+## Super worm: Step 30 (22-23 November, with replicate)
 
 Your idea: take the best ancestor of every past experiment at its peak, before it degraded, then breed only from those. **Result: champions plus reliable selection make the best worms ever seen here, and keep them good; without reliable selection, champions degrade.** Method: python/ecosim/step30.py and STEP30\_SUPER\_WORM.md.
 
@@ -342,9 +342,22 @@ Your idea: take the best ancestor of every past experiment at its peak, before i
 - **Rule 3, reliable selection maintains: PASS.** The drop from peak halves, 0.20 vs 0.44 (14/16, Holm p 0.005).
 - One champion plus mutants did no better or worse than a pool of 12.
 
-**What it takes to make and keep a super worm:** start from champions, and judge every brain on several worlds. With one world per brain, luck decides who breeds, and even champions slide below where they started (3.49 down to 3.19). That answers why lineages peak and then degrade: noisy selection.
+**What it takes to make and keep a super worm (revised after the replicate):** judge every brain on several worlds. That is the only rule that reproduced, and the largest effect (+0.38 to +0.42). Starting from champions gives an unreliable head start (+0.45 once, +0.19 and not significant the second time), because with one world per brain luck decides who breeds and even champions slide below where they started (3.49 to 3.19 in the original, 3.44 to 3.24 in the replicate). That answers why lineages peak and then degrade: noisy selection.
 
-**The super worm** (4-world arm, seed 5, generation 300) scores **4.045**, above every champion. Caveat: it was picked as the best of 768 brains on the same 24 worlds it is scored on, so the number is optimistic; the champions' own hall scores shrank the same way (about 3.5 when re-run). A check on fresh worlds is next. Genome: python/runs/step30/SUPER\_WORM.npy.
+**The super worm** (4-world arm, seed 5, generation 300) scores **4.045** on the 24 hall worlds, above every champion. It was picked as the best of 768 brains on those same worlds, so that number is optimistic (winner's curse). Genome: python/runs/step30/SUPER\_WORM.npy.
+
+**Fresh-world confirmation (23 November).** The super worm, the 12 champions and every seed's best brain were re-tested on 48 worlds none of them had seen. Every score shrank by about 0.2, as expected, but the ranking held: the super worm scored **3.929**, above the best champion on the same worlds (3.571) and about 43 % above typical evolved brains (2.74).
+
+**Independent replicate (23 November, new seeds 17-32).** Everything was rerun with fresh random seeds and the same pre-registered rules.
+
+| Rule | Original (seeds 1-16) | Replicate (seeds 17-32) | Reproduced? |
+| --- | --- | --- | --- |
+| Champions help (pool vs random start) | +0.45, pass | +0.19 (9/16), Holm p 0.22 | No |
+| 4-world scoring helps (vs 1 world) | +0.42, pass | +0.38 (15/16), Holm p 0.00075 | **Yes** |
+| 4-world scoring loses less from its peak | +0.24, pass | +0.11 (10/16), Holm p 0.22 | No |
+| One best champion vs a pool of 12 | no difference | no difference | Yes (null) |
+
+The replicate's super worm (4-world arm, seed 31, generation 100) scored 4.053 on the hall worlds and **3.832** on the fresh worlds; the original, re-scored in the same run, scored 3.861. Both beat every champion (best 3.542), and all 10 of the best fresh-world brains came from 4-world lines. **The two super worms are tied:** the same brain scored 3.929 and 3.861 on the same 48 worlds in two runs, and 3.832 and 3.767 twice within one run, so a single brain's score varies by about ±0.07 (the random stream depends on how worlds are batched). Differences under about 0.1 between single brains are not real.
 
 ## Fleeing food, fixed: Step 27b (17 November, finished 23:18)
 

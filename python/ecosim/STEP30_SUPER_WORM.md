@@ -66,5 +66,37 @@ when re-run as founders). A confirmation on fresh worlds (minutes of GPU) is the
 - Every score shrinks by ~0.2 on fresh worlds (winner's curse, as expected), but the ranking holds.
 - **The super worm is confirmed**: 3.929 on fresh worlds, above the best champion on the same fresh worlds (3.571)
   and ~43 % above typical evolved brains (2.74). 6 of the top 7 fresh-world brains come from the 4-world arm.
-- Independent replicate (new seeds 17-32) started 2026-11-23 01:07.
 
+
+## Independent replicate (seeds 17-32, 2026-11-23 01:07-07:46; fresh-world check 07:51-07:55)
+Same hall of fame, arms, worlds and pre-registered rules; only the random seeds are new (`step30.py nurture --rep`,
+results in `results/step30_rep_stats.txt` and `results/step30_rep_confirm.txt`).
+
+| Rule | Original (seeds 1-16) | Replicate (seeds 17-32) | Reproduced? |
+|---|---|---|---|
+| S1 champions help (pool - random, final) | +0.45, pass | +0.19 (9/16), Holm p 0.22 | **no** |
+| S2 4-world scoring helps (pool_x4 - pool, final) | +0.42, pass | +0.38 (15/16), Holm p 0.00075 | **yes** |
+| S3 4-world scoring loses less from peak | +0.24, pass | +0.11 (10/16), Holm p 0.22 | **no** (same direction, not significant) |
+| single best vs pool of 12 | no difference | +0.01, no difference | yes (null) |
+
+Final arm means (replicate): random 3.06, pool 3.24, best 3.26, pool x4 **3.63**. Random-start worms climbed
+2.51 -> 3.06 and closed most of the gap to the 1-world champion arms, which again slid from their start (3.44 -> 3.24).
+
+**Fresh worlds (same 48 worlds 5800-5847 as the original confirmation):** replicate super worm (`n30_pool_x4` seed 31,
+gen 100; 4.053 on hall worlds) scores **3.832**; the original super worm, re-scored in the same run, **3.861**; best
+champion 3.542. Both super worms beat every champion; 10 of the 10 best fresh-world brains come from the 4-world arm.
+
+**Measurement noise (new, important):** the original super worm scored 3.929 on these 48 worlds in the first
+confirmation and 3.861 in this one, and the replicate super worm appears twice in this run (as "super worm" and as
+its seed's best checkpoint) with 3.832 and 3.767. So one brain's 48-world score varies by about +/-0.07 between runs
+(the simulation's random stream depends on how worlds are batched). The two super worms are therefore **tied**;
+differences under ~0.1 between single brains should not be read as real.
+
+### Revised answer: what it takes to make and keep a super worm
+1. **Judge each brain on several worlds (4 instead of 1).** The only rule that reproduced, and the largest effect
+   (+0.38 to +0.42). This is the recipe.
+2. Starting from champions gives a head start, but it is unreliable: +0.45 in the original, +0.19 (not significant)
+   in the replicate, because with 1-world scoring the champions slide back toward where random evolution reaches.
+3. With 1-world scoring, champions decline from their start in both runs (noisy selection lets lucky brains breed).
+   4-world scoring keeps them at or above their start; whether it halves the decline is not established.
+4. Best brains: ~3.83-3.93 on fresh worlds (about 40 % above typical evolved brains, 2.74), from 4-world lines.

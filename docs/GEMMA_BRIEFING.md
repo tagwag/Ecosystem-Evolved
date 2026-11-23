@@ -17,10 +17,11 @@ Words: seed = one independent run; generation = one round of scoring and breedin
 Holm p / q = p-value corrected for running many tests; null = no detectable effect.
 
 ## Results so far (newest first)
-0. Super worm (Step 30): the best of ~2,000 past lineages at their peak (best 3.69 vs typical 2.74) were bred on.
-   Starting from champions helps (+0.45), and scoring each brain on 4 worlds instead of 1 is what keeps and grows the
-   gains (final 3.61 vs 3.19; decline from peak halved). With 1-world scoring, champions degrade: noisy selection is
-   why lineages peak then slide. Best brain found: 4.045 (still to be confirmed on fresh worlds).
+0. Super worm (Step 30, with an independent replicate): the best of ~2,000 past lineages at their peak (best 3.69 vs
+   typical 2.74) were bred on for 300 generations. The one result that reproduced: scoring each brain on 4 worlds
+   instead of 1 (+0.38 to +0.42 final skill). Starting from champions helped once (+0.45) but not in the replicate
+   (+0.19, not significant); with 1-world scoring champions slide down from where they start. Best brains: 3.83-3.93 on
+   48 fresh worlds, beating every champion (3.54-3.57). One brain's 48-world score varies about +/-0.07 between runs.
 1. Beacon full run (Step 25, 300 generations): worm scent (pheromone), the dopamine "on food" signal and smell can
    lead worms toward a chosen place (Holm p 0.016 / 0.038 / 0.049); magnetism, gravity, light, CO2, toxic cues cannot.
    The effect is a small bias; worms never actually reach the target.

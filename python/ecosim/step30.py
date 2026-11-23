@@ -274,11 +274,14 @@ def confirm():
     from .worm2_gpu import pick_device
     dev, conn = pick_device('cuda'), Connectome()
     gens = list(range(EVERY, GENS + 1, EVERY))
-    st = json.loads((RES / 'step30_stats.json').read_text())
+    st = json.loads((RES / f'step30{TAG}_stats.json').read_text())
     hall = list(csv.DictReader(open(OUT / 'hall' / 'hall_of_fame.csv')))[:POOL]
     rows = []                                                   # (group, label, hall-world score, path)
-    sw = json.loads((OUT / 'SUPER_WORM.json').read_text())
-    rows.append(('super worm', sw['source'], sw['score'], OUT / 'SUPER_WORM.npy'))
+    sw = json.loads((OUT / f'SUPER_WORM{TAG}.json').read_text())
+    rows.append(('super worm', sw['source'], sw['score'], OUT / f'SUPER_WORM{TAG}.npy'))
+    if REP:                                                     # head-to-head: the ORIGINAL super worm on the same fresh worlds
+        so = json.loads((OUT / 'SUPER_WORM.json').read_text())
+        rows.append(('orig super', so['source'], so['score'], OUT / 'SUPER_WORM.npy'))
     for h in hall:
         rows.append(('champion', f"#{h['rank']} {h['experiment']} {h['arm']} s{h['seed']} g{h['generation']}",
                      float(h['score']), OUT / 'hall' / f"hof_{int(h['rank']):03d}.npy"))
@@ -288,9 +291,9 @@ def confirm():
             j = int(c[i].argmax())
             rows.append((a, f'{a} s{s} g{gens[j]}', float(c[i, j]), OUT / f'{a}_s{s}' / f'ckpt_g{gens[j]}.npy'))
     fresh = score([np.load(r[3]) for r in rows], FRESH_W, dev, conn)
-    L = [f'Step 30 FRESH-WORLD CONFIRMATION: {len(rows)} brains re-tested on {len(FRESH_W)} never-used worlds (standard world)',
+    L = [f'Step 30{TAG} FRESH-WORLD CONFIRMATION: {len(rows)} brains re-tested on {len(FRESH_W)} never-used worlds (standard world)',
          'group           n   on hall worlds  on fresh worlds  shrink']
-    groups = ['super worm', 'champion'] + list(ARMS)
+    groups = ['super worm'] + (['orig super'] if REP else []) + ['champion'] + list(ARMS)
     for g in groups:
         idx = [k for k, r in enumerate(rows) if r[0] == g]
         hw = np.mean([rows[k][2] for k in idx]); fw = fresh[idx].mean()
@@ -304,10 +307,10 @@ def confirm():
     for k in np.argsort(-fresh)[:10]:
         L.append(f'  {fresh[k]:.3f}  (hall worlds {rows[k][2]:.3f})  {rows[k][0]:12s} {rows[k][1]}')
     txt = '\n'.join(L); print(txt)
-    (RES / 'step30_confirm.txt').write_text(txt + '\n')
-    (RES / 'step30_confirm.json').write_text(json.dumps([dict(group=r[0], label=r[1], hall=r[2], fresh=float(f))
+    (RES / f'step30{TAG}_confirm.txt').write_text(txt + '\n')
+    (RES / f'step30{TAG}_confirm.json').write_text(json.dumps([dict(group=r[0], label=r[1], hall=r[2], fresh=float(f))
                                                          for r, f in zip(rows, fresh)], indent=1))
-    np.save(OUT / 'SUPER_WORM_fresh_best.npy', np.load(rows[best][3]))
+    np.save(OUT / f'SUPER_WORM{TAG}_fresh_best.npy', np.load(rows[best][3]))
     print('SUPER_CONFIRM_DONE', flush=True)
 
 

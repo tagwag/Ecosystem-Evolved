@@ -1,0 +1,13 @@
+Step 30 SUPER WORM nurture: 16 seeds x 300 gens, checkpoints re-tested on 24 worlds (standard world)
+hall-of-fame best champion: 3.692 (step29 e29_new seed 11 gen 100)
+arm           start   final   peak   decline  best brain   (score at gens 25,50,75,100,125,150,175,200,225,250,275,300)
+n30_random     2.514  3.057  3.187   0.130    3.549   2.51 2.67 2.74 2.77 2.82 2.85 2.94 2.87 2.92 2.95 2.99 3.06
+n30_pool       3.438  3.244  3.556   0.312    3.808   3.44 3.28 3.29 3.11 3.16 3.24 3.19 3.22 3.19 3.12 3.26 3.24
+n30_best       3.430  3.258  3.609   0.352    3.883   3.43 3.31 3.29 3.22 3.23 3.24 3.23 3.25 3.29 3.18 3.23 3.26
+n30_pool_x4    3.601  3.627  3.832   0.205    4.053   3.60 3.60 3.60 3.58 3.57 3.56 3.62 3.60 3.60 3.57 3.58 3.63
+PRE-REGISTERED (paired sign-flip by seed, Holm over 3):
+  S1 champions help (pool - random, final): +0.186 (9/16)  p=0.109  Holm p=0.218 -> no detectable effect
+  S2 reliable selection helps (pool_x4 - pool, final): +0.383 (15/16)  p=0.00025  Holm p=0.00075 -> PASS
+  S3 reliable selection maintains (pool decline - pool_x4 decline): +0.107 (10/16)  p=0.163  Holm p=0.218 -> no detectable effect
+REPORTED: single best champion vs pool (final): +0.014 (7/16) p=0.839 (uncorrected)
+SUPER WORM: n30_pool_x4 seed 31 gen 100, score 4.053 (BEATS the best champion)

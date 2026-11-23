@@ -505,3 +505,57 @@ gpu = true
 share = true
 vram_mb = 4000
 est_minutes = 400
+
+[advisor_quiz]
+about = "Gemma advisor BACKTEST (agent/advisor.py quiz): 12 past experiments with known outcomes, she predicts from the design only; score logged. Uses the server's GPU, not this one. About 5 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.advisor", "quiz"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 6
+
+[advisor_advise]
+about = "Gemma advisor ADVICE (agent/advisor.py advise): she reads the super worm results and recommends the next round from a fixed menu. Logged only; nothing is queued. About 2 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.advisor", "advise"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 3
+
+[forest_pull_qwen]
+about = "Download qwen2.5:7b (about 4.7 GB) onto the server 'forest' through Forest Chat's /api/pull, then list its models. Network only; no GPU here."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.forest_pull", "qwen2.5:7b"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 8
+
+[advisor_quiz_qwen]
+about = "Second advisor BACKTEST: the same 12-item quiz answered by qwen2.5:7b on forest, to compare with gemma3:12b."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.advisor", "quiz", "--model", "qwen2.5:7b"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 4
+
+[advisor_advise_qwen]
+about = "Second advisor ADVICE from qwen2.5:7b on the super worm results. Logged only."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "agent.advisor", "advise", "--model", "qwen2.5:7b"]
+gpu = false
+share = true
+vram_mb = 0
+est_minutes = 2
+
+[super_confirm_rep]
+about = "Fresh-world confirmation of the REPLICATE super worm (seeds 17-32) on the same 48 never-used worlds, with the original super worm head-to-head. About 10 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step30", "confirm", "--rep"]
+gpu = true
+share = true
+vram_mb = 4000
+est_minutes = 10

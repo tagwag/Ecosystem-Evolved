@@ -1,0 +1,470 @@
+[
+ {
+  "group": "super worm",
+  "label": "n30_pool_x4 seed 31 gen 100",
+  "hall": 4.052713058609515,
+  "fresh": 3.8320659404077255
+ },
+ {
+  "group": "orig super",
+  "label": "n30_pool_x4 seed 5 gen 300",
+  "hall": 4.045167693992456,
+  "fresh": 3.8608761285172988
+ },
+ {
+  "group": "champion",
+  "label": "#1 step29 e29_new s11 g100",
+  "hall": 3.692201147735533,
+  "fresh": 3.519569341732293
+ },
+ {
+  "group": "champion",
+  "label": "#2 step25 s25_vibration s14 g300",
+  "hall": 3.6911406461045977,
+  "fresh": 3.5415626430935743
+ },
+ {
+  "group": "champion",
+  "label": "#3 step19 s19_base s8 g-1",
+  "hall": 3.687212510955417,
+  "fresh": 3.4728546605316097
+ },
+ {
+  "group": "champion",
+  "label": "#4 step11_sparse clonal_pher s10 g-1",
+  "hall": 3.6619191136288767,
+  "fresh": 3.367225702454905
+ },
+ {
+  "group": "champion",
+  "label": "#5 step19 s19_base s2 g240",
+  "hall": 3.6600647509098057,
+  "fresh": 3.4582521908580226
+ },
+ {
+  "group": "champion",
+  "label": "#6 step25 s25_predator s11 g300",
+  "hall": 3.653221628747673,
+  "fresh": 3.320651090145111
+ },
+ {
+  "group": "champion",
+  "label": "#7 step24 s24_blind s8 g-1",
+  "hall": 3.6321020245448583,
+  "fresh": 3.4130025025586495
+ },
+ {
+  "group": "champion",
+  "label": "#8 step25 s25_none s3 g300",
+  "hall": 3.6203297731777027,
+  "fresh": 3.516171434467348
+ },
+ {
+  "group": "champion",
+  "label": "#9 step25 s25_gravity s1 g250",
+  "hall": 3.5970369756739173,
+  "fresh": 3.3982546678899475
+ },
+ {
+  "group": "champion",
+  "label": "#10 step25 s25_predator s16 g200",
+  "hall": 3.5457179959604725,
+  "fresh": 3.4135728580851317
+ },
+ {
+  "group": "champion",
+  "label": "#11 step18 o18_noobs s19 g-1",
+  "hall": 3.5402588076837773,
+  "fresh": 3.441478584862004
+ },
+ {
+  "group": "champion",
+  "label": "#12 step11_sparse clonal_nopher s8 g100",
+  "hall": 3.5222330123186114,
+  "fresh": 3.3129203273992367
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s17 g175",
+  "hall": 3.0371658441300196,
+  "fresh": 2.8897175137470996
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s18 g250",
+  "hall": 3.3017395157884395,
+  "fresh": 3.1058467425250758
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s19 g300",
+  "hall": 3.2284293690385915,
+  "fresh": 2.954523479232254
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s20 g300",
+  "hall": 3.414685431249543,
+  "fresh": 3.1748234784967884
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s21 g300",
+  "hall": 2.870046487455774,
+  "fresh": 2.7424840708806495
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s22 g150",
+  "hall": 3.2351727890419877,
+  "fresh": 2.9054335083631386
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s23 g125",
+  "hall": 3.2645826682034467,
+  "fresh": 2.9296396698932057
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s24 g300",
+  "hall": 3.2920598865124497,
+  "fresh": 2.9839585942449047
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s25 g300",
+  "hall": 3.328962316809015,
+  "fresh": 3.319911415202336
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s26 g75",
+  "hall": 2.7217857294767676,
+  "fresh": 2.585008040598283
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s27 g200",
+  "hall": 2.7834992326019954,
+  "fresh": 2.814424206694174
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s28 g275",
+  "hall": 3.3137875883633066,
+  "fresh": 3.0721504746004933
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s29 g300",
+  "hall": 2.7169734958507537,
+  "fresh": 2.5787693727451066
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s30 g250",
+  "hall": 3.491261003352701,
+  "fresh": 3.26487860901333
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s31 g250",
+  "hall": 3.4419038444214185,
+  "fresh": 3.3750423060458465
+ },
+ {
+  "group": "n30_random",
+  "label": "n30_random s32 g150",
+  "hall": 3.5493948089528,
+  "fresh": 3.3019093430083664
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s17 g75",
+  "hall": 3.5836266824872127,
+  "fresh": 3.369056501359834
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s18 g25",
+  "hall": 3.5443499072196167,
+  "fresh": 3.314731032811364
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s19 g175",
+  "hall": 3.582524874884014,
+  "fresh": 3.4340767108990504
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s20 g25",
+  "hall": 3.6323571304583715,
+  "fresh": 3.484410790159988
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s21 g25",
+  "hall": 3.447951291092775,
+  "fresh": 3.3052154621704375
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s22 g300",
+  "hall": 3.4112173856287775,
+  "fresh": 3.2581916559642803
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s23 g300",
+  "hall": 3.6366934893808014,
+  "fresh": 3.4830999441419004
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s24 g50",
+  "hall": 3.418222040419156,
+  "fresh": 3.2331235279432597
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s25 g275",
+  "hall": 3.6284310231192243,
+  "fresh": 3.424890984152444
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s26 g250",
+  "hall": 3.807764226156804,
+  "fresh": 3.592650280261619
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s27 g300",
+  "hall": 3.4754414454464695,
+  "fresh": 3.156632200685433
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s28 g50",
+  "hall": 3.5538134758308946,
+  "fresh": 3.3823284509242515
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s29 g225",
+  "hall": 3.526489011394895,
+  "fresh": 3.4654586763379887
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s30 g25",
+  "hall": 3.4348723367270497,
+  "fresh": 3.3224820666299717
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s31 g25",
+  "hall": 3.5817827319053728,
+  "fresh": 3.4441872230006587
+ },
+ {
+  "group": "n30_pool",
+  "label": "n30_pool s32 g75",
+  "hall": 3.626873181972446,
+  "fresh": 3.2800210549521984
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s17 g25",
+  "hall": 3.675362138848545,
+  "fresh": 3.3913010611548082
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s18 g25",
+  "hall": 3.6474363907705993,
+  "fresh": 3.523768861565946
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s19 g125",
+  "hall": 3.58646655351234,
+  "fresh": 3.56113052565294
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s20 g275",
+  "hall": 3.7379773159097467,
+  "fresh": 3.6263990930954204
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s21 g25",
+  "hall": 3.447951291092775,
+  "fresh": 3.3162608857706393
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s22 g25",
+  "hall": 3.695025813263944,
+  "fresh": 3.464569284254685
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s23 g175",
+  "hall": 3.652495156983948,
+  "fresh": 3.466250707222045
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s24 g25",
+  "hall": 3.340190597209665,
+  "fresh": 3.1791504004556272
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s25 g50",
+  "hall": 3.255141250633945,
+  "fresh": 3.1095421679369686
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s26 g25",
+  "hall": 3.7520210666116327,
+  "fresh": 3.521752117450039
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s27 g200",
+  "hall": 3.815768026423433,
+  "fresh": 3.473185670096427
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s28 g225",
+  "hall": 3.3549226599952413,
+  "fresh": 3.144946695088098
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s29 g50",
+  "hall": 3.8830786265432837,
+  "fresh": 3.6523103335846425
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s30 g225",
+  "hall": 3.564815147422875,
+  "fresh": 3.466935418745399
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s31 g75",
+  "hall": 3.643428782867785,
+  "fresh": 3.2496197514856853
+ },
+ {
+  "group": "n30_best",
+  "label": "n30_best s32 g225",
+  "hall": 3.6998525307875956,
+  "fresh": 3.5553479938405665
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s17 g75",
+  "hall": 3.9065948584841355,
+  "fresh": 3.6891793950900644
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s18 g275",
+  "hall": 3.886931584017455,
+  "fresh": 3.8110255631036125
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s19 g275",
+  "hall": 3.7913551846105196,
+  "fresh": 3.7749576552176016
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s20 g50",
+  "hall": 3.630438356499912,
+  "fresh": 3.437978930687273
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s21 g75",
+  "hall": 3.850720014423132,
+  "fresh": 3.7185131882679543
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s22 g50",
+  "hall": 3.732027414203104,
+  "fresh": 3.540227509553855
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s23 g200",
+  "hall": 3.855444187262199,
+  "fresh": 3.8138661821890203
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s24 g50",
+  "hall": 3.814572853036225,
+  "fresh": 3.575959838968185
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s25 g25",
+  "hall": 3.793644028933098,
+  "fresh": 3.7469623428200265
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s26 g225",
+  "hall": 3.957201945616139,
+  "fresh": 3.7071890076790517
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s27 g50",
+  "hall": 3.8082716165886574,
+  "fresh": 3.5878051812165523
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s28 g300",
+  "hall": 3.868937406311226,
+  "fresh": 3.6893730670524136
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s29 g300",
+  "hall": 3.753923302511167,
+  "fresh": 3.582146325422865
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s30 g250",
+  "hall": 3.787496265318866,
+  "fresh": 3.5719093559232227
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s31 g100",
+  "hall": 4.052713058609515,
+  "fresh": 3.7670258568263506
+ },
+ {
+  "group": "n30_pool_x4",
+  "label": "n30_pool_x4 s32 g75",
+  "hall": 3.8218145444006137,
+  "fresh": 3.6760545756745464
+ }
+]

@@ -4,3 +4,7 @@
 - Step 30 SUPER WORM: hall of fame from 12,084 snapshots (best 3.69 vs control 2.74). Nurture: champions + 4-world
   scoring = best and most stable (final 3.61, decline 0.20); with 1-world scoring champions degrade (3.49 -> 3.19).
   S1-S3 all pass. Super worm 4.045 (n30_pool_x4 s5 g300), not yet confirmed on fresh worlds (winner's curse).
+- Step 30 replicate (seeds 17-32): only S2 reproduces (4-world scoring +0.38, Holm p 0.00075); S1 champions-help
+  (+0.19) and S3 less-decline (+0.11) do not. Fresh worlds: replicate super worm 3.832, original 3.861 (same run),
+  tied; a single brain's 48-world score varies +/-0.07 between runs. Recipe = score each brain on several worlds.
+- Gemma/Qwen advisor built (python/agent: advisor.py quiz/advise/ask, quiz.json backtest); blocked by Forest Chat 401.

@@ -1,0 +1,22 @@
+Step 30_rep FRESH-WORLD CONFIRMATION: 78 brains re-tested on 48 never-used worlds (standard world)
+group           n   on hall worlds  on fresh worlds  shrink
+super worm       1      4.053           3.832       +0.221
+orig super       1      4.045           3.861       +0.184
+champion        12      3.625           3.431       +0.194
+n30_random      16      3.187           3.000       +0.187
+n30_pool        16      3.556           3.372       +0.184
+n30_best        16      3.609           3.419       +0.191
+n30_pool_x4     16      3.832           3.668       +0.164
+super worm on fresh worlds: 3.832 vs best champion on fresh worlds 3.542 -> STILL BEATS every champion
+best brain on fresh worlds: n30_pool_x4 seed 5 gen 300 (orig super), 3.861
+top 10 on fresh worlds:
+  3.861  (hall worlds 4.045)  orig super   n30_pool_x4 seed 5 gen 300
+  3.832  (hall worlds 4.053)  super worm   n30_pool_x4 seed 31 gen 100
+  3.814  (hall worlds 3.855)  n30_pool_x4  n30_pool_x4 s23 g200
+  3.811  (hall worlds 3.887)  n30_pool_x4  n30_pool_x4 s18 g275
+  3.775  (hall worlds 3.791)  n30_pool_x4  n30_pool_x4 s19 g275
+  3.767  (hall worlds 4.053)  n30_pool_x4  n30_pool_x4 s31 g100
+  3.747  (hall worlds 3.794)  n30_pool_x4  n30_pool_x4 s25 g25
+  3.719  (hall worlds 3.851)  n30_pool_x4  n30_pool_x4 s21 g75
+  3.707  (hall worlds 3.957)  n30_pool_x4  n30_pool_x4 s26 g225
+  3.689  (hall worlds 3.869)  n30_pool_x4  n30_pool_x4 s28 g300
