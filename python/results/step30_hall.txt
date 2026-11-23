@@ -1,0 +1,43 @@
+Step 30 HALL OF FAME: 12084 snapshots screened on 4 worlds, top 300 re-tested on 24 worlds in the standard world; peak per lineage; at most 2 per experiment arm
+reference: Step 23 control best brains (gen 300) on the same worlds: mean 2.743, best 3.171
+rank  score   experiment      arm                  seed  generation (-1 = final best)
+   1  3.692  step29          e29_new                11  100
+   2  3.691  step25          s25_vibration          14  300
+   3  3.687  step19          s19_base                8  -1
+   4  3.662  step11_sparse   clonal_pher            10  -1
+   5  3.660  step19          s19_base                2  240
+   6  3.653  step25          s25_predator           11  300
+   7  3.632  step24          s24_blind               8  -1
+   8  3.620  step25          s25_none                3  300
+   9  3.597  step25          s25_gravity             1  250
+  10  3.546  step25          s25_predator           16  200
+  11  3.540  step18          o18_noobs              19  -1
+  12  3.522  step11_sparse   clonal_nopher           8  100
+  13  3.515  step11          clonal_pher            13  120
+  14  3.514  step21          s21_grav               78  150
+  15  3.510  step11_sparse   clonal_nopher           7  130
+  16  3.491  step18          o18_herd               15  90
+  17  3.491  step25          s25_dopamine            8  300
+  18  3.489  step23          s23_mag_food           16  150
+  19  3.487  step25          s25_none                8  -1
+  20  3.486  step21          s21_grav               12  100
+  21  3.486  step25          s25_vibration           4  250
+  22  3.472  step11          clonal_pher            23  150
+  23  3.464  step23          s23_mag_decoy           7  250
+  24  3.464  step25          s25_smell              10  200
+  25  3.439  step25          s25_gravity             4  150
+  26  3.415  step25          s25_dopamine           12  150
+  27  3.414  step11_sparse   clonal_pher            11  30
+  28  3.411  step29          e29_rate0               7  -1
+  29  3.404  step25          s25_light               8  -1
+  30  3.395  step18          o18_noobs              11  30
+  31  3.394  step23          s23_mag_food            4  300
+  32  3.392  step18          o18_herd                8  60
+  33  3.388  step12          c3d_pep                16  -1
+  34  3.374  step25          s25_nose                1  200
+  35  3.373  step11          clonal_nopher          31  70
+  36  3.368  step20          s20_old                 9  210
+  37  3.359  step29          e29_rate10             14  300
+  38  3.346  step11          clonal_nopher          24  140
+  39  3.340  step24          s24_base               14  150
+  40  3.317  step25          s25_pheromone           7  200

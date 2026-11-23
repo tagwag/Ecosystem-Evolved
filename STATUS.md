@@ -31,12 +31,14 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 17 Nov | e9 beacon full (Step 25): pheromone, dopamine, smell steer (Holm p < 0.05); others null | 03:34 | watcher | results/step25_stats.txt | done |
 | DONE 17 Nov 16:18 | e11 paired L+R knockouts: 13/98 pairs lower skill; real-worm validation fails | 15:57 | watcher | results/step26_pairs_stats.txt | done |
 | DONE 17 Nov 23:18 | e12 fleeing food fixed (Step 27b): no idling; all R1-R3 pass; group catches 90-99 % at 0.9-1.5x | 16:18 | watcher | results/step27b_stats.txt | done |
-| RUNNING 2026-11-22 14:09 | e13 super_harvest (Step 30 phase A: hall of fame from ~12,000 snapshots) | 14:09 | watcher | remote/logs/e13_super_harvest.txt | ~15:10 |
-| QUEUED | e14 super_nurture (Step 30 phase B: 4 arms x 16 seeds x 300 gens + analysis) | - | watcher | remote/logs | ~21:40 |
+| DONE 22 Nov 15:09 | e13 super_harvest: hall of fame, best 3.69 vs control 2.74 | 14:09 | watcher | results/step30_hall.txt | done |
+| DONE 22 Nov 21:47 | e14 super_nurture: champions + 4-world scoring best and stable; super worm 4.045 (unconfirmed) | 15:09 | watcher | results/step30_stats.txt | done |
+| IDLE | queue empty since 2026-11-22 21:47 | - | - | - | - |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 
 ## Latest results (one line each; details in PROJECT_NOTES.txt)
+- 2026-11-22 SUPER WORM (step30): start from champions AND score each brain on 4 worlds -> best and holds its gains; 1-world scoring makes champions degrade. Super worm 4.045 (needs fresh-world confirmation).
 - 2026-11-17 BEACON FULL (step25): worm scent, dopamine and smell can lead worms to a chosen place (small bias); magnetism, gravity, light: no.
 - 2026-11-17 PAIRED KNOCKOUTS (step26 --pairs): both-sides removal doubles effects; AIY, AWC, AVE, AIZ key; validation still fails.
 - 2026-11-17 FLEEING FOOD FIXED (step27b): evolution learns to catch it; fleeing 12x harder than drifting; near-worm-speed food caught almost only with 2 worms close.

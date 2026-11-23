@@ -1,0 +1,5 @@
+Step 30 HALL OF FAME: 60 snapshots screened on 1 worlds, top 20 re-tested on 2 worlds in the standard world; peak per lineage; at most 2 per experiment arm
+reference: Step 23 control best brains (gen 300) on the same worlds: mean nan, best nan
+rank  score   experiment      arm                  seed  generation (-1 = final best)
+   1  3.800  step11          clonal_nopher          10  80
+   2  3.405  step11          clonal_nopher           1  170

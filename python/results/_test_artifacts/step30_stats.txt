@@ -1,0 +1,13 @@
+Step 30 SUPER WORM nurture: 2 seeds x 2 gens, checkpoints re-tested on 2 worlds (standard world)
+hall-of-fame best champion: 3.800 (step11 clonal_nopher seed 10 gen 80)
+arm           start   final   peak   decline  best brain   (score at gens 1,2)
+n30_random     1.788  2.121  2.121   0.000    2.165   1.79 2.12
+n30_pool       3.439  3.252  3.439   0.187    3.505   3.44 3.25
+n30_best       2.735  3.360  3.360   0.000    3.408   2.73 3.36
+n30_pool_x4    3.412  3.186  3.412   0.226    3.505   3.41 3.19
+PRE-REGISTERED (paired sign-flip by seed, Holm over 3):
+  S1 champions help (pool - random, final): +1.131 (2/2)  p=0.492  Holm p=1 -> no detectable effect
+  S2 reliable selection helps (pool_x4 - pool, final): -0.066 (1/2)  p=1  Holm p=1 -> no detectable effect
+  S3 reliable selection maintains (pool decline - pool_x4 decline): -0.039 (1/2)  p=1  Holm p=1 -> no detectable effect
+REPORTED: single best champion vs pool (final): +0.108 (2/2) p=0.492 (uncorrected)
+SUPER WORM: hall champion (step11 clonal_nopher), score 3.800 (nurture did not beat the best champion)

@@ -15,7 +15,7 @@ A research notebook in book form: every finding so far, the bugs that were found
 | Project | Ecosystem-Evolved (github.com/tagwag/Ecosystem-Evolved) |
 | Owner | Tag (tagwag) |
 | Written by | Claude, from the project notes, status board and result files |
-| Edition | 1st edition, 13 November 2026; updated 20 November 2026 |
+| Edition | 1st edition, 13 November 2026; updated 23 November 2026 |
 | Covers | 1 November to 13 November 2026 (Steps 1-19, sweep, teacher, Main Experiment, equilibrium world, factor engine) |
 | Hardware | Desktop: i9-10900K, 32 GB RAM, RTX 3080 (10 GB) |
 
@@ -321,6 +321,30 @@ Failed as designed, and the failure is a finding in itself: **when food runs awa
 - The pre-registered tests formally "passed" (skill falls with food speed; group catches rise with speed; evolved brains catch less than random ones) but all three are artefacts of the worms giving up. The group-hunting result rests on a handful of accidental catches. **No evidence about pursuit or group hunting either way.**
 - Tiring food changed nothing: worms that never chase never make the food tire.
 - Possible fixes, not run: food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
+
+## Super worm: Step 30 (22 November, finished 21:47)
+
+Your idea: take the best ancestor of every past experiment at its peak, before it degraded, then breed only from those. **Result: champions plus reliable selection make the best worms ever seen here, and keep them good; without reliable selection, champions degrade.** Method: python/ecosim/step30.py and STEP30\_SUPER\_WORM.md.
+
+**Phase A, hall of fame.** 12,084 saved snapshots of 2,044 past lineages, every run with the standard brain, were scored in one standard world (the Step 23 control rules), so experiments can be compared fairly. The top 300 were re-tested on 24 unseen worlds, and each lineage was counted at its peak. Best: **3.69**, against 2.74 for typical recent evolved worms on the same test. The top 10 come from six different experiments, including eroding gravity (Step 29, generation 100), the vibration and nociception beacons (Step 25), Step 19 and Step 11. Many peaked well before their run ended.
+
+**Phase B, nurture.** Four arms, 16 seeds x 300 generations, every 25th generation's best brain re-tested on the 24 worlds.
+
+| Start from | Start | Peak | Final | Drop from peak |
+| --- | --- | --- | --- | --- |
+| random brains | 2.54 | 3.05 | 2.74 | 0.32 |
+| 12 champions | 3.49 | 3.62 | 3.19 | 0.44 |
+| best champion + mutants | 3.43 | 3.63 | 3.19 | 0.44 |
+| **12 champions, each scored on 4 worlds** | 3.54 | 3.80 | **3.61** | **0.20** |
+
+- **Rule 1, champions help: PASS.** +0.45 over a random start at generation 300 (13/16 seeds, Holm p 0.005).
+- **Rule 2, reliable selection helps: PASS.** Scoring each brain on 4 worlds instead of 1: +0.42 (14/16, Holm p 0.0006).
+- **Rule 3, reliable selection maintains: PASS.** The drop from peak halves, 0.20 vs 0.44 (14/16, Holm p 0.005).
+- One champion plus mutants did no better or worse than a pool of 12.
+
+**What it takes to make and keep a super worm:** start from champions, and judge every brain on several worlds. With one world per brain, luck decides who breeds, and even champions slide below where they started (3.49 down to 3.19). That answers why lineages peak and then degrade: noisy selection.
+
+**The super worm** (4-world arm, seed 5, generation 300) scores **4.045**, above every champion. Caveat: it was picked as the best of 768 brains on the same 24 worlds it is scored on, so the number is optimistic; the champions' own hall scores shrank the same way (about 3.5 when re-run). A check on fresh worlds is next. Genome: python/runs/step30/SUPER\_WORM.npy.
 
 ## Fleeing food, fixed: Step 27b (17 November, finished 23:18)
 

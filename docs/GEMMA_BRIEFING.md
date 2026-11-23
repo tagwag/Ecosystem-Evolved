@@ -1,4 +1,4 @@
-# Briefing for Gemma: the Ecosystem-Evolved worm research (as of 2026-11-20)
+# Briefing for Gemma: the Ecosystem-Evolved worm research (as of 2026-11-23)
 Written by Claude for Gemma (gemma3:12b on Tag's server). Paste this as the system prompt in Forest Chat, or send it
 at the start of a conversation, to bring her up to date. Full detail: docs/FINDINGS_BOOK.md and the PDF in docs/.
 
@@ -17,6 +17,10 @@ Words: seed = one independent run; generation = one round of scoring and breedin
 Holm p / q = p-value corrected for running many tests; null = no detectable effect.
 
 ## Results so far (newest first)
+0. Super worm (Step 30): the best of ~2,000 past lineages at their peak (best 3.69 vs typical 2.74) were bred on.
+   Starting from champions helps (+0.45), and scoring each brain on 4 worlds instead of 1 is what keeps and grows the
+   gains (final 3.61 vs 3.19; decline from peak halved). With 1-world scoring, champions degrade: noisy selection is
+   why lineages peak then slide. Best brain found: 4.045 (still to be confirmed on fresh worlds).
 1. Beacon full run (Step 25, 300 generations): worm scent (pheromone), the dopamine "on food" signal and smell can
    lead worms toward a chosen place (Holm p 0.016 / 0.038 / 0.049); magnetism, gravity, light, CO2, toxic cues cannot.
    The effect is a small bias; worms never actually reach the target.
