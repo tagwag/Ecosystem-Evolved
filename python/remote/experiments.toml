@@ -487,3 +487,21 @@ gpu = true
 share = true
 vram_mb = 4000
 est_minutes = 400
+
+[super_confirm]
+about = "SUPER WORM fresh-world confirmation (ecosim/step30.py confirm): super worm, 12 champions and every seed's best checkpoint re-tested on 48 never-used worlds. About 10 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step30", "confirm"]
+gpu = true
+share = true
+vram_mb = 4000
+est_minutes = 10
+
+[super_nurture_rep]
+about = "SUPER WORM independent replicate (ecosim/step30.py nurture --rep): same 4 arms, new seeds 17-32, 300 gens, then analysis (results tagged _rep). About 6.5 h."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step30", "nurture", "--rep"]
+gpu = true
+share = true
+vram_mb = 4000
+est_minutes = 400

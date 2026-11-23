@@ -33,7 +33,8 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 17 Nov 23:18 | e12 fleeing food fixed (Step 27b): no idling; all R1-R3 pass; group catches 90-99 % at 0.9-1.5x | 16:18 | watcher | results/step27b_stats.txt | done |
 | DONE 22 Nov 15:09 | e13 super_harvest: hall of fame, best 3.69 vs control 2.74 | 14:09 | watcher | results/step30_hall.txt | done |
 | DONE 22 Nov 21:47 | e14 super_nurture: champions + 4-world scoring best and stable; super worm 4.045 (unconfirmed) | 15:09 | watcher | results/step30_stats.txt | done |
-| IDLE | queue empty since 2026-11-22 21:47 | - | - | - | - |
+| DONE 23 Nov 01:07 | e15 super_confirm: super worm 3.929 on 48 fresh worlds (beats every champion, 3.571) | 01:03 | watcher | results/step30_confirm.txt | done |
+| RUNNING 23 Nov 01:07 | e16 super_nurture_rep: Step 30 replicate, new seeds 17-32 | 01:07 | watcher | remote/logs/e16_super_nurture_rep.txt | ~07:45 |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 

@@ -50,3 +50,21 @@ Reported: single best champion vs pool of 12: no difference (+0.004, 8/16).
 above typical evolved brains (2.74). **Caveat (winner's curse):** it was chosen as the best of 768 checkpoints on the
 same 24 worlds it is scored on, so 4.045 is optimistic, as were the hall scores (the champions themselves score ~3.5
 when re-run as founders). A confirmation on fresh worlds (minutes of GPU) is the next step; not run yet.
+
+## Fresh-world confirmation (2026-11-23 01:03-01:07)
+77 brains (super worm, 12 champions, each seed's best checkpoint per arm) re-tested on 48 never-used worlds.
+
+| Group | On the worlds they were picked on | On fresh worlds | Shrink |
+|---|---|---|---|
+| super worm | 4.045 | **3.929** | 0.12 |
+| 12 champions | 3.625 | 3.429 | 0.20 |
+| random-start bests | 3.052 | 2.880 | 0.17 |
+| pool bests | 3.623 | 3.414 | 0.21 |
+| best-champion bests | 3.627 | 3.422 | 0.20 |
+| pool x4 bests | 3.801 | **3.601** | 0.20 |
+
+- Every score shrinks by ~0.2 on fresh worlds (winner's curse, as expected), but the ranking holds.
+- **The super worm is confirmed**: 3.929 on fresh worlds, above the best champion on the same fresh worlds (3.571)
+  and ~43 % above typical evolved brains (2.74). 6 of the top 7 fresh-world brains come from the 4-world arm.
+- Independent replicate (new seeds 17-32) started 2026-11-23 01:07.
+

@@ -40,6 +40,12 @@ PRE-REGISTERED RULES (written 2026-11-22 13:55 MT, before any run; paired sign-f
   champion, learning curves.
 
     python -m ecosim.step30 harvest | nurture | analyze | full
+    add --rep to nurture/analyze: an INDEPENDENT REPLICATE with new seeds 17-32 (owner's request 2026-11-23: "do the
+      super worm again"); same hall, same arms, same rules S1-S3; outputs tagged _rep.
+    python -m ecosim.step30 confirm   (watcher: super_confirm) - FRESH-WORLD CONFIRMATION (pre-registered 2026-11-23
+      07:10 MT): the super worm, the 12 hall champions, and every seed's best checkpoint of every arm (chosen on the 24
+      hall worlds) re-tested on 48 never-used worlds 5800-5847. Reported: how much each score shrinks (winner's
+      curse), whether the super worm still beats the best champion, and the arm ranking on fresh worlds.
     python -m ecosim.step30 check --test     (watcher: super_check)
 Results: runs/step30/, results/step30_hall.txt, step30_stats.txt + .json, step30.png. Super worm genome:
 runs/step30/SUPER_WORM.npy (the best brain found anywhere, with its score in SUPER_WORM.json).
@@ -65,11 +71,17 @@ N_RETEST, PER_ARM, POOL = 300, 2, 12
 EXCLUDE = {'s20_rev', 's20_mus', 's20_both', 's20b_body'}
 SEEDS, GENS, EVERY = list(range(1, 17)), 300, 25
 ARMS = {'n30_random': ('random', 1), 'n30_pool': ('pool', 1), 'n30_best': ('best', 1), 'n30_pool_x4': ('pool', 4)}
+FRESH_W = list(range(5800, 5848))
+REP = '--rep' in sys.argv
+TAG = '_rep' if REP else ''
+if REP:
+    SEEDS = list(range(17, 33))
 TEST = bool(os.environ.get('STEP30_TEST')) or '--test' in sys.argv
 LIMIT = None
 if TEST:
     OUT, RES = Path('runs/step30_test'), Path('results/_test_artifacts')
     SCREEN_W, HALL_W, N_RETEST, SEEDS, GENS, EVERY, LIMIT = [5700], [5710, 5711], 20, [1, 2], 2, 1, 60
+    FRESH_W = [5800, 5801]
 for _a in ARMS:
     CONDITIONS[_a] = CONDITIONS[STD]
     CFG_OVERRIDES[_a] = dict(CFG_OVERRIDES[STD])
@@ -240,24 +252,67 @@ def analyze():
         src = OUT / f'{best_a}_s{SEEDS[bi[0]]}' / f'ckpt_g{gens[bi[1]]}.npy'; who = f'{best_a} seed {SEEDS[bi[0]]} gen {gens[bi[1]]}'
     else:
         src = Path(hall[0]['path']); who = f'hall champion ({hall[0]["experiment"]} {hall[0]["arm"]})'; sup = champ
-    np.save(OUT / 'SUPER_WORM.npy', np.load(src))
-    (OUT / 'SUPER_WORM.json').write_text(json.dumps(dict(score=sup, source=who, path=str(src), worlds=HALL_W), indent=1))
+    np.save(OUT / f'SUPER_WORM{TAG}.npy', np.load(src))
+    (OUT / f'SUPER_WORM{TAG}.json').write_text(json.dumps(dict(score=sup, source=who, path=str(src), worlds=HALL_W), indent=1))
     L.append(f'SUPER WORM: {who}, score {sup:.3f} ' + ('(BEATS the best champion)' if sup > champ else '(nurture did not beat the best champion)'))
     txt = '\n'.join(L); print(txt)
     RES.mkdir(parents=True, exist_ok=True)
-    (RES / 'step30_stats.txt').write_text(txt + '\n')
-    (RES / 'step30_stats.json').write_text(json.dumps(dict(curve={a: c.tolist() for a, c in curve.items()}, gens=gens,
+    (RES / f'step30{TAG}_stats.txt').write_text(txt + '\n')
+    (RES / f'step30{TAG}_stats.json').write_text(json.dumps(dict(curve={a: c.tolist() for a, c in curve.items()}, gens=gens,
                                                            p=p, holm=h, champion=champ, super=sup, super_source=who)))
     fig, ax = plt.subplots(figsize=(8, 4.6))
     for a in ARMS:
         ax.plot(gens, curve[a].mean(0), marker='o', label=a[4:])
     ax.axhline(champ, color='k', ls='--', lw=0.8, label='best champion')
     ax.set(xlabel='generation', ylabel='skill (standard world, 24 unseen worlds)', title='Super worm: nurturing the hall of fame')
-    ax.legend(); fig.tight_layout(); fig.savefig(RES / 'step30.png', dpi=110)
+    ax.legend(); fig.tight_layout(); fig.savefig(RES / f'step30{TAG}.png', dpi=110)
+
+
+def confirm():
+    """Fresh-world confirmation of the super worm, the champions, and each seed's best checkpoint per arm."""
+    from .connectome import Connectome
+    from .worm2_gpu import pick_device
+    dev, conn = pick_device('cuda'), Connectome()
+    gens = list(range(EVERY, GENS + 1, EVERY))
+    st = json.loads((RES / 'step30_stats.json').read_text())
+    hall = list(csv.DictReader(open(OUT / 'hall' / 'hall_of_fame.csv')))[:POOL]
+    rows = []                                                   # (group, label, hall-world score, path)
+    sw = json.loads((OUT / 'SUPER_WORM.json').read_text())
+    rows.append(('super worm', sw['source'], sw['score'], OUT / 'SUPER_WORM.npy'))
+    for h in hall:
+        rows.append(('champion', f"#{h['rank']} {h['experiment']} {h['arm']} s{h['seed']} g{h['generation']}",
+                     float(h['score']), OUT / 'hall' / f"hof_{int(h['rank']):03d}.npy"))
+    for a in ARMS:
+        c = np.array(st['curve'][a])
+        for i, s in enumerate(SEEDS):
+            j = int(c[i].argmax())
+            rows.append((a, f'{a} s{s} g{gens[j]}', float(c[i, j]), OUT / f'{a}_s{s}' / f'ckpt_g{gens[j]}.npy'))
+    fresh = score([np.load(r[3]) for r in rows], FRESH_W, dev, conn)
+    L = [f'Step 30 FRESH-WORLD CONFIRMATION: {len(rows)} brains re-tested on {len(FRESH_W)} never-used worlds (standard world)',
+         'group           n   on hall worlds  on fresh worlds  shrink']
+    groups = ['super worm', 'champion'] + list(ARMS)
+    for g in groups:
+        idx = [k for k, r in enumerate(rows) if r[0] == g]
+        hw = np.mean([rows[k][2] for k in idx]); fw = fresh[idx].mean()
+        L.append(f'{g:14s} {len(idx):3d}     {hw:6.3f}          {fw:6.3f}       {hw - fw:+.3f}')
+    best = int(np.argmax(fresh))
+    champ_best = max(fresh[k] for k, r in enumerate(rows) if r[0] == 'champion')
+    L += [f'super worm on fresh worlds: {fresh[0]:.3f} vs best champion on fresh worlds {champ_best:.3f} -> '
+          + ('STILL BEATS every champion' if fresh[0] > champ_best else 'does NOT beat every champion on fresh worlds'),
+          f'best brain on fresh worlds: {rows[best][1]} ({rows[best][0]}), {fresh[best]:.3f}',
+          'top 10 on fresh worlds:']
+    for k in np.argsort(-fresh)[:10]:
+        L.append(f'  {fresh[k]:.3f}  (hall worlds {rows[k][2]:.3f})  {rows[k][0]:12s} {rows[k][1]}')
+    txt = '\n'.join(L); print(txt)
+    (RES / 'step30_confirm.txt').write_text(txt + '\n')
+    (RES / 'step30_confirm.json').write_text(json.dumps([dict(group=r[0], label=r[1], hall=r[2], fresh=float(f))
+                                                         for r, f in zip(rows, fresh)], indent=1))
+    np.save(OUT / 'SUPER_WORM_fresh_best.npy', np.load(rows[best][3]))
+    print('SUPER_CONFIRM_DONE', flush=True)
 
 
 if __name__ == '__main__':
-    a = [x for x in sys.argv[1:] if x != '--test']
+    a = [x for x in sys.argv[1:] if x not in ('--test', '--rep')]
     import torch
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     if a[:1] == ['harvest']:
@@ -266,6 +321,8 @@ if __name__ == '__main__':
         nurture(dev); analyze()
     elif a[:1] == ['analyze']:
         analyze()
+    elif a[:1] == ['confirm']:
+        confirm()
     elif a[:1] in (['full'], ['check']):
         harvest(); nurture(dev); analyze()
         print('SUPER_CHECK_OK' if a[0] == 'check' else 'SUPER_FULL_DONE', flush=True)
