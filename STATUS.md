@@ -14,6 +14,14 @@ Queue experiments in order of expected run time, shortest first (code checks, be
 Since 2026-11-17 the WATCHER enforces this itself (sorts by est_minutes every time it starts a job; see
 python/remote/README.md). Give every new experiment an est_minutes line in experiments.toml.
 
+## RULE (owner, 2026-11-23): PEAK-STOP for breeding runs
+Breeding runs (goal = the best brain, e.g. super worm) use ecosim/peakstop.py: checkpoints every 25 gens re-tested on
+fixed worlds; 2 checkpoints in a row >= 0.10 below the segment peak = peak passed -> survivors (peak brain, best
+checkpoints, current elites) are interbred by uniform crossover and evolution continues; after 3 interbreedings the
+next peak ends the seed; the run ends when all seeds ended. Each seed's result = peak_genome.npy. Comparison
+experiments (arm vs arm) keep FIXED lengths (owner's choice), since unequal lengths break the tests.
+Pass peakstop=PeakStop(...) to batch3_fast.evolve (clonal mode). First run: ecosim/step31.py (watcher: breed_peak).
+
 ## GPU (the user's RTX 3080 desktop) — one experiment at a time
 Before launching anything on the GPU, check this section. If a run is listed as RUNNING, queue behind it
 (or ask the user) instead of starting a second run: two runs at once both slow down.
@@ -36,7 +44,10 @@ Before launching anything on the GPU, check this section. If a run is listed as 
 | DONE 23 Nov 01:07 | e15 super_confirm: super worm 3.929 on 48 fresh worlds (beats every champion, 3.571) | 01:03 | watcher | results/step30_confirm.txt | done |
 | DONE 23 Nov 07:46 | e16 super_nurture_rep: only S2 (4-world scoring) reproduces (+0.38, Holm p 0.00075); S1, S3 not | 01:07 | watcher | results/step30_rep_stats.txt | done |
 | DONE 23 Nov 07:55 | e17 super_confirm_rep: replicate super worm 3.832 vs original 3.861 on fresh worlds (tied; noise +/-0.07); both beat every champion | 07:51 | watcher | results/step30_rep_confirm.txt | done |
-| BLOCKED | k22/k23 Gemma quiz + qwen2.5:7b download: Forest Chat answers 401 Unauthorized; k24-k26 held. Owner must give access (FOREST_URL or FOREST_AUTH env var, see python/agent/advisor.py) | - | watcher | remote/logs/k22_advisor_quiz.txt | owner |
+| QUEUED 23 Nov 10:40 | e18 combo_screen16 (Step 28 screen with all 16 brains; the only defined run never done) | - | watcher | results/step28_* | ~12:40 |
+| QUEUED | e19 breed_peak (Step 31: super worm recipe under the PEAK-STOP rule, max 600 gens) | after e18 | watcher | results/step31_stats.txt | <= ~20:40 |
+| DONE 23 Nov 10:16 | advisors: quiz gemma3:12b 1/12, qwen2.5:7b 4/12 (chance ~4); advice logged in python/agent/logs | - | watcher | python/agent/logs | done |
+| WAS BLOCKED (fixed) | k22/k23 Gemma quiz + qwen2.5:7b download: Forest Chat answers 401 Unauthorized; k24-k26 held. Owner must give access (FOREST_URL or FOREST_AUTH env var, see python/agent/advisor.py) | - | watcher | remote/logs/k22_advisor_quiz.txt | owner |
 
 **GPU runs now go through the remote watcher (python/remote): drop a job file in remote/queue/, read remote/status.json.**
 

@@ -1008,7 +1008,7 @@ class FastSim:
 
 def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=True, quiet=False, watch=0,
            eval_worlds=1, checkpoint_every=0, clonal=0, init=None, brains=0, setup=None, freeze=None, on_gen=None,
-           deadline=None):
+           deadline=None, peakstop=None):
     """watch: record the first `watch` seeds every generation for the live viewer (python -m ecosim.viewer).
     eval_worlds: score every brain on this many different worlds per generation and average (less luck in
                  selection; costs eval_worlds x the time). 1 = as before (identical results).
@@ -1024,7 +1024,10 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     init: {seed: genome} = start each seed's population from that brain (it + mutants of it) instead of random
           brains (clonal mode only; Step 14a).
     deadline: (clonal mode only) a time.time() value, or a function returning True when it is time to stop. Checked
-          before every generation; on stop the best brains + history so far are saved as usual (Step 20)."""
+          before every generation; on stop the best brains + history so far are saved as usual (Step 20).
+    peakstop: (clonal mode only) an ecosim.peakstop.PeakStop = the owner's PEAK-STOP rule for breeding runs
+          (2026-11-23): at each checkpoint, a seed whose skill has passed its peak is interbred and continues, and
+          ends after the allowed restarts; the run stops early when all seeds ended. Saves peak_genome.npy."""
     opts, conn = CONDITIONS[cond], Connectome()
     cfg = Config(seed=seeds[0], **CFG_OVERRIDES.get(cond, {}))
     dev = pick_device(device)
@@ -1034,7 +1037,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
     P = cfg.worm_population
     if clonal:
         return _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, clonal, init,
-                              brains, eval_worlds, setup, freeze, on_gen, deadline)
+                              brains, eval_worlds, setup, freeze, on_gen, deadline, peakstop=peakstop)
     W = eval_worlds
     # extra worlds get their own random streams, so W = 1 uses exactly the old stream (same results as before)
     wrngs = [[rngs[k]] + [np.random.default_rng([s, 7919, i]) for i in range(1, W)] for k, s in enumerate(seeds)]
@@ -1092,7 +1095,7 @@ def evolve(cond, seeds, generations=GENERATIONS, out=OUT, device='cuda', graph=T
 
 
 def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoint_every, G, init=None, brains=0, W=1,
-                   setup=None, freeze=None, on_gen=None, deadline=None):
+                   setup=None, freeze=None, on_gen=None, deadline=None, peakstop=None):
     """setup(sim, cfg): test-bench hook called once after the simulator is built (formula world, brain dials).
     freeze: bool gene mask; those genes never mutate (test bench).
     on_gen(g, k, fit (P,), per-brain stats list (P), elite indices, population (P, genes)): called every generation
@@ -1178,10 +1181,17 @@ def _evolve_clonal(cond, seeds, generations, out, device, graph, quiet, checkpoi
                 kids.append(kid)
             new[k] = np.array(kids)
         pop = new
+        if peakstop is not None and (g + 1) % peakstop.every == 0:            # owner's peak-stop rule (peakstop.py)
+            pop = peakstop.step(g + 1, best, pop, rngs, n_elite)
         if not quiet:
             fm = np.array([h[-1]['fitness'] for h in hist]); nn = np.nanmean([h[-1]['nn_dist'] for h in hist])
             print(f'{cond} gen {g:3d}  fitness mean {fm.mean():5.2f} (min {fm.min():5.2f}, max {fm.max():5.2f})  '
                   f'nearest-worm dist {nn:6.1f}  sim {t1 - t0:5.2f} s  evolve {time.perf_counter() - t1:4.2f} s', flush=True)
+        if peakstop is not None and peakstop.all_done():
+            print(f'{cond}: PEAK-STOP - every seed has passed its last peak; run ends early after generation {g + 1}', flush=True)
+            break
+    if peakstop is not None and out is not None:
+        peakstop.finish(out, cond, seeds, best)
     if out is not None:
         for k, s in enumerate(seeds):
             d = out / f'{cond}_s{s}'

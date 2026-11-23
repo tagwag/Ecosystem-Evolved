@@ -568,3 +568,21 @@ gpu = false
 share = true
 vram_mb = 0
 est_minutes = 1
+
+[breed_peak_check]
+about = "CODE CHECK for the peak-stop rule (ecosim/peakstop.py + step31.py): 2 seeds x 8 gens, interbreeding forced; must print BREED_PEAK_CHECK_OK. About 3 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step31", "check"]
+gpu = true
+share = true
+vram_mb = 3000
+est_minutes = 3
+
+[breed_peak]
+about = "Step 31: super worm recipe (champions, 4 worlds/brain) under the owner's PEAK-STOP rule: 16 seeds, max 600 gens; seeds passing their peak are interbred (max 3x) then end; run ends early when all seeds ended. At most ~8 h, likely less."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step31", "run"]
+gpu = true
+share = false
+vram_mb = 9000
+est_minutes = 480
