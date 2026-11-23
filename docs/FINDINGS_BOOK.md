@@ -60,9 +60,9 @@ The four platforms, oldest first:
 | Platform | Folder | What it is | Status |
 | --- | --- | --- | --- |
 | Connectome platform | python/ecosim | Real C. elegans wiring (300 neurons, 4,562 synapses) in a 2D food world | Archived as v1-baseline, results kept |
-| 2nd Experiment (toy brain) | python/toybrain | Small evolvable brains (smell, frontal, hippocampus layers), 30 lineages on the GPU | Active, 3 runs until 7pm today |
+| 2nd Experiment (toy brain) | python/toybrain | Small evolvable brains (smell, frontal, hippocampus layers), 30 lineages on the GPU | Done: the three 3,200-generation runs finished 13 November (section 3.3) |
 | Equilibrium world | python/equilibrium | A world built to hold a steady population, with frozen / shadow / real arms | Active |
-| Factor engine | python/engine | 38 environmental factors as off / auto / custom settings in a config form | Active, batch v3 + 9 explorations queued |
+| Factor engine | python/engine | 38 environmental factors as off / auto / custom settings in a config form | Done: batch v3 and all 9 explorations finished 14 November (section 5.2) |
 
 Words in **bold** on first use are in the Glossary (chapter 7). Everyday words are matched to their scientific terms in the Thesaurus (chapter 8).
 
@@ -127,7 +127,7 @@ No effect found. Across a 1000-fold range of gravity pattern strength, evolved b
 - **Rule 2, cost of specialising:** skill with no gravity vs log strength: rho = +0.03, p = 0.73. No trend.
 - Every tenth of the series sat slightly MORE on heavy ground than chance (avoidance -0.05 to -0.19). Worms move slower there, so they linger: the passive bias predicted before the run.
 - Reading: with these rules (energy cost up to 0.3 per tick against 0.6 for living), gravity is invisible to selection within 300 generations. It does not show gravity cannot matter, only that this version did not.
-- Decision that follows: a slowly changing ("eroding") gravity pattern was proposed on 14 November and NOT run, because worms ignored even a constant strong pattern. A short test of harsher gravity rules (python/ecosim/step24.py) was run on 16 November: see "Gravity bite test, Step 24" below. Harsh, sensed gravity IS avoided.
+- Decision that follows: a slowly changing ("eroding") gravity pattern was proposed on 14 November and held back at first, because worms ignored even a constant strong pattern. It was run on 16 November with the harsher rules (see "Eroding gravity, Step 29": no effect). A short test of harsher gravity rules (python/ecosim/step24.py) was run on 16 November: see "Gravity bite test, Step 24" below. Harsh, sensed gravity IS avoided.
 
 ## Can evolution here be predicted? (analysis of all saved runs, 14 November)
 
@@ -183,7 +183,7 @@ Rules set before the run (paired sign-flip, Holm over 4):
 Reported, not tested: gravity decoy vs control +0.17 (11/16, p 0.095, a hint only); gravity at food vs decoy -0.95 (0/16); decoy arms barely change when the sense is cut, so empty circles are neither sought nor avoided.
 
 - Why this differs from the 100-seed Gravity experiment: there, the gravity pattern had no link to food and was ignored. Here the field predicts where food is, and selection used it. A cue matters when it carries information about something the worm needs.
-- Open choice for the owner: food on heavy ground (current) punishes the very behaviour being rewarded. A light-at-food arm (circle\_sign = -1) would test the cue without its cost; about 1.5 h. Not queued.
+- Open choice for the owner: food on heavy ground (current) punishes the very behaviour being rewarded. A light-at-food arm (circle\_sign = -1) would test the cue without its cost; about 1.5 h. It was run on 16 November: see the next chapter.
 - Limits: 16 seeds x 300 generations, skill still creeping up. Gravity (PVD input) and magnetism (AFD input) and their costs are model rules, so this describes how evolution responds to these rules, not what real C. elegans would do.
 - Run note: Step 20b and Step 23 ran side by side; the GPU averaged 94% use (peak 69 C, safe), above the 50% target. The watcher's 50% limit only gates job starts. One job at a time keeps the load near half.
 
@@ -216,14 +216,14 @@ Confirmed: gravity can shape evolution here, if heavy ground is costly enough an
 - Base vs flat: +0.016, Holm p 0.96 (null, repeats the 100-seed Gravity experiment). Blind vs flat: -0.019, Holm p 0.96 (null): without the sense, the same cost produces no avoidance.
 - Decision written before the run: if the bite arm responds, a slowly changing ("eroding") gravity pattern is worth running with the bite rules. It responded; erosion is now worth designing.
 
-## Built 16 November, not yet run
+## Built 16 November (all since run)
 
-Five new experiments are coded and passed their workstation code checks (the eroding-gravity experiment, Step 29, was added later the same day). Finished ones have their own chapters below; the rest are queued, shortest first.
+Five new experiments are coded and passed their workstation code checks (the eroding-gravity experiment, Step 29, was added later the same day). All of them have since run, and each has its own chapter below.
 
 - **Beacon series (Step 25):** one experiment per sense. A hidden reward zone that only one sense can detect; the key test switches the reward off and asks whether the cue alone leads worms to a place we choose, or along a moving path.
 - **Single-neuron knockout guide (Step 26):** each of the 300 neurons removed in turn from 16 evolved brains; a plain-words guide of what each removal does, checked against real-worm ablation results.
 - **Fleeing food (Step 27):** food that runs from worms at 0 to 3x worm top speed; does group hunting or ambushing evolve?
-- **Corridor combination screen (Step 28):** every single, pair and triple of removed neurons tested once in a corridor-to-food test, to find combinations that break navigation only together (**epistasis**). First calibration showed intact worms rarely find one piece of food down a corridor; corridor variants are being compared before the screen runs.
+- **Corridor combination screen (Step 28):** every single, pair and triple of removed neurons tested once in a corridor-to-food test, to find combinations that break navigation only together (**epistasis**). First calibration showed intact worms rarely find one piece of food down a corridor; corridor variants were compared before the screen ran.
 
 ## Beacon series pilot, Step 25 (16 November, finished 11:51)
 
@@ -247,7 +247,7 @@ A first ranking of which senses can lead a worm to a chosen place. Each of 13 ar
 
 - Smell steers most, as expected: it is already wired for finding food. Among new channels, dopamine, nociception and oxygen lead; magnetism, light and gravity trail.
 - Effects are small after 50 generations (time in the circle rises from about 4.4 % to at most 6.1 %), and no group of worms actually reached the circle: steering is a bias, not yet guidance.
-- The method check passes (no cue gives exactly zero). The 300-generation run with the pre-registered tests is queued.
+- The method check passes (no cue gives exactly zero). The 300-generation run with the pre-registered tests ran on 17 November (see "Beacon series, full run").
 
 ## Corridor combination screen, Step 28 (16 November, finished 12:42)
 
@@ -320,7 +320,7 @@ Failed as designed, and the failure is a finding in itself: **when food runs awa
 - Why the food was uncatchable even at half speed: food noticed a worm 40 units away (5x the eating distance) and ran at once. A worm closes only about one unit per tick at 0.5x, and must hold its heading for about 30 ticks while its brain keeps turning. Even random starting brains ate only 0.05 food each at 0.5x, against 3.8 with still food.
 - The pre-registered tests formally "passed" (skill falls with food speed; group catches rise with speed; evolved brains catch less than random ones) but all three are artefacts of the worms giving up. The group-hunting result rests on a handful of accidental catches. **No evidence about pursuit or group hunting either way.**
 - Tiring food changed nothing: worms that never chase never make the food tire.
-- Possible fixes, not run: food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
+- Fixes proposed at the time, all run on 17 November as Step 27b (below): food that notices worms only at about 15 units; a mix of still and fleeing food so worms keep foraging; a score without the survival tie-break.
 
 ## Super worm: Step 30 (22-23 November, with replicate)
 
@@ -497,7 +497,7 @@ To keep variety, 25% of each lineage's children are now crosses: each gene comes
 | m2 one pool | any lineage with any other | 1 (all lineages share genes) |
 | m3 10 groups | only inside groups of 3 | 10 groups |
 
-Rule set before (13 November): interbreeding helps if m3's 10 group means beat m1's lineages grouped the same way (Welch p < 0.05). m2 can only be judged by its level and its kept variety, since its lineages are not independent. Results will be added here.
+Rule set before (13 November): interbreeding helps if m3's 10 group means beat m1's lineages grouped the same way (Welch p < 0.05). m2 can only be judged by its level and its kept variety, since its lineages are not independent. Results are in the next section.
 
 #### Result (13 November 21:44, all three runs completed 3,200 generations)
 
@@ -574,7 +574,7 @@ Evidence tags: EVO = shown to drive evolution in real worms; EFFECT = changes fi
 
 **Batch v1 (archived, do not use):** the mutation-rate gene drifted even with its factor off, and the baseline used different founders. Archived in engine/results/old\_mutbug/. One result held in every world even so: real worms evolved to move slower than shadow worms.
 
-**Running and queued (13 November):**
+**Jobs run 13-14 November (all finished; results in 5.1 and 5.2):**
 
 | Job | Form | Question |
 | --- | --- | --- |
@@ -582,7 +582,7 @@ Evidence tags: EVO = shown to drive evolution in real worms; EFFECT = changes fi
 | x1-x2 | magnetic field, radiofrequency | Contested and untested factors: would they matter? (Radiofrequency runs with an assumed weak cost, since its autopilot is "no effect"; gravity at Mars-like 0.38 g.) |
 | x3-x9 | radiation, gravity, electric field, predatory fungi, microsporidia, mating system, migration | Newly built factors on autopilot vs baseline |
 
-Each form runs 30 worlds x 3 arms (frozen / shadow / real) for 50,000 ticks, about 8 minutes on the GPU. Results will be added here.
+Each form runs 30 worlds x 3 arms (frozen / shadow / real) for 50,000 ticks, about 8 minutes on the GPU. Results are in 5.1 and 5.2.
 
 ### 5.1 First clean results (batch v3, 13 November 15:14)
 
