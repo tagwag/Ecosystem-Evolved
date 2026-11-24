@@ -1,0 +1,7 @@
+Step 31 CONFIRMATION on 96 new worlds 6000-6095 (one scoring call):
+  seed 50 peak             4.070   (worlds 5900-5947: 3.989)
+  seed 46 peak             3.961   (worlds 5900-5947: 3.887)
+  seed 49 peak             3.849   (worlds 5900-5947: 3.760)
+  Step 30 super worm       3.899   (worlds 5900-5947: 3.882)
+  Step 30 super worm_rep   3.825   (worlds 5900-5947: 3.800)
+  verdict: NEW SUPER WORM: seed 50 peak

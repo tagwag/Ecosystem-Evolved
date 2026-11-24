@@ -11,3 +11,5 @@
 - Step 28 repeat with 8 navigating brains (combo_screen16): single breaker RIML (4-brain: AVEL); only 2 of 82 pairs
   (AIZR+RMDDL, PVCR+SMDDL) and 89 of 5,683 triples recur. Combination-knockout effects are brain-specific.
 - Peak-stop rule for breeding runs (ecosim/peakstop.py); Step 31 (breed_peak) is its first run.
+- Step 31 (peak-stop run): interbreeding at peaks +0.02 (noise), no time saved. New super worm = seed 50 peak, 4.070
+  on 96 new worlds vs 3.899 for the Step 30 super worm (confirmed twice). Credit: longer 4-world breeding (600 gens).

@@ -373,6 +373,26 @@ Your idea: take the best ancestor of every past experiment at its peak, before i
 
 The replicate's super worm (4-world arm, seed 31, generation 100) scored 4.053 on the hall worlds and **3.832** on the fresh worlds; the original, re-scored in the same run, scored 3.861. Both beat every champion (best 3.542), and all 10 of the best fresh-world brains came from 4-world lines. **The two super worms are tied:** the same brain scored 3.929 and 3.861 on the same 48 worlds in two runs, and 3.832 and 3.767 twice within one run, so a single brain's score varies by about ±0.07 (the random stream depends on how worlds are batched). Differences under about 0.1 between single brains are not real.
 
+## Peak-stop rule and a new super worm: Step 31 (23-24 November)
+
+**The rule (owner's, 23 November; breeding runs only).** Every 25 generations each seed's best brain is re-tested on fixed worlds. When two re-tests in a row fall at least 0.10 below that stretch's peak, the peak has passed: the surviving worms (the peak brain, the stretch's best other snapshots, the current top brains) are interbred, each child taking every gene from one of two parents at random (**uniform crossover**), and evolution continues. After 3 interbreedings the next peak ends the seed, and the run ends when every seed has ended. Comparison experiments keep fixed lengths, since unequal lengths break the tests. Code: python/ecosim/peakstop.py.
+
+**The run.** The Step 30 recipe that reproduced (12 champions as founders, 4 worlds per brain), 16 new seeds, at most 600 generations.
+
+| Result | Value |
+| --- | --- |
+| Seeds that ended early | 8 of 16 (the run still went the full 600 generations, 7.2 h) |
+| Interbreedings | 45 |
+| Next stretch's peak minus the previous peak | +0.020 on average, 27 of 45 higher (within noise) |
+| Fresh worlds 5900-5947: peak-stop seeds, mean | 3.648 (Step 30 4-world arm: 3.60-3.67) |
+| Fresh worlds 5900-5947: best seed (50) | 3.989 |
+| **96 new worlds 6000-6095: seed 50** | **4.070** |
+| 96 new worlds: Step 30 super worms | 3.899 and 3.825 |
+
+- **Seed 50 is the new super worm.** The rule set before the confirmation was to beat both earlier super worms by more than 0.1; it did so by 0.171, and it scored highest on two independent sets of never-used worlds. Genome: python/runs/step31/p31\_pool\_x4\_peak\_s50/peak\_genome.npy (backup in results/).
+- **The credit goes to breeding for longer, not to interbreeding.** Seed 50 was already at 4.16 on the re-test worlds by generation 275, before its first interbreeding, and later stretches stayed at 4.11-4.17. With each brain judged on 4 worlds, a strong line can keep improving for 600 generations instead of degrading.
+- **On this evidence the peak-stop rule adds neither skill nor time savings.** It does what it was built to do (finds peaks and never loses the peak brain). A fair test would be the same seeds bred for a fixed 600 generations without the rule.
+
 ## Fleeing food, fixed: Step 27b (17 November, finished 23:18)
 
 The fixes worked, and the result is the best sign of cooperation-like behaviour so far. Food now notices a worm only within 15 units (was 40), only half the food moves, and the score is food eaten (no reward for surviving longest). A seventh world has food that **drifts** at 0.9x worm speed without sensing worms. 16 seeds x 300 generations per arm. **No arm idled**: worms kept moving at 0.67-0.97 of top speed. Method: python/ecosim/step27b.py and STEP27\_FLEEING\_FOOD\_DESIGN.md section 9.

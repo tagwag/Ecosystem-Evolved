@@ -1,0 +1,1990 @@
+{
+ "seeds": {
+  "41": {
+   "run_peak": 3.7653914178980306,
+   "run_peak_gen": 200,
+   "restarts": 3,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.596
+    },
+    {
+     "gen": 50,
+     "score": 3.4764
+    },
+    {
+     "gen": 75,
+     "score": 3.5144
+    },
+    {
+     "gen": 100,
+     "score": 3.6572
+    },
+    {
+     "gen": 125,
+     "score": 3.5514
+    },
+    {
+     "gen": 150,
+     "score": 3.3435
+    },
+    {
+     "gen": 150,
+     "segment_peak": 3.6572,
+     "segment_peak_gen": 100,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 175,
+     "score": 3.6474
+    },
+    {
+     "gen": 200,
+     "score": 3.7654
+    },
+    {
+     "gen": 225,
+     "score": 3.6647
+    },
+    {
+     "gen": 250,
+     "score": 3.707
+    },
+    {
+     "gen": 275,
+     "score": 3.5798
+    },
+    {
+     "gen": 300,
+     "score": 3.6149
+    },
+    {
+     "gen": 300,
+     "segment_peak": 3.7654,
+     "segment_peak_gen": 200,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 325,
+     "score": 3.4813
+    },
+    {
+     "gen": 350,
+     "score": 3.5529
+    },
+    {
+     "gen": 375,
+     "score": 3.5014
+    },
+    {
+     "gen": 400,
+     "score": 3.5239
+    },
+    {
+     "gen": 425,
+     "score": 3.4778
+    },
+    {
+     "gen": 450,
+     "score": 3.6051
+    },
+    {
+     "gen": 475,
+     "score": 3.5366
+    },
+    {
+     "gen": 500,
+     "score": 3.4508
+    },
+    {
+     "gen": 525,
+     "score": 3.2296
+    },
+    {
+     "gen": 525,
+     "segment_peak": 3.6051,
+     "segment_peak_gen": 450,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 550,
+     "score": 3.3747
+    },
+    {
+     "gen": 575,
+     "score": 3.4887
+    },
+    {
+     "gen": 600,
+     "score": 3.5867
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "42": {
+   "run_peak": 3.880564936902374,
+   "run_peak_gen": 550,
+   "restarts": 3,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.6023
+    },
+    {
+     "gen": 50,
+     "score": 3.622
+    },
+    {
+     "gen": 75,
+     "score": 3.5293
+    },
+    {
+     "gen": 100,
+     "score": 3.6039
+    },
+    {
+     "gen": 125,
+     "score": 3.5437
+    },
+    {
+     "gen": 150,
+     "score": 3.4496
+    },
+    {
+     "gen": 175,
+     "score": 3.3902
+    },
+    {
+     "gen": 175,
+     "segment_peak": 3.622,
+     "segment_peak_gen": 50,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 200,
+     "score": 3.617
+    },
+    {
+     "gen": 225,
+     "score": 3.5856
+    },
+    {
+     "gen": 250,
+     "score": 3.7852
+    },
+    {
+     "gen": 275,
+     "score": 3.832
+    },
+    {
+     "gen": 300,
+     "score": 3.8291
+    },
+    {
+     "gen": 325,
+     "score": 3.6993
+    },
+    {
+     "gen": 350,
+     "score": 3.7207
+    },
+    {
+     "gen": 350,
+     "segment_peak": 3.832,
+     "segment_peak_gen": 275,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 375,
+     "score": 3.7561
+    },
+    {
+     "gen": 400,
+     "score": 3.8121
+    },
+    {
+     "gen": 425,
+     "score": 3.5488
+    },
+    {
+     "gen": 450,
+     "score": 3.654
+    },
+    {
+     "gen": 450,
+     "segment_peak": 3.8121,
+     "segment_peak_gen": 400,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 475,
+     "score": 3.7383
+    },
+    {
+     "gen": 500,
+     "score": 3.6506
+    },
+    {
+     "gen": 525,
+     "score": 3.8095
+    },
+    {
+     "gen": 550,
+     "score": 3.8806
+    },
+    {
+     "gen": 575,
+     "score": 3.7409
+    },
+    {
+     "gen": 600,
+     "score": 3.81
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "43": {
+   "run_peak": 3.763852469012555,
+   "run_peak_gen": 300,
+   "restarts": 2,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.6281
+    },
+    {
+     "gen": 50,
+     "score": 3.5578
+    },
+    {
+     "gen": 75,
+     "score": 3.4099
+    },
+    {
+     "gen": 100,
+     "score": 3.6444
+    },
+    {
+     "gen": 125,
+     "score": 3.369
+    },
+    {
+     "gen": 150,
+     "score": 3.5519
+    },
+    {
+     "gen": 175,
+     "score": 3.6661
+    },
+    {
+     "gen": 200,
+     "score": 3.5969
+    },
+    {
+     "gen": 225,
+     "score": 3.4266
+    },
+    {
+     "gen": 250,
+     "score": 3.5249
+    },
+    {
+     "gen": 250,
+     "segment_peak": 3.6661,
+     "segment_peak_gen": 175,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 275,
+     "score": 3.4395
+    },
+    {
+     "gen": 300,
+     "score": 3.7639
+    },
+    {
+     "gen": 325,
+     "score": 3.6983
+    },
+    {
+     "gen": 350,
+     "score": 3.6371
+    },
+    {
+     "gen": 375,
+     "score": 3.4167
+    },
+    {
+     "gen": 375,
+     "segment_peak": 3.7639,
+     "segment_peak_gen": 300,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 400,
+     "score": 3.3494
+    },
+    {
+     "gen": 425,
+     "score": 3.3318
+    },
+    {
+     "gen": 450,
+     "score": 3.5243
+    },
+    {
+     "gen": 475,
+     "score": 3.5354
+    },
+    {
+     "gen": 500,
+     "score": 3.5738
+    },
+    {
+     "gen": 525,
+     "score": 3.566
+    },
+    {
+     "gen": 550,
+     "score": 3.3817
+    },
+    {
+     "gen": 575,
+     "score": 3.63
+    },
+    {
+     "gen": 600,
+     "score": 3.4195
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "44": {
+   "run_peak": 3.819118602848094,
+   "run_peak_gen": 25,
+   "restarts": 3,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.8191
+    },
+    {
+     "gen": 50,
+     "score": 3.7203
+    },
+    {
+     "gen": 75,
+     "score": 3.7101
+    },
+    {
+     "gen": 100,
+     "score": 3.7619
+    },
+    {
+     "gen": 125,
+     "score": 3.6811
+    },
+    {
+     "gen": 150,
+     "score": 3.5856
+    },
+    {
+     "gen": 150,
+     "segment_peak": 3.8191,
+     "segment_peak_gen": 25,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 175,
+     "score": 3.8034
+    },
+    {
+     "gen": 200,
+     "score": 3.7405
+    },
+    {
+     "gen": 225,
+     "score": 3.6687
+    },
+    {
+     "gen": 250,
+     "score": 3.7688
+    },
+    {
+     "gen": 275,
+     "score": 3.7759
+    },
+    {
+     "gen": 300,
+     "score": 3.7131
+    },
+    {
+     "gen": 325,
+     "score": 3.6466
+    },
+    {
+     "gen": 350,
+     "score": 3.568
+    },
+    {
+     "gen": 350,
+     "segment_peak": 3.8034,
+     "segment_peak_gen": 175,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 375,
+     "score": 3.7687
+    },
+    {
+     "gen": 400,
+     "score": 3.3721
+    },
+    {
+     "gen": 425,
+     "score": 3.751
+    },
+    {
+     "gen": 450,
+     "score": 3.656
+    },
+    {
+     "gen": 475,
+     "score": 3.6378
+    },
+    {
+     "gen": 475,
+     "segment_peak": 3.7687,
+     "segment_peak_gen": 375,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 500,
+     "score": 3.7321
+    },
+    {
+     "gen": 525,
+     "score": 3.5935
+    },
+    {
+     "gen": 550,
+     "score": 3.7014
+    },
+    {
+     "gen": 575,
+     "score": 3.6367
+    },
+    {
+     "gen": 600,
+     "score": 3.7253
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "45": {
+   "run_peak": 3.8612484817367254,
+   "run_peak_gen": 525,
+   "restarts": 3,
+   "ended_gen": 575,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.667
+    },
+    {
+     "gen": 50,
+     "score": 3.6941
+    },
+    {
+     "gen": 75,
+     "score": 3.7891
+    },
+    {
+     "gen": 100,
+     "score": 3.5771
+    },
+    {
+     "gen": 125,
+     "score": 3.4777
+    },
+    {
+     "gen": 125,
+     "segment_peak": 3.7891,
+     "segment_peak_gen": 75,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 150,
+     "score": 3.7149
+    },
+    {
+     "gen": 175,
+     "score": 3.6602
+    },
+    {
+     "gen": 200,
+     "score": 3.7109
+    },
+    {
+     "gen": 225,
+     "score": 3.6392
+    },
+    {
+     "gen": 250,
+     "score": 3.5236
+    },
+    {
+     "gen": 275,
+     "score": 3.5767
+    },
+    {
+     "gen": 275,
+     "segment_peak": 3.7149,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 300,
+     "score": 3.7384
+    },
+    {
+     "gen": 325,
+     "score": 3.6028
+    },
+    {
+     "gen": 350,
+     "score": 3.8405
+    },
+    {
+     "gen": 375,
+     "score": 3.5975
+    },
+    {
+     "gen": 400,
+     "score": 3.5831
+    },
+    {
+     "gen": 400,
+     "segment_peak": 3.8405,
+     "segment_peak_gen": 350,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 425,
+     "score": 3.69
+    },
+    {
+     "gen": 450,
+     "score": 3.7476
+    },
+    {
+     "gen": 475,
+     "score": 3.6111
+    },
+    {
+     "gen": 500,
+     "score": 3.7213
+    },
+    {
+     "gen": 525,
+     "score": 3.8612
+    },
+    {
+     "gen": 550,
+     "score": 3.5735
+    },
+    {
+     "gen": 575,
+     "score": 3.5101
+    },
+    {
+     "gen": 575,
+     "segment_peak": 3.8612,
+     "segment_peak_gen": 525,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "46": {
+   "run_peak": 4.031765360597315,
+   "run_peak_gen": 425,
+   "restarts": 3,
+   "ended_gen": 475,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.61
+    },
+    {
+     "gen": 50,
+     "score": 3.4894
+    },
+    {
+     "gen": 75,
+     "score": 3.689
+    },
+    {
+     "gen": 100,
+     "score": 3.5112
+    },
+    {
+     "gen": 125,
+     "score": 3.3212
+    },
+    {
+     "gen": 125,
+     "segment_peak": 3.689,
+     "segment_peak_gen": 75,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 150,
+     "score": 3.7092
+    },
+    {
+     "gen": 175,
+     "score": 3.5738
+    },
+    {
+     "gen": 200,
+     "score": 3.492
+    },
+    {
+     "gen": 200,
+     "segment_peak": 3.7092,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #2 (5 survivors)"
+    },
+    {
+     "gen": 225,
+     "score": 3.7295
+    },
+    {
+     "gen": 250,
+     "score": 3.6996
+    },
+    {
+     "gen": 275,
+     "score": 3.6966
+    },
+    {
+     "gen": 300,
+     "score": 3.6289
+    },
+    {
+     "gen": 325,
+     "score": 3.4351
+    },
+    {
+     "gen": 325,
+     "segment_peak": 3.7295,
+     "segment_peak_gen": 225,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 350,
+     "score": 3.7595
+    },
+    {
+     "gen": 375,
+     "score": 3.7774
+    },
+    {
+     "gen": 400,
+     "score": 3.8012
+    },
+    {
+     "gen": 425,
+     "score": 4.0318
+    },
+    {
+     "gen": 450,
+     "score": 3.7678
+    },
+    {
+     "gen": 475,
+     "score": 3.5761
+    },
+    {
+     "gen": 475,
+     "segment_peak": 4.0318,
+     "segment_peak_gen": 425,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "47": {
+   "run_peak": 3.8318883729374242,
+   "run_peak_gen": 400,
+   "restarts": 3,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.4387
+    },
+    {
+     "gen": 50,
+     "score": 3.467
+    },
+    {
+     "gen": 75,
+     "score": 3.4801
+    },
+    {
+     "gen": 100,
+     "score": 3.5927
+    },
+    {
+     "gen": 125,
+     "score": 3.7502
+    },
+    {
+     "gen": 150,
+     "score": 3.6639
+    },
+    {
+     "gen": 175,
+     "score": 3.555
+    },
+    {
+     "gen": 200,
+     "score": 3.4626
+    },
+    {
+     "gen": 200,
+     "segment_peak": 3.7502,
+     "segment_peak_gen": 125,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 225,
+     "score": 3.6913
+    },
+    {
+     "gen": 250,
+     "score": 3.5752
+    },
+    {
+     "gen": 275,
+     "score": 3.7771
+    },
+    {
+     "gen": 300,
+     "score": 3.5236
+    },
+    {
+     "gen": 325,
+     "score": 3.5816
+    },
+    {
+     "gen": 325,
+     "segment_peak": 3.7771,
+     "segment_peak_gen": 275,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 350,
+     "score": 3.803
+    },
+    {
+     "gen": 375,
+     "score": 3.6359
+    },
+    {
+     "gen": 400,
+     "score": 3.8319
+    },
+    {
+     "gen": 425,
+     "score": 3.76
+    },
+    {
+     "gen": 450,
+     "score": 3.6389
+    },
+    {
+     "gen": 475,
+     "score": 3.5347
+    },
+    {
+     "gen": 475,
+     "segment_peak": 3.8319,
+     "segment_peak_gen": 400,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 500,
+     "score": 3.632
+    },
+    {
+     "gen": 525,
+     "score": 3.6403
+    },
+    {
+     "gen": 550,
+     "score": 3.6387
+    },
+    {
+     "gen": 575,
+     "score": 3.5287
+    },
+    {
+     "gen": 600,
+     "score": 3.689
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "48": {
+   "run_peak": 3.948203585493482,
+   "run_peak_gen": 225,
+   "restarts": 3,
+   "ended_gen": 425,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.8312
+    },
+    {
+     "gen": 50,
+     "score": 3.7901
+    },
+    {
+     "gen": 75,
+     "score": 3.692
+    },
+    {
+     "gen": 100,
+     "score": 3.5117
+    },
+    {
+     "gen": 100,
+     "segment_peak": 3.8312,
+     "segment_peak_gen": 25,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 125,
+     "score": 3.8123
+    },
+    {
+     "gen": 150,
+     "score": 3.9102
+    },
+    {
+     "gen": 175,
+     "score": 3.7346
+    },
+    {
+     "gen": 200,
+     "score": 3.7512
+    },
+    {
+     "gen": 200,
+     "segment_peak": 3.9102,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 225,
+     "score": 3.9482
+    },
+    {
+     "gen": 250,
+     "score": 3.8416
+    },
+    {
+     "gen": 275,
+     "score": 3.7246
+    },
+    {
+     "gen": 275,
+     "segment_peak": 3.9482,
+     "segment_peak_gen": 225,
+     "event": "INTERBREED #3 (5 survivors)"
+    },
+    {
+     "gen": 300,
+     "score": 3.6279
+    },
+    {
+     "gen": 325,
+     "score": 3.8453
+    },
+    {
+     "gen": 350,
+     "score": 3.8422
+    },
+    {
+     "gen": 375,
+     "score": 3.8465
+    },
+    {
+     "gen": 400,
+     "score": 3.5515
+    },
+    {
+     "gen": 425,
+     "score": 3.6245
+    },
+    {
+     "gen": 425,
+     "segment_peak": 3.8465,
+     "segment_peak_gen": 375,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "49": {
+   "run_peak": 3.8997621818238657,
+   "run_peak_gen": 400,
+   "restarts": 2,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.5064
+    },
+    {
+     "gen": 50,
+     "score": 3.5835
+    },
+    {
+     "gen": 75,
+     "score": 3.4998
+    },
+    {
+     "gen": 100,
+     "score": 3.4925
+    },
+    {
+     "gen": 125,
+     "score": 3.6792
+    },
+    {
+     "gen": 150,
+     "score": 3.5752
+    },
+    {
+     "gen": 175,
+     "score": 3.637
+    },
+    {
+     "gen": 200,
+     "score": 3.726
+    },
+    {
+     "gen": 225,
+     "score": 3.6025
+    },
+    {
+     "gen": 250,
+     "score": 3.5061
+    },
+    {
+     "gen": 250,
+     "segment_peak": 3.726,
+     "segment_peak_gen": 200,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 275,
+     "score": 3.7768
+    },
+    {
+     "gen": 300,
+     "score": 3.4746
+    },
+    {
+     "gen": 325,
+     "score": 3.6916
+    },
+    {
+     "gen": 350,
+     "score": 3.6998
+    },
+    {
+     "gen": 375,
+     "score": 3.8092
+    },
+    {
+     "gen": 400,
+     "score": 3.8998
+    },
+    {
+     "gen": 425,
+     "score": 3.8313
+    },
+    {
+     "gen": 450,
+     "score": 3.5199
+    },
+    {
+     "gen": 475,
+     "score": 3.7609
+    },
+    {
+     "gen": 475,
+     "segment_peak": 3.8998,
+     "segment_peak_gen": 400,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 500,
+     "score": 3.6904
+    },
+    {
+     "gen": 525,
+     "score": 3.8313
+    },
+    {
+     "gen": 550,
+     "score": 3.284
+    },
+    {
+     "gen": 575,
+     "score": 3.8771
+    },
+    {
+     "gen": 600,
+     "score": 3.7006
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "50": {
+   "run_peak": 4.168686802959484,
+   "run_peak_gen": 600,
+   "restarts": 3,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.6801
+    },
+    {
+     "gen": 50,
+     "score": 3.5681
+    },
+    {
+     "gen": 75,
+     "score": 3.8165
+    },
+    {
+     "gen": 100,
+     "score": 3.6816
+    },
+    {
+     "gen": 125,
+     "score": 3.7376
+    },
+    {
+     "gen": 150,
+     "score": 3.902
+    },
+    {
+     "gen": 175,
+     "score": 3.8528
+    },
+    {
+     "gen": 200,
+     "score": 3.7527
+    },
+    {
+     "gen": 225,
+     "score": 4.0072
+    },
+    {
+     "gen": 250,
+     "score": 3.9638
+    },
+    {
+     "gen": 275,
+     "score": 4.1576
+    },
+    {
+     "gen": 300,
+     "score": 3.8531
+    },
+    {
+     "gen": 325,
+     "score": 3.7515
+    },
+    {
+     "gen": 325,
+     "segment_peak": 4.1576,
+     "segment_peak_gen": 275,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 350,
+     "score": 4.0633
+    },
+    {
+     "gen": 375,
+     "score": 4.1599
+    },
+    {
+     "gen": 400,
+     "score": 4.0149
+    },
+    {
+     "gen": 425,
+     "score": 3.8458
+    },
+    {
+     "gen": 425,
+     "segment_peak": 4.1599,
+     "segment_peak_gen": 375,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 450,
+     "score": 4.1132
+    },
+    {
+     "gen": 475,
+     "score": 4.0689
+    },
+    {
+     "gen": 500,
+     "score": 4.0556
+    },
+    {
+     "gen": 525,
+     "score": 3.9864
+    },
+    {
+     "gen": 550,
+     "score": 3.9095
+    },
+    {
+     "gen": 550,
+     "segment_peak": 4.1132,
+     "segment_peak_gen": 450,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 575,
+     "score": 4.0297
+    },
+    {
+     "gen": 600,
+     "score": 4.1687
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "51": {
+   "run_peak": 3.9208899459180735,
+   "run_peak_gen": 600,
+   "restarts": 2,
+   "ended_gen": null,
+   "done": false,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.5926
+    },
+    {
+     "gen": 50,
+     "score": 3.3888
+    },
+    {
+     "gen": 75,
+     "score": 3.7146
+    },
+    {
+     "gen": 100,
+     "score": 3.5357
+    },
+    {
+     "gen": 125,
+     "score": 3.8314
+    },
+    {
+     "gen": 150,
+     "score": 3.5459
+    },
+    {
+     "gen": 175,
+     "score": 3.7282
+    },
+    {
+     "gen": 175,
+     "segment_peak": 3.8314,
+     "segment_peak_gen": 125,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 200,
+     "score": 3.7187
+    },
+    {
+     "gen": 225,
+     "score": 3.7017
+    },
+    {
+     "gen": 250,
+     "score": 3.6965
+    },
+    {
+     "gen": 275,
+     "score": 3.7561
+    },
+    {
+     "gen": 300,
+     "score": 3.5736
+    },
+    {
+     "gen": 325,
+     "score": 3.5926
+    },
+    {
+     "gen": 325,
+     "segment_peak": 3.7561,
+     "segment_peak_gen": 275,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 350,
+     "score": 3.75
+    },
+    {
+     "gen": 375,
+     "score": 3.7759
+    },
+    {
+     "gen": 400,
+     "score": 3.455
+    },
+    {
+     "gen": 425,
+     "score": 3.6936
+    },
+    {
+     "gen": 450,
+     "score": 3.6084
+    },
+    {
+     "gen": 475,
+     "score": 3.7578
+    },
+    {
+     "gen": 500,
+     "score": 3.7629
+    },
+    {
+     "gen": 525,
+     "score": 3.7078
+    },
+    {
+     "gen": 550,
+     "score": 3.788
+    },
+    {
+     "gen": 575,
+     "score": 3.6327
+    },
+    {
+     "gen": 600,
+     "score": 3.9209
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "52": {
+   "run_peak": 3.838359982947198,
+   "run_peak_gen": 450,
+   "restarts": 3,
+   "ended_gen": 525,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.5134
+    },
+    {
+     "gen": 50,
+     "score": 3.7499
+    },
+    {
+     "gen": 75,
+     "score": 3.7193
+    },
+    {
+     "gen": 100,
+     "score": 3.6506
+    },
+    {
+     "gen": 125,
+     "score": 3.5111
+    },
+    {
+     "gen": 150,
+     "score": 3.5965
+    },
+    {
+     "gen": 150,
+     "segment_peak": 3.7499,
+     "segment_peak_gen": 50,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 175,
+     "score": 3.7558
+    },
+    {
+     "gen": 200,
+     "score": 3.651
+    },
+    {
+     "gen": 225,
+     "score": 3.7826
+    },
+    {
+     "gen": 250,
+     "score": 3.7659
+    },
+    {
+     "gen": 275,
+     "score": 3.5845
+    },
+    {
+     "gen": 300,
+     "score": 3.5082
+    },
+    {
+     "gen": 300,
+     "segment_peak": 3.7826,
+     "segment_peak_gen": 225,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 325,
+     "score": 3.8134
+    },
+    {
+     "gen": 350,
+     "score": 3.7694
+    },
+    {
+     "gen": 375,
+     "score": 3.4752
+    },
+    {
+     "gen": 400,
+     "score": 3.5266
+    },
+    {
+     "gen": 400,
+     "segment_peak": 3.8134,
+     "segment_peak_gen": 325,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 425,
+     "score": 3.7695
+    },
+    {
+     "gen": 450,
+     "score": 3.8384
+    },
+    {
+     "gen": 475,
+     "score": 3.7657
+    },
+    {
+     "gen": 500,
+     "score": 3.7054
+    },
+    {
+     "gen": 525,
+     "score": 3.6687
+    },
+    {
+     "gen": 525,
+     "segment_peak": 3.8384,
+     "segment_peak_gen": 450,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "53": {
+   "run_peak": 3.8851846096726756,
+   "run_peak_gen": 375,
+   "restarts": 3,
+   "ended_gen": 425,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.4857
+    },
+    {
+     "gen": 50,
+     "score": 3.4591
+    },
+    {
+     "gen": 75,
+     "score": 3.8468
+    },
+    {
+     "gen": 100,
+     "score": 3.5222
+    },
+    {
+     "gen": 125,
+     "score": 3.5036
+    },
+    {
+     "gen": 125,
+     "segment_peak": 3.8468,
+     "segment_peak_gen": 75,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 150,
+     "score": 3.6945
+    },
+    {
+     "gen": 175,
+     "score": 3.5023
+    },
+    {
+     "gen": 200,
+     "score": 3.5496
+    },
+    {
+     "gen": 200,
+     "segment_peak": 3.6945,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #2 (5 survivors)"
+    },
+    {
+     "gen": 225,
+     "score": 3.7522
+    },
+    {
+     "gen": 250,
+     "score": 3.6591
+    },
+    {
+     "gen": 275,
+     "score": 3.4798
+    },
+    {
+     "gen": 300,
+     "score": 3.5932
+    },
+    {
+     "gen": 300,
+     "segment_peak": 3.7522,
+     "segment_peak_gen": 225,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 325,
+     "score": 3.6847
+    },
+    {
+     "gen": 350,
+     "score": 3.8376
+    },
+    {
+     "gen": 375,
+     "score": 3.8852
+    },
+    {
+     "gen": 400,
+     "score": 3.7253
+    },
+    {
+     "gen": 425,
+     "score": 3.6938
+    },
+    {
+     "gen": 425,
+     "segment_peak": 3.8852,
+     "segment_peak_gen": 375,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "54": {
+   "run_peak": 3.9405592338285516,
+   "run_peak_gen": 550,
+   "restarts": 3,
+   "ended_gen": 600,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.4507
+    },
+    {
+     "gen": 50,
+     "score": 3.6525
+    },
+    {
+     "gen": 75,
+     "score": 3.6259
+    },
+    {
+     "gen": 100,
+     "score": 3.7405
+    },
+    {
+     "gen": 125,
+     "score": 3.8917
+    },
+    {
+     "gen": 150,
+     "score": 3.9249
+    },
+    {
+     "gen": 175,
+     "score": 3.9032
+    },
+    {
+     "gen": 200,
+     "score": 3.6987
+    },
+    {
+     "gen": 225,
+     "score": 3.7233
+    },
+    {
+     "gen": 225,
+     "segment_peak": 3.9249,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 250,
+     "score": 3.9226
+    },
+    {
+     "gen": 275,
+     "score": 3.5726
+    },
+    {
+     "gen": 300,
+     "score": 3.6989
+    },
+    {
+     "gen": 300,
+     "segment_peak": 3.9226,
+     "segment_peak_gen": 250,
+     "event": "INTERBREED #2 (5 survivors)"
+    },
+    {
+     "gen": 325,
+     "score": 3.5853
+    },
+    {
+     "gen": 350,
+     "score": 3.7931
+    },
+    {
+     "gen": 375,
+     "score": 3.6482
+    },
+    {
+     "gen": 400,
+     "score": 3.6942
+    },
+    {
+     "gen": 425,
+     "score": 3.671
+    },
+    {
+     "gen": 450,
+     "score": 3.6721
+    },
+    {
+     "gen": 450,
+     "segment_peak": 3.7931,
+     "segment_peak_gen": 350,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 475,
+     "score": 3.819
+    },
+    {
+     "gen": 500,
+     "score": 3.6575
+    },
+    {
+     "gen": 525,
+     "score": 3.7664
+    },
+    {
+     "gen": 550,
+     "score": 3.9406
+    },
+    {
+     "gen": 575,
+     "score": 3.7564
+    },
+    {
+     "gen": 600,
+     "score": 3.7392
+    },
+    {
+     "gen": 600,
+     "segment_peak": 3.9406,
+     "segment_peak_gen": 550,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "55": {
+   "run_peak": 3.7312570755163,
+   "run_peak_gen": 375,
+   "restarts": 3,
+   "ended_gen": 425,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.619
+    },
+    {
+     "gen": 50,
+     "score": 3.3926
+    },
+    {
+     "gen": 75,
+     "score": 3.0404
+    },
+    {
+     "gen": 75,
+     "segment_peak": 3.619,
+     "segment_peak_gen": 25,
+     "event": "INTERBREED #1 (5 survivors)"
+    },
+    {
+     "gen": 100,
+     "score": 3.6678
+    },
+    {
+     "gen": 125,
+     "score": 3.5074
+    },
+    {
+     "gen": 150,
+     "score": 3.5317
+    },
+    {
+     "gen": 150,
+     "segment_peak": 3.6678,
+     "segment_peak_gen": 100,
+     "event": "INTERBREED #2 (5 survivors)"
+    },
+    {
+     "gen": 175,
+     "score": 3.4962
+    },
+    {
+     "gen": 200,
+     "score": 3.7058
+    },
+    {
+     "gen": 225,
+     "score": 3.5699
+    },
+    {
+     "gen": 250,
+     "score": 3.6334
+    },
+    {
+     "gen": 275,
+     "score": 3.47
+    },
+    {
+     "gen": 300,
+     "score": 3.5854
+    },
+    {
+     "gen": 300,
+     "segment_peak": 3.7058,
+     "segment_peak_gen": 200,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 325,
+     "score": 3.6481
+    },
+    {
+     "gen": 350,
+     "score": 3.6975
+    },
+    {
+     "gen": 375,
+     "score": 3.7313
+    },
+    {
+     "gen": 400,
+     "score": 3.3843
+    },
+    {
+     "gen": 425,
+     "score": 3.5
+    },
+    {
+     "gen": 425,
+     "segment_peak": 3.7313,
+     "segment_peak_gen": 375,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  },
+  "56": {
+   "run_peak": 3.8404115825581058,
+   "run_peak_gen": 325,
+   "restarts": 3,
+   "ended_gen": 475,
+   "done": true,
+   "log": [
+    {
+     "gen": 25,
+     "score": 3.8089
+    },
+    {
+     "gen": 50,
+     "score": 3.7536
+    },
+    {
+     "gen": 75,
+     "score": 3.6744
+    },
+    {
+     "gen": 100,
+     "score": 3.6394
+    },
+    {
+     "gen": 100,
+     "segment_peak": 3.8089,
+     "segment_peak_gen": 25,
+     "event": "INTERBREED #1 (6 survivors)"
+    },
+    {
+     "gen": 125,
+     "score": 3.6033
+    },
+    {
+     "gen": 150,
+     "score": 3.7634
+    },
+    {
+     "gen": 175,
+     "score": 3.691
+    },
+    {
+     "gen": 200,
+     "score": 3.5172
+    },
+    {
+     "gen": 225,
+     "score": 3.7065
+    },
+    {
+     "gen": 250,
+     "score": 3.6411
+    },
+    {
+     "gen": 275,
+     "score": 3.6353
+    },
+    {
+     "gen": 275,
+     "segment_peak": 3.7634,
+     "segment_peak_gen": 150,
+     "event": "INTERBREED #2 (6 survivors)"
+    },
+    {
+     "gen": 300,
+     "score": 3.5999
+    },
+    {
+     "gen": 325,
+     "score": 3.8404
+    },
+    {
+     "gen": 350,
+     "score": 3.6958
+    },
+    {
+     "gen": 375,
+     "score": 3.7264
+    },
+    {
+     "gen": 375,
+     "segment_peak": 3.8404,
+     "segment_peak_gen": 325,
+     "event": "INTERBREED #3 (6 survivors)"
+    },
+    {
+     "gen": 400,
+     "score": 3.6008
+    },
+    {
+     "gen": 425,
+     "score": 3.748
+    },
+    {
+     "gen": 450,
+     "score": 3.4942
+    },
+    {
+     "gen": 475,
+     "score": 3.3384
+    },
+    {
+     "gen": 475,
+     "segment_peak": 3.748,
+     "segment_peak_gen": 425,
+     "event": "END (peak passed, no restarts left)"
+    }
+   ],
+   "rule": {
+    "every": 25,
+    "drop": 0.1,
+    "confirm": 2,
+    "restarts": 3
+   }
+  }
+ },
+ "fresh": {
+  "seed 41 peak": 3.6243791122506885,
+  "seed 42 peak": 3.7336536541244847,
+  "seed 43 peak": 3.6208152720704674,
+  "seed 44 peak": 3.577677724939875,
+  "seed 45 peak": 3.5786587809691106,
+  "seed 46 peak": 3.8871540992805316,
+  "seed 47 peak": 3.684515941181841,
+  "seed 48 peak": 3.6598148951565634,
+  "seed 49 peak": 3.7602417776412853,
+  "seed 50 peak": 3.9887123422619575,
+  "seed 51 peak": 3.6308493844970755,
+  "seed 52 peak": 3.52801515404135,
+  "seed 53 peak": 3.693688849502036,
+  "seed 54 peak": 3.582553139934316,
+  "seed 55 peak": 3.433670430387267,
+  "seed 56 peak": 3.3781924800740355,
+  "Step 30 super worm": 3.8820849286676897,
+  "Step 30 super worm_rep": 3.800134739083134,
+  "champion hof_001": 3.5208285360183154,
+  "champion hof_002": 3.4897970664030353,
+  "champion hof_003": 3.4366992509794527,
+  "champion hof_004": 3.476660595788983,
+  "champion hof_005": 3.3640479145312887,
+  "champion hof_006": 3.2537033121644825,
+  "champion hof_007": 3.4152903013759186,
+  "champion hof_008": 3.496928080049758,
+  "champion hof_009": 3.377881464547116,
+  "champion hof_010": 3.310361660282231,
+  "champion hof_011": 3.3971363375661894,
+  "champion hof_012": 3.3739844029070816
+ }
+}

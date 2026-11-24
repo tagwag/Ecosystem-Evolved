@@ -586,3 +586,12 @@ gpu = true
 share = false
 vram_mb = 7000
 est_minutes = 480
+
+[breed_peak_confirm]
+about = "Step 31 confirmation: 3 best peak-stop brains vs both Step 30 super worms on 96 new worlds (6000-6095). About 3 min."
+cwd = "."
+cmd = ["{py}", "-u", "-m", "ecosim.step31", "confirm"]
+gpu = true
+share = true
+vram_mb = 3000
+est_minutes = 3

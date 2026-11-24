@@ -1,0 +1,24 @@
+Step 31 peak-stop breeding run: 16 seeds, max 600 gens, rule: 0.1 below segment peak at 2 checkpoints in a row -> interbreed (max 3), then end
+seed  run peak (gen)   restarts  ended at   segment peaks
+  41  3.765 (200)     3        max gens    3.657 -> 3.765 -> 3.605 -> 3.587
+  42  3.881 (550)     3        max gens    3.622 -> 3.832 -> 3.812 -> 3.881
+  43  3.764 (300)     2        max gens    3.666 -> 3.764 -> 3.630
+  44  3.819 (25)     3        max gens    3.819 -> 3.803 -> 3.769 -> 3.732
+  45  3.861 (525)     3        575    3.789 -> 3.715 -> 3.841 -> 3.861
+  46  4.032 (425)     3        475    3.689 -> 3.709 -> 3.729 -> 4.032
+  47  3.832 (400)     3        max gens    3.750 -> 3.777 -> 3.832 -> 3.689
+  48  3.948 (225)     3        425    3.831 -> 3.910 -> 3.948 -> 3.846
+  49  3.900 (400)     2        max gens    3.726 -> 3.900 -> 3.877
+  50  4.169 (600)     3        max gens    4.158 -> 4.160 -> 4.113 -> 4.169
+  51  3.921 (600)     2        max gens    3.831 -> 3.756 -> 3.921
+  52  3.838 (450)     3        525    3.750 -> 3.783 -> 3.813 -> 3.838
+  53  3.885 (375)     3        425    3.847 -> 3.695 -> 3.752 -> 3.885
+  54  3.941 (550)     3        600    3.925 -> 3.923 -> 3.793 -> 3.941
+  55  3.731 (375)     3        425    3.619 -> 3.668 -> 3.706 -> 3.731
+  56  3.840 (325)     3        475    3.809 -> 3.763 -> 3.840 -> 3.748
+interbreeding: next segment peak minus previous segment peak: mean +0.020, 27/45 climbed past the old peak (checkpoint worlds; noise ~ +/-0.1)
+FRESH WORLDS 5900-5947 (never used), one scoring call:
+  peak-stop seeds: mean 3.648, best 3.989 (seed 50 peak)
+  Step 30 super worm: 3.882
+  Step 30 super worm_rep: 3.800
+  champions: mean 3.409, best 3.521

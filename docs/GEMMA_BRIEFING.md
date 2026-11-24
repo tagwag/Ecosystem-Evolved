@@ -17,6 +17,10 @@ Words: seed = one independent run; generation = one round of scoring and breedin
 Holm p / q = p-value corrected for running many tests; null = no detectable effect.
 
 ## Results so far (newest first)
+00. Step 31 peak-stop rule (stop at a seed's peak, interbreed survivors, continue, max 3x): interbreeding gave no clear
+   gain (+0.02, noise) and the run did not end early. But 600 generations of 4-world breeding produced a new super worm
+   (seed 50): 4.070 on 96 never-used worlds vs 3.899 for the Step 30 super worm. Lines kept improving instead of
+   degrading when each brain was judged on 4 worlds.
 0. Super worm (Step 30, with an independent replicate): the best of ~2,000 past lineages at their peak (best 3.69 vs
    typical 2.74) were bred on for 300 generations. The one result that reproduced: scoring each brain on 4 worlds
    instead of 1 (+0.38 to +0.42 final skill). Starting from champions helped once (+0.45) but not in the replicate

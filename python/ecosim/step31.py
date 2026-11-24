@@ -110,6 +110,30 @@ def analyze():
     print('BREED_PEAK_ANALYZE_DONE', flush=True)
 
 
+CONFIRM_W = list(range(6000, 6096))                 # 96 worlds never used anywhere (pre-registered 2026-11-24 02:50 UTC)
+
+
+def confirm():
+    """Second fresh-world test: the 3 best peak-stop seeds on worlds 5900-5947 (picked there, so their 5900 score is
+    optimistic) vs both Step 30 super worms, on 96 NEW worlds, in one scoring call. Rule written before the run: a
+    peak-stop brain counts as a new super worm only if it beats BOTH super worms here by more than 0.1."""
+    from .connectome import Connectome
+    from .worm2_gpu import pick_device
+    dev, conn = pick_device('cuda'), Connectome()
+    fr = json.loads((RES / 'step31_stats.json').read_text())['fresh']
+    top = sorted([n for n in fr if n.endswith(' peak')], key=lambda n: -fr[n])[:3]
+    rows = [(n, OUT / f'{ARM}_s{n.split()[1]}' / 'peak_genome.npy') for n in top]
+    rows += [(f'Step 30 super worm{t}', s30.OUT / f'SUPER_WORM{t}.npy') for t in ('', '_rep')]
+    sc = s30.score([np.load(p) for _, p in rows], CONFIRM_W, dev, conn)
+    sup = max(sc[-2:])
+    L = [f'Step 31 CONFIRMATION on {len(CONFIRM_W)} new worlds {CONFIRM_W[0]}-{CONFIRM_W[-1]} (one scoring call):']
+    L += [f'  {n:24s} {x:.3f}   (worlds 5900-5947: {fr.get(n, float("nan")):.3f})' for (n, _), x in zip(rows, sc)]
+    L.append('  verdict: ' + ('NEW SUPER WORM: ' + rows[int(sc[:-2].argmax())][0] if sc[:-2].max() > sup + 0.1
+                             else 'no peak-stop brain beats both super worms by > 0.1 (tied within noise or worse)'))
+    txt = '\n'.join(L); print(txt); (RES / 'step31_confirm.txt').write_text(txt + '\n')
+    print('BREED_PEAK_CONFIRM_DONE', flush=True)
+
+
 if __name__ == '__main__':
     a = [x for x in sys.argv[1:] if x != '--test']
     if a[:1] in (['run'], ['check']):
@@ -120,5 +144,7 @@ if __name__ == '__main__':
             print('BREED_PEAK_CHECK_OK', flush=True)
     elif a[:1] == ['analyze']:
         analyze()
+    elif a[:1] == ['confirm']:
+        confirm()
     else:
         print(__doc__)
